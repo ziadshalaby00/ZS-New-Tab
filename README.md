@@ -1,6 +1,10 @@
-# ZS Custom New Tab
+# ZS New Tab
 
 A minimal, fast, and fully offline **New Tab** replacement for Chrome — a personal bookmark dashboard with a search bar, a customizable grid, and a settings panel. No accounts, no tracking, no backend. Everything is stored locally in your browser (`localStorage` + `IndexedDB`).
+
+![Version](https://img.shields.io/github/v/release/ziadshalaby00/ZS-New-Tab)
+![Stars](https://img.shields.io/github/stars/ziadshalaby00/ZS-New-Tab)
+![Issues](https://img.shields.io/github/issues/ziadshalaby00/ZS-New-Tab)
 
 ![s1](./images/s1.png)
 ![s2](./images/s2.png)
