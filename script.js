@@ -693,7 +693,7 @@
         const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `new-tab-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        a.download = `zs-new-tab-backup-${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
     });
 
@@ -861,3 +861,15 @@
     applyBackground();
 
 })();
+
+// Get LocalStorage Size, Call From Console
+function getLocalStorageSize() {
+  let total = 0;
+  for (let key in localStorage) {
+    if (localStorage.hasOwnProperty(key)) {
+      total += (localStorage[key].length + key.length) * 2;
+    }
+  }
+  console.log(`Total localStorage size: ${(total / 1024).toFixed(2)} KB`);
+  return total;
+}
