@@ -6,9 +6,11 @@ A minimal, fast, and fully offline **New Tab** replacement for Chrome — a pers
 ![Stars](https://img.shields.io/github/stars/ziadshalaby00/ZS-New-Tab)
 ![Issues](https://img.shields.io/github/issues/ziadshalaby00/ZS-New-Tab)
 
-![s1](./images/s1.png)
-![s2](./images/s2.png)
-![s3](./images/s3.png)
+<p align="center">
+  <img src="./images/s1.png" width="32%">
+  <img src="./images/s2.png" width="32%">
+  <img src="./images/s3.png" width="32%">
+</p>
 
 ## Features
 
