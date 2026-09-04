@@ -1,6 +1,6 @@
 /**
  * ----------------------------------------------
- *  New Tab – Full Application (with IndexedDB for backgrounds)
+ *  ZS New Tab – Full Application (with IndexedDB for backgrounds)
  * ----------------------------------------------
  */
 (function () {
@@ -224,12 +224,64 @@
     }
 
     function getColorForName(name) {
-        const palette = ["#e8a33d", "#5fd3c4", "#6f9be0", "#c77dd1", "#e2685f", "#7fbf7f", "#d4a24d", "#8a8fe0"];
+        const palette = [
+            "#e8a33d", 
+            "#5fd3c4", 
+            "#6f9be0", 
+            "#c77dd1", 
+            "#e2685f", 
+            "#7fbf7f", 
+            "#d4a24d", 
+            "#8a8fe0"
+        ];
+
         let sum = 0;
         for (let i = 0; i < name.length; i++) {
             sum += name.charCodeAt(i);
         }
         return palette[sum % palette.length];
+    }
+
+    function showConfirm(message, title = "Confirm") {
+        return new Promise((resolve) => {
+            const overlay = document.createElement("div");
+            overlay.className = "overlay open";
+
+            const modal = document.createElement("div");
+            modal.className = "modal";
+
+            modal.innerHTML = `
+            <h2>${title}</h2>
+            <p class="hint" style="margin-bottom:18px; font-size:13px; color:var(--text);">${message}</p>
+            <div class="actions">
+                <button class="cancel">Cancel</button>
+                <button class="save danger-fill">Confirm</button>
+            </div>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            function cleanup(result) {
+                overlay.remove();
+                resolve(result);
+            }
+
+            modal.querySelector(".cancel").addEventListener("click", () => cleanup(false));
+            modal.querySelector(".save").addEventListener("click", () => cleanup(true));
+
+            overlay.addEventListener("click", (e) => {
+                if (e.target === overlay) cleanup(false);
+            });
+
+            function onKey(e) {
+                if (e.key === "Escape") {
+                    document.removeEventListener("keydown", onKey);
+                    cleanup(false);
+                }
+            }
+            document.addEventListener("keydown", onKey);
+        });
     }
 
     // =============================================
@@ -247,15 +299,19 @@
     //  9.  RENDERING FUNCTIONS
     // =============================================
 
-    // Main render function
-    function render() {
-        document.documentElement.style.setProperty("--cols", state.settings.cols);
-        document.documentElement.style.setProperty("--rows", state.settings.rows);
-
+    function renderNameAndEngine() {
         const name = state.settings.name || "there";
         document.getElementById("greetName").textContent = name;
 
         document.getElementById("engineSelect").value = state.settings.engine;
+    }
+
+    // Main render function
+    function render() {
+        document.documentElement.style.setProperty("--cols", state.settings.cols);
+        document.documentElement.style.setProperty("--rows", state.settings.rows);
+        
+        renderNameAndEngine();
 
         const total = getTotalPages();
         if (currentPage >= total) currentPage = total - 1;
@@ -348,12 +404,12 @@
         delBtn.className = "del";
         delBtn.textContent = "✕";
         delBtn.title = "Delete";
-        delBtn.addEventListener("click", function (e) {
+        delBtn.addEventListener("click", async function (e) {
             e.stopPropagation();
-            if (confirm(`Delete "${site.name}"?`)) {
+            if (await showConfirm(`Delete "${site.name}"?`, "Delete Site")) {
                 state.sites = state.sites.filter(s => s.id !== site.id);
                 saveState();
-                render();
+                renderWithTransition();
             }
         });
 
@@ -558,8 +614,7 @@
         iconPreview.style.display = "none";
     });
 
-    // Save site (add or edit)
-    document.getElementById("modalSave").addEventListener("click", function () {
+    function saveSite() {
         const name = document.getElementById("siteName").value.trim();
         let url = document.getElementById("siteUrl").value.trim();
         if (!name || !url) return;
@@ -587,6 +642,25 @@
         saveState();
         closeModal();
         renderWithTransition();
+    }
+
+    // Save button
+    document.getElementById("modalSave").addEventListener("click", saveSite);
+
+    // Enter Site Name
+    document.getElementById("siteName").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            saveSite();
+        }
+    });
+
+    // Enter Site Url
+    document.getElementById("siteUrl").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            saveSite();
+        }
     });
 
     // =============================================
@@ -605,14 +679,19 @@
         panel.classList.remove("open");
     });
 
-    function applySetting(field, value) {
+    function applySetting(field, value, name = false) {
         state.settings[field] = value;
         saveState();
+
+        if(name) {
+            renderNameAndEngine();
+            return;
+        }
         renderWithTransition();
     }
 
     document.getElementById("displayName").addEventListener("input", function (e) {
-        applySetting("name", e.target.value);
+        applySetting("name", e.target.value, true);
     });
 
     document.getElementById("rowsInput").addEventListener("change", function (e) {
@@ -739,7 +818,7 @@
     });
 
     document.getElementById("resetBtn").addEventListener("click", async function () {
-        if (confirm("This removes all your sites and settings. Continue?")) {
+        if (await showConfirm("This removes all your sites and settings. Continue?", "Reset Everything")) {
             try {
                 await deleteBackgroundBlob();
             } catch (_) { /* ignore */ }
@@ -829,6 +908,8 @@
     let scrollTimeout = false;
 
     gridWrap.addEventListener('wheel', function (e) {
+        e.preventDefault();
+
         const total = getTotalPages();
         if (total <= 1) return;
         if (scrollTimeout) return;
@@ -871,5 +952,4 @@ function getLocalStorageSize() {
     }
   }
   console.log(`Total localStorage size: ${(total / 1024).toFixed(2)} KB`);
-  return total;
 }

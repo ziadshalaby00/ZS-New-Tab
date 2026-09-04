@@ -13,6 +13,8 @@
     --accent-dim: #e8a33d55;
     --cyan: #5fd3c4;
     --danger: #e2685f;
+    --danger-strong: #d92d20;
+    --danger-strong-hover: #b8241a;
     --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
     --cols: 6;
@@ -37,7 +39,7 @@ body {
         radial-gradient(1200px 600px at 50% -10%, #1c2430 0%, transparent 60%),
         var(--bg-0);
     background-attachment: fixed;
-    overflow: hidden;
+    overflow:auto;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -230,7 +232,7 @@ form.search button svg {
     display: flex;
     align-items: center;
     gap: 6px;
-    width: 100%;
+    width: fit-content;
     justify-content: center;
 }
 
@@ -750,4 +752,16 @@ form.search button svg {
         width: 46px;
         height: 46px;
     }
+}
+
+.modal .actions .save.danger-fill {
+    background: var(--danger-strong);
+    border-color: var(--danger-strong);
+    color: #fff;
+}
+
+.modal .actions .save.danger-fill:hover {
+    background: var(--danger-strong-hover);
+    border-color: var(--danger-strong-hover);
+    filter: none;
 }
