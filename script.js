@@ -368,6 +368,13 @@
             window.location.href = site.url;
         });
 
+        tile.addEventListener("auxclick", function (e) {
+            if (e.button === 1) {
+                e.preventDefault();
+                window.open(site.url, "_blank");
+            }
+        });
+
         tile.addEventListener("dragstart", function () {
             dragSourceId = site.id;
             tile.classList.add("dragging");
