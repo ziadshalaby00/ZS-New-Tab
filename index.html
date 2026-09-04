@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>New Tab</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Load Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ==================== TOP BAR ==================== -->
+    <!-- Contains the settings toggle button -->
+    <div class="top-bar">
+        <button class="icon-btn" id="settingsToggle" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- ==================== MAIN APP ==================== -->
+    <div class="app">
+
+        <!-- Greeting & time section -->
+        <div class="hero">
+            <div class="greeting" id="greeting">Hi, <span class="name" id="greetName">there</span></div>
+        </div>
+
+        <!-- Search form -->
+        <form class="search" id="searchForm" autocomplete="off">
+            <select id="engineSelect">
+                <option value="https://www.google.com/search?q=">Google</option>
+                <option value="https://duckduckgo.com/?q=">DuckDuckGo</option>
+                <option value="https://search.brave.com/search?q=">Brave</option>
+                <option value="https://www.bing.com/search?q=">Bing</option>
+            </select>
+            <input id="searchInput" type="text" placeholder="Search or type a URL" autofocus>
+            <button type="submit" title="Search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <circle cx="11" cy="11" r="7"/>
+                    <path d="m21 21-4.3-4.3"/>
+                </svg>
+            </button>
+        </form>
+
+        <!-- Site grid with navigation buttons -->
+        <div class="grid-wrap">
+            <button class="page-nav" id="prevPage" title="Previous page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m15 18-6-6 6-6"/>
+                </svg>
+            </button>
+            <div class="grid" id="grid"></div>
+            <button class="page-nav" id="nextPage" title="Next page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m9 18 6-6-6-6"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Pagination dots -->
+        <div class="dots" id="dots"></div>
+    </div>
+
+    <!-- ==================== SETTINGS PANEL (SLIDE-OUT) ==================== -->
+    <aside class="panel" id="panel">
+        <button class="panel-close" id="panelClose" title="Close settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6 6 18"/>
+                <path d="m6 6 12 12"/>
+            </svg>
+        </button>
+
+        <h2>Settings</h2>
+
+        <!-- Display name -->
+        <div class="field">
+            <label>Your name</label>
+            <input type="text" id="displayName" placeholder="User">
+        </div>
+
+        <!-- Rows and columns -->
+        <div class="row2">
+            <div class="field">
+                <label>Rows per page</label>
+                <input type="number" id="rowsInput" min="1" max="8">
+            </div>
+            <div class="field">
+                <label>Columns per page</label>
+                <input type="number" id="colsInput" min="2" max="10">
+            </div>
+        </div>
+
+        <!-- Background image upload -->
+        <div class="field">
+            <label>Background image</label>
+            <input type="file" id="bgImageInput" accept="image/*">
+        </div>
+        <div class="hint">
+            Choose an image from your device. Leave empty to use the default dark background.
+        </div>
+        <button class="btn danger" id="removeBgBtn">
+            Remove background
+        </button>
+
+        <hr>
+
+        <!-- Export / Import -->
+        <button class="btn" id="exportBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <path d="M7 10l5 5 5-5"/>
+                <path d="M12 15V3"/>
+            </svg>
+            Export backup (.json)
+        </button>
+        <button class="btn" id="importBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <path d="M17 8l-5-5-5 5"/>
+                <path d="M12 3v12"/>
+            </svg>
+            Import backup
+        </button>
+        <input type="file" id="importFile" accept="application/json" hidden>
+
+        <hr>
+
+        <!-- Reset -->
+        <button class="btn danger" id="resetBtn">Reset everything</button>
+    </aside>
+
+    <!-- ==================== MODAL OVERLAY (ADD / EDIT SITE) ==================== -->
+    <div class="overlay" id="overlay">
+        <div class="modal">
+            <h2 id="modalTitle">Add site</h2>
+
+            <!-- Site name -->
+            <div class="field">
+                <label>Name</label>
+                <input type="text" id="siteName" placeholder="GitHub">
+            </div>
+
+            <!-- Site URL -->
+            <div class="field">
+                <label>URL</label>
+                <input type="text" id="siteUrl" placeholder="https://github.com">
+            </div>
+
+            <!-- Custom icon upload (with preview) -->
+            <div class="field">
+                <label>Custom icon (optional)</label>
+                <input type="file" id="siteIcon" accept="image/*">
+                <div id="iconPreview" style="margin-top: 6px; display: none; align-items: center; gap: 8px;">
+                    <img id="iconPreviewImg" style="width:40px; height:40px; border-radius:50%; object-fit:cover; background:var(--surface-2);">
+                    <button type="button" id="removeIconBtn" style="background:transparent; border:1px solid var(--border); color:var(--text-dim); border-radius:50%; width:24px; height:24px; cursor:pointer; font-size:12px;">✕</button>
+                </div>
+            </div>
+
+            <!-- Modal actions -->
+            <div class="actions">
+                <button class="cancel" id="modalCancel">Cancel</button>
+                <button class="save" id="modalSave">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT ==================== -->
+    <script src="script.js"></script>
+</body>
+</html>

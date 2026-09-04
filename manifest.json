@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "ZS New Tab",
+  "short_name": "New Tab",
+  "version": "1.0.0",
+  "description": "A custom new tab page with a bookmark grid, quick search, and a settings panel for background image, layout, and backups.",
+  "author": "Ziad Shalaby",
+  "minimum_chrome_version": "88",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "icons": {
+    "16": "./icons/favicon-16x16.png",
+    "48": "./icons/favicon-32x32.png",
+    "128": "./icons/android-chrome-192x192.png"
+  },
+  "incognito": "split"
+}
