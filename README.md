@@ -70,4 +70,6 @@ Use **Export backup (.json)** in the settings panel to save your full setup, and
 
 ## License
 
+Developed entirely by [Ziad Shalaby](https://github.com/ziadshalaby00).
+
 MIT — do whatever you'd like with it.
