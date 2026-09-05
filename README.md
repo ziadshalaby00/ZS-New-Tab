@@ -36,7 +36,7 @@ A minimal, fast, and fully offline **New Tab** replacement for Chrome — a pers
 
 ### Enable in Incognito (optional)
 
-Go to `chrome://extensions`, find **ZS Custom New Tab**, click **Details**, and toggle **Allow in incognito**.
+Go to `chrome://extensions`, find **ZS New Tab**, click **Details**, and toggle **Allow in incognito**.
 
 ## Project structure
 
