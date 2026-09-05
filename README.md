@@ -62,7 +62,7 @@ Go to `chrome://extensions`, find **ZS New Tab**, click **Details**, and toggle 
 
 - Vanilla HTML, CSS, and JavaScript — no build step, no dependencies
 - `localStorage` for app state (sites and settings)
-- `IndexedDB` for storing the background image blob
+- `IndexedDB` storing background images and custom site icons
 - Google Fonts (Inter, JetBrains Mono) loaded via CDN
 
 ## Customization

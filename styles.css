@@ -9,14 +9,18 @@
     --border: #2b3442;
     --text: #e7eaf0;
     --text-dim: #8892a0;
+    
     --accent: #e8a33d;
     --accent-dim: #e8a33d55;
     --cyan: #5fd3c4;
+    
     --danger: #e2685f;
     --danger-strong: #d92d20;
     --danger-strong-hover: #b8241a;
+    
     --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    
     --cols: 6;
     --rows: 4;
     --radius: 16px;
@@ -25,6 +29,9 @@
 /* ============================================
    2. BASE RESET & BODY STYLES
    ============================================ */
+/* 
+   Added it back to ensure box-sizing applies to all elements.
+*/
 * {
     box-sizing: border-box;
 }
@@ -35,11 +42,11 @@ body {
     height: 100%;
     font-family: var(--font-ui);
     color: var(--text);
-    background:
-        radial-gradient(1200px 600px at 50% -10%, #1c2430 0%, transparent 60%),
+    background: 
+        radial-gradient(1200px 600px at 50% -10%, #1c2430 0%, transparent 60%), 
         var(--bg-0);
     background-attachment: fixed;
-    overflow:auto;
+    overflow: auto;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -61,6 +68,10 @@ a {
 /* ============================================
    3. BACKGROUND IMAGE OVERLAY
    ============================================ */
+/* 
+   When a custom background is set, we ensure it covers the screen 
+   and add a dark overlay (::before) so the UI elements remain readable.
+*/
 body.has-bg-image {
     background-size: cover;
     background-position: center;
@@ -72,7 +83,7 @@ body.has-bg-image::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: rgba(10, 13, 17, .30);
+    background: rgba(10, 13, 17, 0.30);
     z-index: 0;
     pointer-events: none;
 }
@@ -118,7 +129,7 @@ body.has-bg-image .app {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: .15s;
+    transition: 0.15s;
 }
 
 .icon-btn:hover {
@@ -163,7 +174,7 @@ form.search {
     border-radius: 999px;
     padding: 6px 8px 6px 18px;
     margin-bottom: 46px;
-    transition: border-color .15s, box-shadow .15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 form.search:focus-within {
@@ -212,7 +223,7 @@ form.search button {
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: .15s;
+    transition: 0.15s;
 }
 
 form.search button:hover {
@@ -256,11 +267,12 @@ form.search button svg {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: .15s;
+    transition: 0.15s;
     opacity: 0;
     pointer-events: none;
 }
 
+/* Show navigation arrows only when hovering over the grid area */
 .grid-wrap:hover .page-nav.active {
     opacity: 1;
     pointer-events: auto;
@@ -300,7 +312,7 @@ form.search button svg {
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    transition: box-shadow .15s, transform .15s;
+    transition: box-shadow 0.15s, transform 0.15s;
 }
 
 .tile:hover .icon {
@@ -385,10 +397,13 @@ form.search button svg {
 
 /* Drag & Drop state */
 .tile[draggable="true"].dragging {
-    opacity: .35;
+    opacity: 0.35;
 }
 
-/* Empty tile placeholders (invisible) */
+/* 
+   Empty tile placeholders: 
+   Invisible tiles used to maintain the grid layout when the page isn't full.
+*/
 .tile.empty {
     pointer-events: none;
     cursor: default;
@@ -422,7 +437,7 @@ form.search button svg {
     border-radius: 50%;
     background: var(--border);
     cursor: pointer;
-    transition: .15s;
+    transition: 0.15s;
 }
 
 .dot.active {
@@ -447,7 +462,7 @@ form.search button svg {
     z-index: 30;
     overflow-y: auto;
     transform: translateX(100%);
-    transition: transform .22s ease;
+    transition: transform 0.22s ease;
 }
 
 .panel.open {
@@ -511,7 +526,7 @@ form.search button svg {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    transition: .15s;
+    transition: 0.15s;
 }
 
 .panel .btn:hover {
@@ -566,7 +581,7 @@ form.search button svg {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: .15s;
+    transition: 0.15s;
 }
 
 .panel-close:hover {
@@ -731,7 +746,7 @@ form.search button svg {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: .15s;
+    transition: 0.15s;
 }
 
 #removeIconBtn:hover {

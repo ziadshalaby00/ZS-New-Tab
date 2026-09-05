@@ -1,20 +1,19 @@
 /**
- * ----------------------------------------------
- *  ZS New Tab – Full Application (with IndexedDB for backgrounds)
- * ----------------------------------------------
+ * ZS New Tab – Full Application
+ * Uses localStorage for settings/state and IndexedDB for large assets (backgrounds/icons).
  */
 (function () {
     "use strict";
 
     // =============================================
-    //  1.  CONSTANTS
+    //  1. CONSTANTS
     // =============================================
     const STORE_KEY = "ZSNewTab.v1";
     const DB_NAME = "NewTabDB";
     const STORE_NAME = "background";
 
     // =============================================
-    //  2.  DEFAULT STATE
+    //  2. DEFAULT STATE
     // =============================================
     const defaultState = {
         settings: {
@@ -55,16 +54,19 @@
     };
 
     // =============================================
-    //  3.  LOCAL STORAGE HELPERS
+    //  3. LOCAL STORAGE HELPERS
     // =============================================
     function loadState() {
         try {
             const raw = localStorage.getItem(STORE_KEY);
             if (!raw) return JSON.parse(JSON.stringify(defaultState));
+            
             const parsed = JSON.parse(raw);
+            // Ensure required properties exist to prevent crashes on old states
             if (!parsed.settings) parsed.settings = defaultState.settings;
             if (!parsed.sites) parsed.sites = [];
             if (typeof parsed.settings.bg !== "boolean") parsed.settings.bg = false;
+            
             return parsed;
         } catch (_) {
             return JSON.parse(JSON.stringify(defaultState));
@@ -72,15 +74,14 @@
     }
 
     // =============================================
-    //  4.  GLOBAL VARIABLES
+    //  4. GLOBAL VARIABLES
     // =============================================
-
     let state = loadState();
     let currentPage = 0;
     let editingId = null;
     let dragSourceId = null;
     let isTransitioning = false;
-    let tempIconData = null; // temporary Data URL for uploaded icon
+    let tempIconData = null; // Temporary Data URL for uploaded icon in the modal
 
     function saveState() {
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
@@ -91,11 +92,14 @@
     }
 
     // =============================================
-    //  5.  INDEXEDDB HELPERS (background images)
+    //  5. INDEXEDDB HELPERS (backgrounds + icons)
+    //  Note: We use IndexedDB because localStorage has a ~5MB limit, 
+    //  which is easily exceeded by base64 images.
     // =============================================
     function openDB() {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, 1);
+            const request = indexedDB.open(DB_NAME, 2);
+            
             request.onupgradeneeded = function (e) {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -111,42 +115,92 @@
         });
     }
 
-    async function saveBackgroundBlob(blob) {
+    async function saveImageBlob(key, blob) {
         const db = await openDB();
         return new Promise((resolve, reject) => {
             const tx = db.transaction(STORE_NAME, "readwrite");
             const store = tx.objectStore(STORE_NAME);
-            const request = store.put(blob, "bg");
-            request.onsuccess = () => resolve();
+            const request = store.put(blob, key);
+            
             request.onerror = () => reject(request.error);
-            tx.oncomplete = () => db.close();
+            tx.oncomplete = () => {
+                db.close();
+                resolve();
+            };
+            tx.onerror = () => {
+                db.close();
+                reject(tx.error);
+            };
         });
     }
 
-    async function loadBackgroundBlob() {
+    async function loadImageBlob(key) {
         const db = await openDB();
         return new Promise((resolve, reject) => {
             const tx = db.transaction(STORE_NAME, "readonly");
             const store = tx.objectStore(STORE_NAME);
-            const request = store.get("bg");
+            const request = store.get(key);
+            
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
             tx.oncomplete = () => db.close();
+            tx.onerror = () => {
+                db.close();
+                reject(tx.error);
+            };
         });
     }
 
-    async function deleteBackgroundBlob() {
+    async function deleteImageBlob(key) {
         const db = await openDB();
         return new Promise((resolve, reject) => {
             const tx = db.transaction(STORE_NAME, "readwrite");
             const store = tx.objectStore(STORE_NAME);
-            const request = store.delete("bg");
-            request.onsuccess = () => resolve();
+            const request = store.delete(key);
+            
             request.onerror = () => reject(request.error);
-            tx.oncomplete = () => db.close();
+            tx.oncomplete = () => {
+                db.close();
+                resolve();
+            };
+            tx.onerror = () => {
+                db.close();
+                reject(tx.error);
+            };
         });
     }
 
+    // --- Background helpers ---
+    async function saveBackgroundBlob(blob) {
+        return saveImageBlob("bg", blob);
+    }
+
+    async function loadBackgroundBlob() {
+        return loadImageBlob("bg");
+    }
+
+    async function deleteBackgroundBlob() {
+        return deleteImageBlob("bg");
+    }
+
+    // --- Site icon helpers ---
+    function getIconKey(siteId) {
+        return `icon_${siteId}`;
+    }
+
+    async function saveSiteIcon(siteId, blob) {
+        return saveImageBlob(getIconKey(siteId), blob);
+    }
+
+    async function loadSiteIcon(siteId) {
+        return loadImageBlob(getIconKey(siteId));
+    }
+
+    async function deleteSiteIcon(siteId) {
+        return deleteImageBlob(getIconKey(siteId));
+    }
+
+    // --- Conversion helpers for Export/Import ---
     function blobToDataURL(blob) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -162,6 +216,7 @@
         const byteString = atob(parts[1]);
         const ab = new ArrayBuffer(byteString.length);
         const ia = new Uint8Array(ab);
+        
         for (let i = 0; i < byteString.length; i++) {
             ia[i] = byteString.charCodeAt(i);
         }
@@ -169,10 +224,11 @@
     }
 
     // =============================================
-    //  6.  BACKGROUND IMAGE MANAGEMENT
+    //  6. BACKGROUND IMAGE MANAGEMENT
     // =============================================
     async function applyBackground() {
         const bgExists = state.settings.bg === true;
+        
         if (bgExists) {
             try {
                 const blob = await loadBackgroundBlob();
@@ -180,9 +236,12 @@
                     const url = URL.createObjectURL(blob);
                     document.body.classList.add("has-bg-image");
                     document.body.style.backgroundImage = `url('${url}')`;
+                    
+                    // Revoke previous object URL to prevent memory leaks
                     if (window._bgUrl) URL.revokeObjectURL(window._bgUrl);
                     window._bgUrl = url;
                 } else {
+                    // Fallback if blob is missing but flag is true
                     state.settings.bg = false;
                     saveState();
                     document.body.classList.remove("has-bg-image");
@@ -204,7 +263,7 @@
     }
 
     // =============================================
-    //  7.  UTILITY FUNCTIONS
+    //  7. UTILITY FUNCTIONS
     // =============================================
     function getHostname(url) {
         try {
@@ -225,16 +284,9 @@
 
     function getColorForName(name) {
         const palette = [
-            "#e8a33d", 
-            "#5fd3c4", 
-            "#6f9be0", 
-            "#c77dd1", 
-            "#e2685f", 
-            "#7fbf7f", 
-            "#d4a24d", 
-            "#8a8fe0"
+            "#e8a33d", "#5fd3c4", "#6f9be0", "#c77dd1", 
+            "#e2685f", "#7fbf7f", "#d4a24d", "#8a8fe0"
         ];
-
         let sum = 0;
         for (let i = 0; i < name.length; i++) {
             sum += name.charCodeAt(i);
@@ -246,19 +298,18 @@
         return new Promise((resolve) => {
             const overlay = document.createElement("div");
             overlay.className = "overlay open";
-
+            
             const modal = document.createElement("div");
             modal.className = "modal";
-
             modal.innerHTML = `
-            <h2>${title}</h2>
-            <p class="hint" style="margin-bottom:18px; font-size:13px; color:var(--text);">${message}</p>
-            <div class="actions">
-                <button class="cancel">Cancel</button>
-                <button class="save danger-fill">Confirm</button>
-            </div>
+                <h2>${title}</h2>
+                <p class="hint" style="margin-bottom:18px; font-size:13px; color:var(--text);">${message}</p>
+                <div class="actions">
+                    <button class="cancel">Cancel</button>
+                    <button class="save danger-fill">Confirm</button>
+                </div>
             `;
-
+            
             overlay.appendChild(modal);
             document.body.appendChild(overlay);
 
@@ -269,7 +320,7 @@
 
             modal.querySelector(".cancel").addEventListener("click", () => cleanup(false));
             modal.querySelector(".save").addEventListener("click", () => cleanup(true));
-
+            
             overlay.addEventListener("click", (e) => {
                 if (e.target === overlay) cleanup(false);
             });
@@ -285,20 +336,20 @@
     }
 
     // =============================================
-    //  8.  PAGINATION HELPERS
+    //  8. PAGINATION HELPERS
     // =============================================
     function getPageSize() {
         return state.settings.rows * state.settings.cols;
     }
 
     function getTotalPages() {
+        // We add 1 to sites.length to account for the "Add site" tile
         return Math.max(1, Math.ceil((state.sites.length + 1) / getPageSize()));
     }
 
     // =============================================
-    //  9.  RENDERING FUNCTIONS
+    //  9. RENDERING FUNCTIONS
     // =============================================
-
     function renderName() {
         const name = state.settings.name || "there";
         document.getElementById("greetName").textContent = name;
@@ -323,22 +374,27 @@
         const grid = document.getElementById("grid");
         grid.innerHTML = "";
 
+        // Render site tiles
         pageSites.forEach(site => {
             grid.appendChild(buildTile(site));
         });
 
+        // Render "Add site" tile if there's space
         if (pageSites.length < getPageSize()) {
             grid.appendChild(buildAddTile());
         }
 
+        // Fill remaining empty space with invisible tiles to maintain grid layout
         const totalCells = pageSize;
-        const filled = pageSites.length + 1;
+        const filled = pageSites.length + 1; // +1 for the "Add site" tile
         for (let i = filled; i < totalCells; i++) {
             grid.appendChild(buildEmptyTile());
         }
 
+        // Render pagination dots
         const dotsContainer = document.getElementById("dots");
         dotsContainer.innerHTML = "";
+        
         if (total > 1) {
             for (let i = 0; i < total; i++) {
                 const dot = document.createElement("div");
@@ -353,29 +409,45 @@
             }
         }
 
+        // Update prev/next buttons state
         document.getElementById("prevPage").classList.toggle("active", currentPage > 0);
         document.getElementById("nextPage").classList.toggle("active", currentPage < total - 1);
     }
 
-    // Build a tile for a site
+    // Build a tile for a specific site
     function buildTile(site) {
         const tile = document.createElement("div");
         tile.className = "tile";
         tile.draggable = true;
         tile.dataset.id = site.id;
 
+        // Icon container
         const icon = document.createElement("div");
         icon.className = "icon";
         icon.style.background = getColorForName(site.name);
 
         const img = document.createElement("img");
-        if (site.iconData) {
-            img.src = site.iconData;
+        
+        // Check if site has a custom icon stored in IndexedDB
+        if (site.iconData === true) {
+            loadSiteIcon(site.id)
+                .then(blob => {
+                    if (!blob) throw new Error("Icon not found");
+                    const url = URL.createObjectURL(blob);
+                    img.src = url;
+                    img.onload = () => URL.revokeObjectURL(url);
+                })
+                .catch(() => {
+                    // Fallback to favicon if custom icon fails to load
+                    img.src = getFaviconUrl(site.url);
+                });
         } else {
             img.src = getFaviconUrl(site.url);
         }
+        
         img.alt = "";
         img.onerror = function () {
+            // Fallback to first letter if favicon fails
             icon.innerHTML = "";
             const span = document.createElement("span");
             span.className = "letter";
@@ -384,10 +456,12 @@
         };
         icon.appendChild(img);
 
+        // Label
         const label = document.createElement("div");
         label.className = "label";
         label.textContent = site.name;
 
+        // Action buttons (Edit / Delete)
         const actions = document.createElement("div");
         actions.className = "tile-actions";
 
@@ -406,6 +480,11 @@
         delBtn.addEventListener("click", async function (e) {
             e.stopPropagation();
             if (await showConfirm(`Delete "${site.name}"?`, "Delete Site")) {
+                try {
+                    await deleteSiteIcon(site.id);
+                } catch (err) {
+                    console.warn(`Failed to delete icon for site ${site.id}`, err);
+                }
                 state.sites = state.sites.filter(s => s.id !== site.id);
                 saveState();
                 renderWithTransition();
@@ -415,41 +494,50 @@
         actions.appendChild(editBtn);
         actions.appendChild(delBtn);
 
+        // Assemble tile
         tile.appendChild(icon);
         tile.appendChild(label);
         tile.appendChild(actions);
 
+        // Event Listeners
         tile.addEventListener("click", function () {
             window.location.href = site.url;
         });
 
         tile.addEventListener("auxclick", function (e) {
+            // Open in new tab on middle mouse click
             if (e.button === 1) {
                 e.preventDefault();
                 window.open(site.url, "_blank");
             }
         });
 
+        // Drag and Drop logic
         tile.addEventListener("dragstart", function () {
             dragSourceId = site.id;
             tile.classList.add("dragging");
         });
+
         tile.addEventListener("dragend", function () {
             tile.classList.remove("dragging");
         });
+
         tile.addEventListener("dragover", function (e) {
             e.preventDefault();
         });
+
         tile.addEventListener("drop", function (e) {
             e.preventDefault();
             if (!dragSourceId || dragSourceId === site.id) return;
-
+            
             const fromIndex = state.sites.findIndex(s => s.id === dragSourceId);
             const toIndex = state.sites.findIndex(s => s.id === site.id);
+            
             if (fromIndex === -1 || toIndex === -1) return;
-
+            
             const moved = state.sites.splice(fromIndex, 1)[0];
             state.sites.splice(toIndex, 0, moved);
+            
             saveState();
             render();
         });
@@ -461,31 +549,31 @@
     function buildAddTile() {
         const tile = document.createElement("div");
         tile.className = "tile add";
-
+        
         const icon = document.createElement("div");
         icon.className = "icon";
         icon.textContent = "+";
-
+        
         const label = document.createElement("div");
         label.className = "label";
         label.textContent = "Add site";
-
+        
         tile.appendChild(icon);
         tile.appendChild(label);
-
+        
         tile.addEventListener("click", function () {
             openModal(null);
         });
-
+        
         return tile;
     }
 
-    // Build an empty (invisible) tile to fill the grid
+    // Build an empty (invisible) tile to fill the grid and maintain layout
     function buildEmptyTile() {
         const tile = document.createElement("div");
         tile.className = "tile empty";
         tile.draggable = false;
-
+        
         const icon = document.createElement("div");
         icon.className = "icon";
         icon.style.cssText = `
@@ -496,28 +584,28 @@
             transform: none !important;
             pointer-events: none;
         `;
-
+        
         const label = document.createElement("div");
         label.className = "label";
         label.textContent = "";
         label.style.opacity = "0";
-
+        
         tile.appendChild(icon);
         tile.appendChild(label);
-
+        
         tile.style.cssText = `
             cursor: default;
             pointer-events: none;
             opacity: 0;
         `;
-
+        
         return tile;
     }
 
-    // Render with a fade transition
+    // Render with a fade transition to make UI changes smoother
     function renderWithTransition(force = false) {
         const grid = document.getElementById('grid');
-
+        
         if (force) {
             render();
             grid.style.transition = 'none';
@@ -525,13 +613,13 @@
             isTransitioning = false;
             return;
         }
-
+        
         if (isTransitioning) return;
-
+        
         grid.style.transition = 'opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1)';
         grid.style.opacity = '0';
         isTransitioning = true;
-
+        
         setTimeout(() => {
             render();
             requestAnimationFrame(() => {
@@ -544,7 +632,7 @@
     }
 
     // =============================================
-    //  10.  MODAL (ADD / EDIT SITE)
+    //  10. MODAL (ADD / EDIT SITE)
     // =============================================
     const overlay = document.getElementById("overlay");
     const siteIconInput = document.getElementById("siteIcon");
@@ -557,17 +645,23 @@
         document.getElementById("modalTitle").textContent = site ? "Edit site" : "Add site";
         document.getElementById("siteName").value = site ? site.name : "";
         document.getElementById("siteUrl").value = site ? site.url : "";
-
+        
         tempIconData = null;
         siteIconInput.value = "";
         iconPreview.style.display = "none";
-
-        if (site && site.iconData) {
-            tempIconData = site.iconData;
-            iconPreviewImg.src = site.iconData;
+        
+        if (site && site.iconData === true) {
+            tempIconData = true;
             iconPreview.style.display = "flex";
+            loadSiteIcon(site.id).then(blob => {
+                if (blob) {
+                    const url = URL.createObjectURL(blob);
+                    iconPreviewImg.src = url;
+                    iconPreviewImg.onload = () => URL.revokeObjectURL(url);
+                }
+            }).catch(() => { iconPreview.style.display = "none"; });
         }
-
+        
         overlay.classList.add("open");
         setTimeout(() => document.getElementById("siteName").focus(), 50);
     }
@@ -580,6 +674,7 @@
     }
 
     document.getElementById("modalCancel").addEventListener("click", closeModal);
+    
     overlay.addEventListener("click", function (e) {
         if (e.target === overlay) closeModal();
     });
@@ -588,11 +683,13 @@
     siteIconInput.addEventListener("change", function (e) {
         const file = e.target.files[0];
         if (!file) return;
+        
         if (!file.type.startsWith("image/")) {
             alert("Please select an image file.");
             siteIconInput.value = "";
             return;
         }
+        
         const reader = new FileReader();
         reader.onload = function (ev) {
             tempIconData = ev.target.result;
@@ -613,40 +710,63 @@
         iconPreview.style.display = "none";
     });
 
-    function saveSite() {
+    async function saveSite() {
         const name = document.getElementById("siteName").value.trim();
         let url = document.getElementById("siteUrl").value.trim();
+        
         if (!name || !url) return;
-        if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+        
+        // Ensure URL has a protocol
+        if (!/^https?:\/\//i.test(url)) {
+            url = "https://" + url;
+        }
+        
+        try {
+            if (editingId) {
+                // Update existing site
+                const existing = state.sites.find(s => s.id === editingId);
+                if (existing) {
+                    existing.name = name;
+                    existing.url = url;
 
-        if (editingId) {
-            const existing = state.sites.find(s => s.id === editingId);
-            if (existing) {
-                existing.name = name;
-                existing.url = url;
+                    if (typeof tempIconData === "string" && tempIconData.startsWith("data:")) {
+                        const blob = dataURLToBlob(tempIconData);
+                        await saveSiteIcon(existing.id, blob);
+                        existing.iconData = true;
+                    } else if (tempIconData === null) {
+                        if (existing.iconData) await deleteSiteIcon(existing.id);
+                        delete existing.iconData;
+                    }
+                }
+            } else {
+                // Create new site
+                const newSite = {
+                    id: generateId(),
+                    name,
+                    url
+                };
+                state.sites.push(newSite);
+                
                 if (tempIconData) {
-                    existing.iconData = tempIconData;
-                } else {
-                    delete existing.iconData;
+                    const blob = dataURLToBlob(tempIconData);
+                    await saveSiteIcon(newSite.id, blob);
+                    newSite.iconData = true;
                 }
             }
-        } else {
-            const newSite = { id: generateId(), name, url };
-            if (tempIconData) {
-                newSite.iconData = tempIconData;
-            }
-            state.sites.push(newSite);
+            
+            saveState();
+            closeModal();
+            renderWithTransition();
+        } catch (err) {
+            console.error("Failed to save site:", err);
+            alert("Could not save site icon.");
         }
-
-        saveState();
-        closeModal();
-        renderWithTransition();
     }
 
     // Save button
     document.getElementById("modalSave").addEventListener("click", saveSite);
 
-    // Enter Site Name
+    // Enter key triggers save
     document.getElementById("siteName").addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -654,7 +774,6 @@
         }
     });
 
-    // Enter Site Url
     document.getElementById("siteUrl").addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -678,11 +797,11 @@
         panel.classList.remove("open");
     });
 
-    function applySetting(field, value, name = false) {
+    function applySetting(field, value, isName = false) {
         state.settings[field] = value;
         saveState();
-
-        if(name) {
+        
+        if (isName) {
             renderName();
             return;
         }
@@ -700,7 +819,7 @@
     });
 
     document.getElementById("colsInput").addEventListener("change", function (e) {
-        let val = Math.max(2, Math.min(10, parseInt(e.target.value, 10) || 6));
+        let val = Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 6));
         e.target.value = val;
         applySetting("cols", val);
     });
@@ -709,13 +828,13 @@
     document.getElementById("bgImageInput").addEventListener("change", async function (e) {
         const file = e.target.files[0];
         if (!file) return;
-
+        
         if (!file.type.startsWith("image/")) {
             alert("Please choose an image file.");
             e.target.value = "";
             return;
         }
-
+        
         try {
             await saveBackgroundBlob(file);
             state.settings.bg = true;
@@ -751,30 +870,63 @@
     // =============================================
     //  12. EXPORT / IMPORT / RESET
     // =============================================
+    
+    // Export backup (converts IndexedDB blobs to DataURLs for JSON serialization)
     document.getElementById("exportBtn").addEventListener("click", async function () {
-        const exportData = JSON.parse(JSON.stringify(state));
-        if (state.settings.bg) {
-            try {
-                const blob = await loadBackgroundBlob();
-                if (blob) {
-                    const dataURL = await blobToDataURL(blob);
-                    exportData.settings.bg = dataURL;
-                } else {
+        try {
+            const exportData = JSON.parse(JSON.stringify(state));
+
+            // 1. Export background
+            if (state.settings.bg) {
+                try {
+                    const blob = await loadBackgroundBlob();
+                    if (blob) {
+                        exportData.settings.bg = await blobToDataURL(blob);
+                    } else {
+                        exportData.settings.bg = false;
+                    }
+                } catch (e) {
+                    console.warn("Could not read background for export", e);
                     exportData.settings.bg = false;
                 }
-            } catch (e) {
-                console.warn("Could not read background for export", e);
-                exportData.settings.bg = false;
             }
-        }
 
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `zs-new-tab-backup-${new Date().toISOString().slice(0, 10)}.json`;
-        a.click();
+            // 2. Export site icons
+            for (const site of exportData.sites) {
+                if (site.iconData !== true) continue;
+                
+                try {
+                    const blob = await loadSiteIcon(site.id);
+                    if (blob) {
+                        site.iconData = await blobToDataURL(blob);
+                    } else {
+                        delete site.iconData;
+                    }
+                } catch (e) {
+                    console.warn(`Could not read icon for site ${site.id}`, e);
+                    delete site.iconData;
+                }
+            }
+
+            // 3. Create and download backup file
+            const blob = new Blob(
+                [JSON.stringify(exportData, null, 2)],
+                { type: "application/json" }
+            );
+            const a = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            
+            a.href = url;
+            a.download = `zs-new-tab-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error("Failed to export backup:", err);
+            alert("Could not create backup.");
+        }
     });
 
+    // Import backup
     document.getElementById("importBtn").addEventListener("click", function () {
         document.getElementById("importFile").click();
     });
@@ -782,14 +934,17 @@
     document.getElementById("importFile").addEventListener("change", function (e) {
         const file = e.target.files[0];
         if (!file) return;
-
+        
         const reader = new FileReader();
         reader.onload = async function (ev) {
             try {
                 const parsed = JSON.parse(ev.target.result);
-                if (!parsed.sites || !parsed.settings) throw new Error("Invalid format");
+                if (!parsed.sites || !parsed.settings) {
+                    throw new Error("Invalid format");
+                }
 
-                let bgDataURL = parsed.settings.bg;
+                // 1. Import background
+                const bgDataURL = parsed.settings.bg;
                 if (bgDataURL && typeof bgDataURL === "string" && bgDataURL.startsWith("data:image")) {
                     try {
                         const blob = dataURLToBlob(bgDataURL);
@@ -803,13 +958,32 @@
                     parsed.settings.bg = !!parsed.settings.bg;
                 }
 
+                // 2. Import site icons
+                for (const site of parsed.sites) {
+                    // Backward compatibility: Older backups stored iconData as a DataURL string.
+                    // Newer backups store it as a boolean `true` and fetch from IndexedDB.
+                    if (typeof site.iconData === "string" && site.iconData.startsWith("data:image")) {
+                        try {
+                            const blob = dataURLToBlob(site.iconData);
+                            await saveSiteIcon(site.id, blob);
+                            // Replace Data URL string with boolean flag
+                            site.iconData = true;
+                        } catch (err) {
+                            console.warn(`Failed to import icon for site ${site.id}`, err);
+                            delete site.iconData;
+                        }
+                    }
+                }
+
+                // 3. Apply imported state
                 state = parsed;
                 saveState();
                 currentPage = 0;
                 renderWithTransition();
-                applyBackground();
+                await applyBackground();
                 panel.classList.remove("open");
-            } catch (_) {
+            } catch (err) {
+                console.error("Import failed:", err);
                 alert("This file doesn't look like a valid backup.");
             }
         };
@@ -817,11 +991,20 @@
         e.target.value = "";
     });
 
+    // Reset everything to default
     document.getElementById("resetBtn").addEventListener("click", async function () {
         if (await showConfirm("This removes all your sites and settings. Continue?", "Reset Everything")) {
             try {
                 await deleteBackgroundBlob();
-            } catch (_) { /* ignore */ }
+                for (const site of state.sites) {
+                    if (site.iconData === true) {
+                        await deleteSiteIcon(site.id);
+                    }
+                }
+            } catch (_) {
+                // Ignore cleanup errors
+            }
+            
             state = JSON.parse(JSON.stringify(defaultState));
             saveState();
             currentPage = 0;
@@ -835,11 +1018,17 @@
     //  13. NAVIGATION CONTROLS (prev / next / dots)
     // =============================================
     document.getElementById("prevPage").addEventListener("click", function () {
-        if (currentPage > 0) { currentPage--; renderWithTransition(); }
+        if (currentPage > 0) {
+            currentPage--;
+            renderWithTransition();
+        }
     });
 
     document.getElementById("nextPage").addEventListener("click", function () {
-        if (currentPage < getTotalPages() - 1) { currentPage++; renderWithTransition(); }
+        if (currentPage < getTotalPages() - 1) {
+            currentPage++;
+            renderWithTransition();
+        }
     });
 
     // =============================================
@@ -850,6 +1039,7 @@
         const query = document.getElementById("searchInput").value.trim();
         if (!query) return;
 
+        // Check if the query looks like a URL
         const looksLikeUrl = /^https?:\/\//i.test(query) ||
             (/^[\w-]+(\.[\w-]+)+(\/.*)?$/.test(query) && !query.includes(" "));
 
@@ -864,10 +1054,12 @@
     //  15. KEYBOARD SHORTCUTS
     // =============================================
     document.addEventListener("keydown", function (e) {
+        // Focus search input on '/'
         if (e.key === "/" && document.activeElement.tagName !== "INPUT") {
             e.preventDefault();
             document.getElementById("searchInput").focus();
         }
+        // Close modals/panels on 'Escape'
         if (e.key === "Escape") {
             closeModal();
             panel.classList.remove("open");
@@ -877,14 +1069,17 @@
     // =============================================
     //  16. GREETING
     // =============================================
+    const greetingTextNode = document.querySelector(".greeting").firstChild;
     function updateGreeting() {
         const now = new Date();
         const hour = now.getHours();
+        
         let greeting = hour < 5 ? "Good night" :
             hour < 12 ? "Good morning" :
             hour < 18 ? "Good afternoon" :
             "Good evening";
-        document.querySelector(".greeting").firstChild.textContent = `${greeting}, `;
+            
+        greetingTextNode.textContent = `${greeting}, `;
     }
 
     // =============================================
@@ -893,7 +1088,7 @@
     document.addEventListener('click', function (e) {
         const panelElem = document.getElementById('panel');
         const toggleBtn = document.getElementById('settingsToggle');
-
+        
         if (panelElem.classList.contains('open')) {
             const target = e.target;
             if (!panelElem.contains(target) && target !== toggleBtn && !toggleBtn.contains(target)) {
@@ -906,17 +1101,19 @@
     //  18. SCROLL NAVIGATION (wheel on grid)
     // =============================================
     const gridWrap = document.querySelector('.grid-wrap');
-    let scrollTimeout = false;
+    let scrollTimeout = false; // Debounce flag to prevent rapid page switching
 
     gridWrap.addEventListener('wheel', function (e) {
         e.preventDefault();
-
+        
         const total = getTotalPages();
         if (total <= 1) return;
         if (scrollTimeout) return;
-
+        
         const delta = e.deltaY;
+        
         if (delta > 20) {
+            // Scroll down -> Next page
             if (currentPage < total - 1) {
                 currentPage++;
                 renderWithTransition();
@@ -924,6 +1121,7 @@
                 setTimeout(() => { scrollTimeout = false; }, 250);
             }
         } else if (delta < -20) {
+            // Scroll up -> Previous page
             if (currentPage > 0) {
                 currentPage--;
                 renderWithTransition();
@@ -937,22 +1135,22 @@
     //  19. INITIALIZATION
     // =============================================
     updateGreeting();
-    setInterval(updateGreeting, 15000);
-
+    setInterval(updateGreeting, 15000); // Update greeting every 15 seconds
+    
     render();
     applyBackground();
 
 })();
 
 // =============================================
-// Get LocalStorage Size, Call From Console
+// GLOBAL UTILITY: Get LocalStorage Size (Call from Console)
 // =============================================
-
 function getLocalStorageSize() {
     let total = 0;
     for (let key in localStorage) {
         if (localStorage.hasOwnProperty(key)) {
-        total += (localStorage[key].length + key.length) * 2;
+            // Multiply by 2 because JS strings are UTF-16
+            total += (localStorage[key].length + key.length) * 2;
         }
     }
     console.log(`Total localStorage size: ${(total / 1024).toFixed(2)} KB`);

@@ -7,15 +7,17 @@
 
     <!-- Load Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <!-- Main stylesheet -->
+    <!-- Main Stylesheet -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <!-- ==================== TOP BAR ==================== -->
-    <!-- Contains the settings toggle button -->
+    <!-- ============================================
+         1. TOP BAR (SETTINGS & CONTROLS)
+         ============================================ -->
     <div class="top-bar">
         <button class="icon-btn" id="settingsToggle" title="Settings">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -25,15 +27,19 @@
         </button>
     </div>
 
-    <!-- ==================== MAIN APP ==================== -->
+    <!-- ============================================
+         2. MAIN APP CONTAINER
+         ============================================ -->
     <div class="app">
 
-        <!-- Greeting & time section -->
+        <!-- Greeting Section -->
         <div class="hero">
-            <div class="greeting" id="greeting">Hi, <span class="name" id="greetName">there</span></div>
+            <div class="greeting" id="greeting">
+                Hi, <span class="name" id="greetName">there</span>
+            </div>
         </div>
 
-        <!-- Search form -->
+        <!-- Search Form -->
         <form class="search" id="searchForm" autocomplete="off">
             <select id="engineSelect">
                 <option value="https://www.google.com/search?q=">Google</option>
@@ -50,14 +56,16 @@
             </button>
         </form>
 
-        <!-- Site grid with navigation buttons -->
+        <!-- Site Grid with Navigation Buttons -->
         <div class="grid-wrap">
             <button class="page-nav" id="prevPage" title="Previous page">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="m15 18-6-6 6-6"/>
                 </svg>
             </button>
+            
             <div class="grid" id="grid"></div>
+            
             <button class="page-nav" id="nextPage" title="Next page">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="m9 18 6-6-6-6"/>
@@ -65,11 +73,14 @@
             </button>
         </div>
 
-        <!-- Pagination dots -->
+        <!-- Pagination Dots -->
         <div class="dots" id="dots"></div>
+
     </div>
 
-    <!-- ==================== SETTINGS PANEL (SLIDE-OUT) ==================== -->
+    <!-- ============================================
+         3. SETTINGS PANEL (SLIDE-OUT)
+         ============================================ -->
     <aside class="panel" id="panel">
         <button class="panel-close" id="panelClose" title="Close settings">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -80,39 +91,37 @@
 
         <h2>Settings</h2>
 
-        <!-- Display name -->
+        <!-- Display Name -->
         <div class="field">
-            <label>Your name</label>
+            <label for="displayName">Your name</label>
             <input type="text" id="displayName" placeholder="User">
         </div>
 
-        <!-- Rows and columns -->
+        <!-- Grid Dimensions (Rows & Columns) -->
         <div class="row2">
             <div class="field">
-                <label>Rows per page</label>
-                <input type="number" id="rowsInput" min="1" max="8">
+                <label for="rowsInput">Rows per page</label>
+                <input type="number" id="rowsInput" min="1" max="20">
             </div>
             <div class="field">
-                <label>Columns per page</label>
-                <input type="number" id="colsInput" min="2" max="10">
+                <label for="colsInput">Columns per page</label>
+                <input type="number" id="colsInput" min="1" max="20">
             </div>
         </div>
 
-        <!-- Background image upload -->
+        <!-- Background Image Upload -->
         <div class="field">
-            <label>Background image</label>
+            <label for="bgImageInput">Background image</label>
             <input type="file" id="bgImageInput" accept="image/*">
         </div>
         <div class="hint">
             Choose an image from your device. Leave empty to use the default dark background.
         </div>
-        <button class="btn danger" id="removeBgBtn">
-            Remove background
-        </button>
+        <button class="btn danger" id="removeBgBtn">Remove background</button>
 
         <hr>
 
-        <!-- Export / Import -->
+        <!-- Export / Import Backup -->
         <button class="btn" id="exportBtn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -121,6 +130,7 @@
             </svg>
             Export backup (.json)
         </button>
+        
         <button class="btn" id="importBtn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -133,38 +143,42 @@
 
         <hr>
 
-        <!-- Reset -->
+        <!-- Reset All Data -->
         <button class="btn danger" id="resetBtn">Reset everything</button>
     </aside>
 
-    <!-- ==================== MODAL OVERLAY (ADD / EDIT SITE) ==================== -->
+    <!-- ============================================
+         4. MODAL OVERLAY (ADD / EDIT SITE)
+         ============================================ -->
     <div class="overlay" id="overlay">
         <div class="modal">
             <h2 id="modalTitle">Add site</h2>
 
-            <!-- Site name -->
+            <!-- Site Name -->
             <div class="field">
-                <label>Name</label>
+                <label for="siteName">Name</label>
                 <input type="text" id="siteName" placeholder="GitHub">
             </div>
 
             <!-- Site URL -->
             <div class="field">
-                <label>URL</label>
+                <label for="siteUrl">URL</label>
                 <input type="text" id="siteUrl" placeholder="https://github.com">
             </div>
 
-            <!-- Custom icon upload (with preview) -->
+            <!-- Custom Icon Upload (with Preview) -->
             <div class="field">
-                <label>Custom icon (optional)</label>
+                <label for="siteIcon">Custom icon (optional)</label>
                 <input type="file" id="siteIcon" accept="image/*">
+                
+                <!-- Preview Container (Toggled via JS) -->
                 <div id="iconPreview" style="margin-top: 6px; display: none; align-items: center; gap: 8px;">
-                    <img id="iconPreviewImg" style="width:40px; height:40px; border-radius:50%; object-fit:cover; background:var(--surface-2);">
-                    <button type="button" id="removeIconBtn" style="background:transparent; border:1px solid var(--border); color:var(--text-dim); border-radius:50%; width:24px; height:24px; cursor:pointer; font-size:12px;">✕</button>
+                    <img id="iconPreviewImg" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--surface-2);" alt="Icon preview">
+                    <button type="button" id="removeIconBtn" style="background: transparent; border: 1px solid var(--border); color: var(--text-dim); border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 12px;" title="Remove icon">✕</button>
                 </div>
             </div>
 
-            <!-- Modal actions -->
+            <!-- Modal Actions -->
             <div class="actions">
                 <button class="cancel" id="modalCancel">Cancel</button>
                 <button class="save" id="modalSave">Save</button>
@@ -172,7 +186,9 @@
         </div>
     </div>
 
-    <!-- ==================== JAVASCRIPT ==================== -->
+    <!-- ============================================
+         5. JAVASCRIPT
+         ============================================ -->
     <script src="script.js"></script>
 </body>
 </html>
