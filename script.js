@@ -433,6 +433,56 @@
     }
 
     // =============================================
+    //  RESIZE HELPER
+    // =============================================
+    function resizeImage(file, maxWidth, maxHeight, quality = 0.82) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const objectUrl = URL.createObjectURL(file);
+
+            img.onload = function () {
+                URL.revokeObjectURL(objectUrl);
+
+                let { width, height } = img;
+
+                if (width <= maxWidth && height <= maxHeight) {
+                    resolve(file);
+                    return;
+                }
+
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width = Math.round(width * ratio);
+                height = Math.round(height * ratio);
+
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const outputType = file.type === "image/png" ? "image/png" : "image/jpeg";
+
+                canvas.toBlob(
+                    (blob) => {
+                        if (blob) resolve(blob);
+                        else reject(new Error("Canvas toBlob failed"));
+                    },
+                    outputType,
+                    quality
+                );
+            };
+
+            img.onerror = function () {
+                URL.revokeObjectURL(objectUrl);
+                reject(new Error("Failed to load image for resizing"));
+            };
+
+            img.src = objectUrl;
+        });
+    }
+
+    // =============================================
     //  8. PAGINATION HELPERS
     // =============================================
     function getPageSize() {
@@ -779,27 +829,28 @@
     });
 
     // Handle icon upload
-    siteIconInput.addEventListener("change", function (e) {
+    siteIconInput.addEventListener("change", async function (e) {
         const file = e.target.files[0];
         if (!file) return;
-        
+
         if (!file.type.startsWith("image/")) {
             alert("Please select an image file.");
             siteIconInput.value = "";
             return;
         }
-        
-        const reader = new FileReader();
-        reader.onload = function (ev) {
-            tempIconData = ev.target.result;
+
+        try {
+            const resizedBlob = await resizeImage(file, 128, 128, 0.85);
+            const dataUrl = await blobToDataURL(resizedBlob);
+
+            tempIconData = dataUrl;
             iconPreviewImg.src = tempIconData;
             iconPreview.style.display = "flex";
-        };
-        reader.onerror = function () {
+        } catch (err) {
+            console.error("Failed to resize icon:", err);
             alert("Failed to read image.");
             siteIconInput.value = "";
-        };
-        reader.readAsDataURL(file);
+        }
     });
 
     // Remove uploaded icon
@@ -930,15 +981,17 @@
     document.getElementById("bgImageInput").addEventListener("change", async function (e) {
         const file = e.target.files[0];
         if (!file) return;
-        
+
         if (!file.type.startsWith("image/")) {
             alert("Please choose an image file.");
             e.target.value = "";
             return;
         }
-        
+
         try {
-            await saveBackgroundBlob(file);
+            const resizedBlob = await resizeImage(file, 1920, 1080, 0.82);
+
+            await saveBackgroundBlob(resizedBlob);
             state.settings.bg = true;
             saveState();
             await applyBackground();
