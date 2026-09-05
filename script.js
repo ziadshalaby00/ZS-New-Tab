@@ -77,6 +77,8 @@
     //  4. GLOBAL VARIABLES
     // =============================================
     let state = loadState();
+    let iconCache = new Map(); // siteId -> objectURL
+
     let currentPage = 0;
     let editingId = null;
     let dragSourceId = null;
@@ -213,6 +215,32 @@
 
     async function deleteSiteIcon(siteId) {
         return deleteImageBlob(getIconKey(siteId));
+    }
+
+    async function preloadIcons() {
+        const sitesWithIcons = state.sites.filter(s => s.iconData === true);
+        await Promise.all(sitesWithIcons.map(async (site) => {
+            try {
+                const blob = await loadSiteIcon(site.id);
+                if (blob) iconCache.set(site.id, URL.createObjectURL(blob));
+            } catch (e) {
+                console.warn(`Failed to preload icon for site ${site.id}`, e);
+            }
+        }));
+    }
+
+    function setIconCache(siteId, blob) {
+        const old = iconCache.get(siteId);
+        if (old) URL.revokeObjectURL(old);
+        iconCache.set(siteId, URL.createObjectURL(blob));
+    }
+
+    function clearIconCache(siteId) {
+        const old = iconCache.get(siteId);
+        if (old) {
+            URL.revokeObjectURL(old);
+            iconCache.delete(siteId);
+        }
     }
 
     // --- Conversion helpers for Export/Import ---
@@ -444,18 +472,8 @@
         const img = document.createElement("img");
         
         // Check if site has a custom icon stored in IndexedDB
-        if (site.iconData === true) {
-            loadSiteIcon(site.id)
-                .then(blob => {
-                    if (!blob) throw new Error("Icon not found");
-                    const url = URL.createObjectURL(blob);
-                    img.src = url;
-                    img.onload = () => URL.revokeObjectURL(url);
-                })
-                .catch(() => {
-                    // Fallback to favicon if custom icon fails to load
-                    img.src = getFaviconUrl(site.url);
-                });
+        if (site.iconData === true && iconCache.has(site.id)) {
+            img.src = iconCache.get(site.id);
         } else {
             img.src = getFaviconUrl(site.url);
         }
@@ -497,6 +515,7 @@
             if (await showConfirm(`Delete "${site.name}"?`, "Delete Site")) {
                 try {
                     await deleteSiteIcon(site.id);
+                    clearIconCache(site.id);
                 } catch (err) {
                     console.warn(`Failed to delete icon for site ${site.id}`, err);
                 }
@@ -668,13 +687,17 @@
         if (site && site.iconData === true) {
             tempIconData = true;
             iconPreview.style.display = "flex";
-            loadSiteIcon(site.id).then(blob => {
-                if (blob) {
-                    const url = URL.createObjectURL(blob);
-                    iconPreviewImg.src = url;
-                    iconPreviewImg.onload = () => URL.revokeObjectURL(url);
-                }
-            }).catch(() => { iconPreview.style.display = "none"; });
+            
+            if (iconCache.has(site.id)) {
+                iconPreviewImg.src = iconCache.get(site.id);
+            } else {
+                loadSiteIcon(site.id).then(blob => {
+                    if (blob) {
+                        setIconCache(site.id, blob);
+                        iconPreviewImg.src = iconCache.get(site.id);
+                    }
+                }).catch(() => { iconPreview.style.display = "none"; });
+            }
         }
         
         overlay.classList.add("open");
@@ -748,9 +771,11 @@
                         const blob = dataURLToBlob(tempIconData);
                         await saveSiteIcon(existing.id, blob);
                         existing.iconData = true;
+                        setIconCache(existing.id, blob); 
                     } else if (tempIconData === null) {
                         if (existing.iconData) await deleteSiteIcon(existing.id);
                         delete existing.iconData;
+                        clearIconCache(existing.id);   
                     }
                 }
             } else {
@@ -766,6 +791,7 @@
                     const blob = dataURLToBlob(tempIconData);
                     await saveSiteIcon(newSite.id, blob);
                     newSite.iconData = true;
+                    setIconCache(newSite.id, blob);  
                 }
             }
             
@@ -994,6 +1020,11 @@
                 state = parsed;
                 saveState();
                 currentPage = 0;
+
+                for (const url of iconCache.values()) URL.revokeObjectURL(url);
+                iconCache.clear();
+                await preloadIcons();
+
                 renderWithTransition();
                 await applyBackground();
                 panel.classList.remove("open");
@@ -1019,6 +1050,9 @@
             } catch (_) {
                 // Ignore cleanup errors
             }
+
+            for (const url of iconCache.values()) URL.revokeObjectURL(url);
+            iconCache.clear();
             
             state = JSON.parse(JSON.stringify(defaultState));
             saveState();
@@ -1150,6 +1184,7 @@
     //  19. INITIALIZATION
     // =============================================
     await initDB();
+    await preloadIcons(); 
 
     updateGreeting();
     setInterval(updateGreeting, 15000); // Update greeting every 15 seconds
