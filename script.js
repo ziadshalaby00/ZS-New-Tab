@@ -302,34 +302,49 @@
     //  6. BACKGROUND IMAGE MANAGEMENT
     // =============================================
     async function applyBackground() {
+        const bgLayer = document.getElementById('bg-layer');
+        if (!bgLayer) return;
+
         const bgExists = state.settings.bg === true;
-        
+
         if (bgExists) {
             try {
                 const blob = await loadBackgroundBlob();
                 if (blob) {
                     const url = URL.createObjectURL(blob);
+
+                    await new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.onload = resolve;
+                        img.onerror = () => reject(new Error('Failed to load background image'));
+                        img.src = url;
+                    });
+
+                    bgLayer.style.backgroundImage = `url('${url}')`;
                     document.body.classList.add("has-bg-image");
-                    document.body.style.backgroundImage = `url('${url}')`;
-                    
-                    // Revoke previous object URL to prevent memory leaks
+
                     if (window._bgUrl) URL.revokeObjectURL(window._bgUrl);
                     window._bgUrl = url;
+
+                    bgLayer.classList.add('visible');
+                    return;
                 } else {
-                    // Fallback if blob is missing but flag is true
                     state.settings.bg = false;
                     saveState();
                     document.body.classList.remove("has-bg-image");
-                    document.body.style.backgroundImage = "";
+                    bgLayer.style.backgroundImage = '';
+                    bgLayer.classList.remove('visible');
                 }
             } catch (e) {
                 console.warn("Failed to load background from IndexedDB", e);
                 document.body.classList.remove("has-bg-image");
-                document.body.style.backgroundImage = "";
+                bgLayer.style.backgroundImage = '';
+                bgLayer.classList.remove('visible');
             }
         } else {
             document.body.classList.remove("has-bg-image");
-            document.body.style.backgroundImage = "";
+            bgLayer.style.backgroundImage = '';
+            bgLayer.classList.remove('visible');
             if (window._bgUrl) {
                 URL.revokeObjectURL(window._bgUrl);
                 window._bgUrl = null;
@@ -1223,20 +1238,24 @@
     // =============================================
     //  19. INITIALIZATION
     // =============================================
+    document.body.classList.add('loading');
+
     updateGreeting();
     setInterval(updateGreeting, 15000);
 
     render();
+    
+    // requestAnimationFrame(() => {
+    //     requestAnimationFrame(() => {
+    //         document.body.classList.add('loaded');
+    //     });
+    // });
 
     // Open IndexedDB in the background.
     // Do not block the first render.
     initDB()
-        .then(() => {
-            return applyBackground();
-        })
-        .catch((err) => {
-            console.warn("IndexedDB initialization failed:", err);
-        });
+    .then(() => { applyBackground(); })
+    .catch(err => console.warn(err));
 })();
 
 // =============================================
