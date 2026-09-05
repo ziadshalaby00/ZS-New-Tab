@@ -99,6 +99,7 @@
     //  which is easily exceeded by base64 images.
     // =============================================
     let db = null;
+    let dbOpenPromise = null;
     function openDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, 2);
@@ -121,17 +122,23 @@
 
     async function initDB() {
         if (db) return db;
+        if (dbOpenPromise) return dbOpenPromise;
 
-        db = await openDB();
-        db.onclose = () => {
-            db = null;
-        };
-        db.onversionchange = () => {
-            db.close();
-            db = null;
-        };
+        dbOpenPromise = openDB().then((opened) => {
+            db = opened;
+            db.onclose = () => {
+                db = null;
+            };
+            db.onversionchange = () => {
+                db.close();
+                db = null;
+            };
+            return db;
+        }).finally(() => {
+            dbOpenPromise = null;
+        });
 
-        return db;
+        return dbOpenPromise;
     }
 
     window.addEventListener("beforeunload", () => {
@@ -217,14 +224,25 @@
         return deleteImageBlob(getIconKey(siteId));
     }
 
-    async function preloadIcons() {
-        const sitesWithIcons = state.sites.filter(s => s.iconData === true);
-        await Promise.all(sitesWithIcons.map(async (site) => {
+    // Lazily loads icons only for the sites passed in (i.e. the sites on the
+    // currently visible page), instead of pulling every custom icon out of
+    // IndexedDB up front. Already-cached icons are skipped.
+    async function loadIconsForSites(sites) {
+        const toLoad = sites.filter(s => s.iconData === true && !iconCache.has(s.id));
+        if (toLoad.length === 0) return;
+
+        await Promise.all(toLoad.map(async (site) => {
             try {
                 const blob = await loadSiteIcon(site.id);
-                if (blob) iconCache.set(site.id, URL.createObjectURL(blob));
+                // Site may have been deleted or re-edited while this was in flight.
+                const stillExists = state.sites.some(s => s.id === site.id);
+                if (blob && stillExists && !iconCache.has(site.id)) {
+                    setIconCache(site.id, blob);
+                    const img = document.querySelector(`.tile[data-id="${site.id}"] img`);
+                    if (img) img.src = iconCache.get(site.id);
+                }
             } catch (e) {
-                console.warn(`Failed to preload icon for site ${site.id}`, e);
+                console.warn(`Failed to load icon for site ${site.id}`, e);
             }
         }));
     }
@@ -422,6 +440,9 @@
             grid.appendChild(buildTile(site));
         });
 
+        // Only fetch icon blobs for sites actually visible on this page
+        loadIconsForSites(pageSites);
+
         // Render "Add site" tile if there's space
         if (pageSites.length < getPageSize()) {
             grid.appendChild(buildAddTile());
@@ -547,9 +568,13 @@
         });
 
         // Drag and Drop logic
-        tile.addEventListener("dragstart", function () {
+        tile.addEventListener("dragstart", function (e) {
             dragSourceId = site.id;
             tile.classList.add("dragging");
+            if (e.dataTransfer) {
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/plain", site.id);
+            }
         });
 
         tile.addEventListener("dragend", function () {
@@ -1023,7 +1048,6 @@
 
                 for (const url of iconCache.values()) URL.revokeObjectURL(url);
                 iconCache.clear();
-                await preloadIcons();
 
                 renderWithTransition();
                 await applyBackground();
@@ -1184,7 +1208,6 @@
     //  19. INITIALIZATION
     // =============================================
     await initDB();
-    await preloadIcons(); 
 
     updateGreeting();
     setInterval(updateGreeting, 15000); // Update greeting every 15 seconds
