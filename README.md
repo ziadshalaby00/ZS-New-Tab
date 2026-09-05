@@ -20,6 +20,8 @@ A minimal, fast, and fully offline **New Tab** replacement for Chrome — a pers
 - **Pagination** — grid pages with dot navigation, arrow buttons, and mouse-wheel scrolling
 - **Settings panel** — customize your display name, grid rows/columns, and background image
 - **Custom background** — upload any image as your background, stored locally via IndexedDB (not localStorage, so large images don't hit storage limits)
+- **Smart image compression** — background and icon uploads are automatically downscaled (via canvas, before saving) to keep storage lean and loading fast, without a visible quality hit
+- **Seamless first load** — the background image and bookmark grid are synchronized to fade in together as one unified reveal, instead of popping in separately
 - **Backup & restore** — export your full setup (sites, settings, background image) to a `.json` file, and import it back anytime
 - **Keyboard shortcuts** — `/` to focus search, `Esc` to close any open panel or modal
 - **Dark UI** — clean dark theme with smooth transitions, built with plain CSS (no frameworks)
@@ -50,12 +52,12 @@ Go to `chrome://extensions`, find **ZS New Tab**, click **Details**, and toggle 
 ## Project structure
 
 ```
-├── manifest.json           # Chrome extension manifest (MV3)
-├── index.html              # New tab page markup
-├── styles.css              # All styling (dark theme, responsive grid, panels, modal)
-├── script.js               # App logic (state, rendering, IndexedDB, drag & drop, import/export)
-├── CONTRIBUTING.md          # How to set up the project and submit changes
-├── ISSUES.md                # Known issues and how to report bugs
+├── manifest.json             # Chrome extension manifest (MV3)
+├── index.html                # New tab page markup
+├── styles.css                # All styling (dark theme, responsive grid, panels, modal)
+├── script.js                 # App logic (state, rendering, IndexedDB, drag & drop, import/export)
+├── CONTRIBUTING.md           # How to set up the project and submit changes
+├── ISSUES.md                 # Known issues and how to report bugs
 ├── icons/
 └── images/
 ```
@@ -65,19 +67,26 @@ Go to `chrome://extensions`, find **ZS New Tab**, click **Details**, and toggle 
 - Vanilla HTML, CSS, and JavaScript — no build step, no dependencies
 - `localStorage` for app state (sites and settings)
 - `IndexedDB` for storing background images and custom site icons
+- Canvas-based image resizing pipeline for compressing uploads before storage
 - Google Fonts (Inter, JetBrains Mono) loaded via CDN
+
+## Performance & UX details
+
+- **Unified load sequence**: on startup, the app waits for both the grid render and the background image to be ready before revealing anything, so the page appears as a single smooth transition instead of the background and bookmarks popping in at different times. A short timeout safeguard ensures a slow background load never blocks the page from appearing.
+- **Automatic image resizing**: any image you upload (background or site icon) is resized on a `<canvas>` before being saved — backgrounds are capped at 1920×1080 and icons at 128×128 — cutting down storage size and speeding up future loads, with no manual compression needed from the user.
 
 ## Customization
 
 - **Search engines**: add more options in the `<select id="engineSelect">` element in `index.html`.
 - **Colors**: all theme colors are CSS variables at the top of `styles.css` (`:root { --accent, --bg-0, ... }`) — change them in one place to re-theme the whole app.
 - **Default bookmarks**: edit the `defaultState.sites` array in `script.js` to change what ships by default for a fresh install.
+- **Resize limits**: adjust the max width/height/quality passed to `resizeImage()` in `script.js` if you want larger or smaller stored images.
 
 ## Data & privacy
 
 Almost everything lives in your browser only:
 - Sites and settings → `localStorage`
-- Background image and custom site icons → `IndexedDB`
+- Background image and custom site icons → `IndexedDB` (resized before storage to keep things light)
 
 Two things do reach outside your browser:
 - **Favicon lookups**, via Google's public favicon service (`https://www.google.com/s2/favicons`), used to fetch each site's icon.
