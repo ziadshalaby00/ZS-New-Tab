@@ -22,7 +22,6 @@
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
     
     --cols: 6;
-    --rows: 4;
     --radius: 16px;
 }
 
@@ -83,9 +82,23 @@ body.has-bg-image::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: rgba(10, 13, 17, 0.30);
+
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    background-color: rgba(10, 13, 17, 0.30);
+
     z-index: 0;
     pointer-events: none;
+
+    opacity: 0;
+    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body.has-bg-image.bg-visible::before {
+    opacity: 1;
 }
 
 body.has-bg-image .app {
@@ -98,7 +111,6 @@ body.has-bg-image .app {
    ============================================ */
 .app {
     position: relative;
-    z-index: 1;
     min-height: 100%;
     display: flex;
     flex-direction: column;
@@ -784,32 +796,19 @@ form.search button svg {
 /* ============================================
    15. PAGE FADE-IN TRANSITION
    ============================================ */
-#bg-layer {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0;
-    transition: opacity 0.8s ease;
-    pointer-events: none;
-}
-#bg-layer.visible {
-    opacity: 1;
-}
-/* .app {
+.app {
     position: relative;
     z-index: 2;
 
     opacity: 0;
     transform: scale(0.92);
+
     transition:
-        opacity 0.8s ease,
+        opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
         transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body.loaded .app {
     opacity: 1;
     transform: scale(1);
-} */
+}

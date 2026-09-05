@@ -242,21 +242,34 @@
     // currently visible page), instead of pulling every custom icon out of
     // IndexedDB up front. Already-cached icons are skipped.
     async function loadIconsForSites(sites) {
-        const toLoad = sites.filter(s => s.iconData === true && !iconCache.has(s.id));
+        const toLoad = sites.filter(
+            s => s.iconData === true && !iconCache.has(s.id)
+        );
+
         if (toLoad.length === 0) return;
 
         await Promise.all(toLoad.map(async (site) => {
             try {
                 const blob = await loadSiteIcon(site.id);
-                // Site may have been deleted or re-edited while this was in flight.
+
                 const stillExists = state.sites.some(s => s.id === site.id);
+
                 if (blob && stillExists && !iconCache.has(site.id)) {
                     setIconCache(site.id, blob);
-                    const img = document.querySelector(`.tile[data-id="${site.id}"] img`);
-                    if (img) img.src = iconCache.get(site.id);
+
+                    const img = document.querySelector(
+                        `.tile[data-id="${site.id}"] img`
+                    );
+
+                    if (img) {
+                        img.src = iconCache.get(site.id);
+                    }
                 }
             } catch (e) {
-                console.warn(`Failed to load icon for site ${site.id}`, e);
+                console.warn(
+                    `Failed to load icon for site ${site.id}`,
+                    e
+                );
             }
         }));
     }
@@ -302,49 +315,67 @@
     //  6. BACKGROUND IMAGE MANAGEMENT
     // =============================================
     async function applyBackground() {
-        const bgLayer = document.getElementById('bg-layer');
-        if (!bgLayer) return;
+        const body = document.body;
 
         const bgExists = state.settings.bg === true;
 
         if (bgExists) {
             try {
                 const blob = await loadBackgroundBlob();
+
                 if (blob) {
                     const url = URL.createObjectURL(blob);
 
                     await new Promise((resolve, reject) => {
                         const img = new Image();
+
                         img.onload = resolve;
-                        img.onerror = () => reject(new Error('Failed to load background image'));
+                        img.onerror = () =>
+                            reject(new Error('Failed to load background image'));
+
                         img.src = url;
                     });
 
-                    bgLayer.style.backgroundImage = `url('${url}')`;
-                    document.body.classList.add("has-bg-image");
+                    body.style.setProperty(
+                        '--bg-image',
+                        `url("${url}")`
+                    );
 
-                    if (window._bgUrl) URL.revokeObjectURL(window._bgUrl);
+                    body.classList.add('has-bg-image');
+
+                    if (window._bgUrl) {
+                        URL.revokeObjectURL(window._bgUrl);
+                    }
+
                     window._bgUrl = url;
 
-                    bgLayer.classList.add('visible');
+                    requestAnimationFrame(() => {
+                        body.classList.add('bg-visible');
+                    });
+
                     return;
-                } else {
-                    state.settings.bg = false;
-                    saveState();
-                    document.body.classList.remove("has-bg-image");
-                    bgLayer.style.backgroundImage = '';
-                    bgLayer.classList.remove('visible');
                 }
+
+                state.settings.bg = false;
+                saveState();
+
+                body.classList.remove('bg-visible', 'has-bg-image');
+                body.style.removeProperty('--bg-image');
+
             } catch (e) {
-                console.warn("Failed to load background from IndexedDB", e);
-                document.body.classList.remove("has-bg-image");
-                bgLayer.style.backgroundImage = '';
-                bgLayer.classList.remove('visible');
+                console.warn(
+                    "Failed to load background from IndexedDB",
+                    e
+                );
+
+                body.classList.remove('bg-visible', 'has-bg-image');
+                body.style.removeProperty('--bg-image');
             }
+
         } else {
-            document.body.classList.remove("has-bg-image");
-            bgLayer.style.backgroundImage = '';
-            bgLayer.classList.remove('visible');
+            body.classList.remove('bg-visible', 'has-bg-image');
+            body.style.removeProperty('--bg-image');
+
             if (window._bgUrl) {
                 URL.revokeObjectURL(window._bgUrl);
                 window._bgUrl = null;
@@ -446,7 +477,7 @@
     }
 
     // Main render function
-    function render() {
+    async function render() {
         document.documentElement.style.setProperty("--cols", state.settings.cols);
         document.documentElement.style.setProperty("--rows", state.settings.rows);
         
@@ -470,7 +501,7 @@
         });
 
         // Only fetch icon blobs for sites actually visible on this page
-        loadIconsForSites(pageSites);
+        await loadIconsForSites(pageSites);
 
         // Render "Add site" tile if there's space
         if (pageSites.length < getPageSize()) {
@@ -1243,19 +1274,14 @@
     updateGreeting();
     setInterval(updateGreeting, 15000);
 
-    render();
-    
-    // requestAnimationFrame(() => {
-    //     requestAnimationFrame(() => {
-    //         document.body.classList.add('loaded');
-    //     });
-    // });
-
     // Open IndexedDB in the background.
     // Do not block the first render.
     initDB()
     .then(() => { applyBackground(); })
     .catch(err => console.warn(err));
+
+    await render();
+    document.body.classList.add('loaded');
 })();
 
 // =============================================
