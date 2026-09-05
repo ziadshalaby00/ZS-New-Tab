@@ -49,6 +49,68 @@ Built on Manifest V3 (minimum Chrome 88), so it works on any Chromium-based brow
 
 Go to `chrome://extensions`, find **ZS New Tab**, click **Details**, and toggle **Allow in incognito**.
 
+## Opera Support
+
+Opera's extension store enforces stricter validation on `chrome_url_overrides.newtab` for
+side-loaded / unpacked extensions, and rejects it with:
+
+> `'chrome_url_overrides' is not allowed for specified extension ID.`
+
+To use **ZS New Tab** on Opera, replace `manifest.json` with the following, and add a
+`background.js` file next to it. Instead of overriding the new tab page directly, this
+approach uses a background script that listens for Opera's default start page / new tab
+URLs and redirects them to `index.html`.
+
+**`manifest.json` (Opera variant):**
+```json
+{
+  "manifest_version": 2,
+  "name": "ZS New Tab",
+  "short_name": "New Tab",
+  "version": "1.0.0",
+  "description": "A custom new tab page with a bookmark grid, quick search, and a settings panel for background image, layout, and backups.",
+  "author": "Ziad Shalaby",
+  "minimum_chrome_version": "88",
+  "permissions": [ "tabs" ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "icons": {
+    "16": "./icons/favicon-16x16.png",
+    "48": "./icons/favicon-32x32.png",
+    "128": "./icons/android-chrome-192x192.png"
+  },
+  "incognito": "split"
+}
+```
+
+**`background.js`:**
+```javascript
+function redirectToIndex(tabId) {
+  chrome.tabs.update(tabId, {
+    url: chrome.runtime.getURL("index.html")
+  });
+}
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  const currentUrl = changeInfo.url || tab.pendingUrl || tab.url || "";
+
+  if (currentUrl) {
+    const startPages = [
+      "opera://startpage",
+      "chrome://startpage",
+      "chrome://newtab",
+      "edge://newtab",
+      "about:blank"
+    ];
+
+    if (startPages.some(page => currentUrl.startsWith(page))) {
+      redirectToIndex(tabId);
+    }
+  }
+});
+```
+
 ## Project structure
 
 ```
