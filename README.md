@@ -24,6 +24,17 @@ A minimal, fast, and fully offline **New Tab** replacement for Chrome — a pers
 - **Keyboard shortcuts** — `/` to focus search, `Esc` to close any open panel or modal
 - **Dark UI** — clean dark theme with smooth transitions, built with plain CSS (no frameworks)
 
+## Supported browsers
+
+Built on Manifest V3, so it works on any Chromium-based browser:
+- Chrome
+- Edge
+- Brave
+- Opera
+- Vivaldi
+
+Not compatible with Firefox or Safari (different extension APIs).
+
 ## Installation
 
 ### From source (developer mode)
