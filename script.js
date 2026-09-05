@@ -1043,8 +1043,7 @@
 
                 // 2. Import site icons
                 for (const site of parsed.sites) {
-                    // Backward compatibility: Older backups stored iconData as a DataURL string.
-                    // Newer backups store it as a boolean `true` and fetch from IndexedDB.
+                    // backups store it as a boolean `true` and fetch from IndexedDB.
                     if (typeof site.iconData === "string" && site.iconData.startsWith("data:image")) {
                         try {
                             const blob = dataURLToBlob(site.iconData);
@@ -1224,14 +1223,20 @@
     // =============================================
     //  19. INITIALIZATION
     // =============================================
-    await initDB();
-
     updateGreeting();
-    setInterval(updateGreeting, 15000); // Update greeting every 15 seconds
-    
-    render();
-    applyBackground();
+    setInterval(updateGreeting, 15000);
 
+    render();
+
+    // Open IndexedDB in the background.
+    // Do not block the first render.
+    initDB()
+        .then(() => {
+            return applyBackground();
+        })
+        .catch((err) => {
+            console.warn("IndexedDB initialization failed:", err);
+        });
 })();
 
 // =============================================

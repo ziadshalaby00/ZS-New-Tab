@@ -771,7 +771,7 @@ form.search button svg {
    ============================================ */
 @media (max-width: 600px) {
     .grid {
-        grid-template-columns: repeat(4, 72px);
+        grid-template-columns: repeat(var(--cols), 72px);
         grid-auto-rows: 86px;
     }
 
