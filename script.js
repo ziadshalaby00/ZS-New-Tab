@@ -145,6 +145,20 @@
         if (db) db.close();
     });
 
+    async function clearStoredAssets() {
+        const database = await initDB();
+
+        return new Promise((resolve, reject) => {
+            const tx = database.transaction(STORE_NAME, "readwrite");
+            const store = tx.objectStore(STORE_NAME);
+
+            const request = store.clear();
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
     async function saveImageBlob(key, blob) {
         const db = await initDB();
         return new Promise((resolve, reject) => {
@@ -997,10 +1011,10 @@
         document.getElementById("importFile").click();
     });
 
-    document.getElementById("importFile").addEventListener("change", function (e) {
+    document.getElementById("importFile").addEventListener("change", async function (e) {
         const file = e.target.files[0];
         if (!file) return;
-        
+
         const reader = new FileReader();
         reader.onload = async function (ev) {
             try {
@@ -1008,6 +1022,9 @@
                 if (!parsed.sites || !parsed.settings) {
                     throw new Error("Invalid format");
                 }
+
+                // Now that the backup is valid, clear old assets
+                await clearStoredAssets();
 
                 // 1. Import background
                 const bgDataURL = parsed.settings.bg;
