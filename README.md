@@ -26,7 +26,7 @@ A minimal, fast, and fully offline **New Tab** replacement for Chrome — a pers
 
 ## Supported browsers
 
-Built on Manifest V3, so it works on any Chromium-based browser:
+Built on Manifest V3 (minimum Chrome 88), so it works on any Chromium-based browser:
 - Chrome
 - Edge
 - Brave
@@ -54,7 +54,9 @@ Go to `chrome://extensions`, find **ZS New Tab**, click **Details**, and toggle 
 ├── index.html              # New tab page markup
 ├── styles.css              # All styling (dark theme, responsive grid, panels, modal)
 ├── script.js               # App logic (state, rendering, IndexedDB, drag & drop, import/export)
-├── icons/          
+├── CONTRIBUTING.md          # How to set up the project and submit changes
+├── ISSUES.md                # Known issues and how to report bugs
+├── icons/
 └── images/
 ```
 
@@ -62,7 +64,7 @@ Go to `chrome://extensions`, find **ZS New Tab**, click **Details**, and toggle 
 
 - Vanilla HTML, CSS, and JavaScript — no build step, no dependencies
 - `localStorage` for app state (sites and settings)
-- `IndexedDB` storing background images and custom site icons
+- `IndexedDB` for storing background images and custom site icons
 - Google Fonts (Inter, JetBrains Mono) loaded via CDN
 
 ## Customization
@@ -73,15 +75,23 @@ Go to `chrome://extensions`, find **ZS New Tab**, click **Details**, and toggle 
 
 ## Data & privacy
 
-Everything lives in your browser only:
+Almost everything lives in your browser only:
 - Sites and settings → `localStorage`
-- Background image → `IndexedDB`
+- Background image and custom site icons → `IndexedDB`
 
-Nothing is sent to any server except favicon lookups, which go through Google's public favicon service (`https://www.google.com/s2/favicons`) to fetch each site's icon.
+Two things do reach outside your browser:
+- **Favicon lookups**, via Google's public favicon service (`https://www.google.com/s2/favicons`), used to fetch each site's icon.
+- **Google Fonts**, loaded from `fonts.googleapis.com` and `fonts.gstatic.com` for the Inter and JetBrains Mono typefaces used in the UI.
+
+No account, analytics, or backend is involved beyond that.
 
 ## Backup
 
-Use **Export backup (.json)** in the settings panel to save your full setup, and **Import backup** to restore it — on this browser or a fresh install.
+Use **Export backup (.json)** in the settings panel to save your full setup, and **Import backup** to restore it — on this browser or a fresh install. Only backup files exported by this extension are supported; a manually edited or malformed JSON file will show an "invalid backup" alert.
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) for setup instructions and the PR workflow. Found a bug or have a feature request? Check [ISSUES.md](./ISSUES.md) for the bug report format and a list of known issues before opening a new one.
 
 ## License
 
