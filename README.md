@@ -33,8 +33,6 @@ Built on Manifest V3, so it works on any Chromium-based browser:
 - Opera
 - Vivaldi
 
-Not compatible with Firefox or Safari (different extension APIs).
-
 ## Installation
 
 ### From source (developer mode)

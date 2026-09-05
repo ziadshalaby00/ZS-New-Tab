@@ -299,11 +299,9 @@
     //  9.  RENDERING FUNCTIONS
     // =============================================
 
-    function renderNameAndEngine() {
+    function renderName() {
         const name = state.settings.name || "there";
         document.getElementById("greetName").textContent = name;
-
-        document.getElementById("engineSelect").value = state.settings.engine;
     }
 
     // Main render function
@@ -311,7 +309,8 @@
         document.documentElement.style.setProperty("--cols", state.settings.cols);
         document.documentElement.style.setProperty("--rows", state.settings.rows);
         
-        renderNameAndEngine();
+        renderName();
+        document.getElementById("engineSelect").value = state.settings.engine;
 
         const total = getTotalPages();
         if (currentPage >= total) currentPage = total - 1;
@@ -684,7 +683,7 @@
         saveState();
 
         if(name) {
-            renderNameAndEngine();
+            renderName();
             return;
         }
         renderWithTransition();
@@ -695,7 +694,7 @@
     });
 
     document.getElementById("rowsInput").addEventListener("change", function (e) {
-        let val = Math.max(1, Math.min(8, parseInt(e.target.value, 10) || 4));
+        let val = Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 4));
         e.target.value = val;
         applySetting("rows", val);
     });
@@ -808,6 +807,7 @@
                 saveState();
                 currentPage = 0;
                 renderWithTransition();
+                applyBackground();
                 panel.classList.remove("open");
             } catch (_) {
                 alert("This file doesn't look like a valid backup.");
@@ -826,6 +826,7 @@
             saveState();
             currentPage = 0;
             renderWithTransition();
+            applyBackground();
             panel.classList.remove("open");
         }
     });
@@ -874,9 +875,9 @@
     });
 
     // =============================================
-    //  16. CLOCK AND GREETING
+    //  16. GREETING
     // =============================================
-    function updateClockAndGreeting() {
+    function updateGreeting() {
         const now = new Date();
         const hour = now.getHours();
         let greeting = hour < 5 ? "Good night" :
@@ -935,21 +936,24 @@
     // =============================================
     //  19. INITIALIZATION
     // =============================================
-    updateClockAndGreeting();
-    setInterval(updateClockAndGreeting, 15000);
+    updateGreeting();
+    setInterval(updateGreeting, 15000);
 
     render();
     applyBackground();
 
 })();
 
+// =============================================
 // Get LocalStorage Size, Call From Console
+// =============================================
+
 function getLocalStorageSize() {
-  let total = 0;
-  for (let key in localStorage) {
-    if (localStorage.hasOwnProperty(key)) {
-      total += (localStorage[key].length + key.length) * 2;
+    let total = 0;
+    for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+        total += (localStorage[key].length + key.length) * 2;
+        }
     }
-  }
-  console.log(`Total localStorage size: ${(total / 1024).toFixed(2)} KB`);
+    console.log(`Total localStorage size: ${(total / 1024).toFixed(2)} KB`);
 }

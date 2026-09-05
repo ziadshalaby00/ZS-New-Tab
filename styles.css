@@ -691,6 +691,18 @@ form.search button svg {
     border-color: var(--text-dim);
 }
 
+.modal .actions .save.danger-fill {
+    background: var(--danger-strong);
+    border-color: var(--danger-strong);
+    color: #fff;
+}
+
+.modal .actions .save.danger-fill:hover {
+    background: var(--danger-strong-hover);
+    border-color: var(--danger-strong-hover);
+    filter: none;
+}
+
 /* Custom icon preview inside the modal */
 #iconPreview {
     display: none;
@@ -752,16 +764,4 @@ form.search button svg {
         width: 46px;
         height: 46px;
     }
-}
-
-.modal .actions .save.danger-fill {
-    background: var(--danger-strong);
-    border-color: var(--danger-strong);
-    color: #fff;
-}
-
-.modal .actions .save.danger-fill:hover {
-    background: var(--danger-strong-hover);
-    border-color: var(--danger-strong-hover);
-    filter: none;
 }
