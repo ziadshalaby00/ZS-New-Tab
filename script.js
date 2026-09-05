@@ -2,7 +2,7 @@
  * ZS New Tab – Full Application
  * Uses localStorage for settings/state and IndexedDB for large assets (backgrounds/icons).
  */
-(function () {
+(async function () {
     "use strict";
 
     // =============================================
@@ -96,14 +96,16 @@
     //  Note: We use IndexedDB because localStorage has a ~5MB limit, 
     //  which is easily exceeded by base64 images.
     // =============================================
+    let db = null;
     function openDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, 2);
-            
+
             request.onupgradeneeded = function (e) {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    db.createObjectStore(STORE_NAME);
+                const database = e.target.result;
+
+                if (!database.objectStoreNames.contains(STORE_NAME)) {
+                    database.createObjectStore(STORE_NAME);
                 }
             };
             request.onsuccess = function (e) {
@@ -115,8 +117,27 @@
         });
     }
 
+    async function initDB() {
+        if (db) return db;
+
+        db = await openDB();
+        db.onclose = () => {
+            db = null;
+        };
+        db.onversionchange = () => {
+            db.close();
+            db = null;
+        };
+
+        return db;
+    }
+
+    window.addEventListener("beforeunload", () => {
+        if (db) db.close();
+    });
+
     async function saveImageBlob(key, blob) {
-        const db = await openDB();
+        const db = await initDB();
         return new Promise((resolve, reject) => {
             const tx = db.transaction(STORE_NAME, "readwrite");
             const store = tx.objectStore(STORE_NAME);
@@ -124,18 +145,16 @@
             
             request.onerror = () => reject(request.error);
             tx.oncomplete = () => {
-                db.close();
                 resolve();
             };
             tx.onerror = () => {
-                db.close();
                 reject(tx.error);
             };
         });
     }
 
     async function loadImageBlob(key) {
-        const db = await openDB();
+        const db = await initDB();
         return new Promise((resolve, reject) => {
             const tx = db.transaction(STORE_NAME, "readonly");
             const store = tx.objectStore(STORE_NAME);
@@ -143,16 +162,14 @@
             
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
-            tx.oncomplete = () => db.close();
             tx.onerror = () => {
-                db.close();
                 reject(tx.error);
             };
         });
     }
 
     async function deleteImageBlob(key) {
-        const db = await openDB();
+        const db = await initDB();
         return new Promise((resolve, reject) => {
             const tx = db.transaction(STORE_NAME, "readwrite");
             const store = tx.objectStore(STORE_NAME);
@@ -160,11 +177,9 @@
             
             request.onerror = () => reject(request.error);
             tx.oncomplete = () => {
-                db.close();
                 resolve();
             };
             tx.onerror = () => {
-                db.close();
                 reject(tx.error);
             };
         });
@@ -1134,6 +1149,8 @@
     // =============================================
     //  19. INITIALIZATION
     // =============================================
+    await initDB();
+
     updateGreeting();
     setInterval(updateGreeting, 15000); // Update greeting every 15 seconds
     
