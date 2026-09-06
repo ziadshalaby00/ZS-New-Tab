@@ -94,10 +94,6 @@ body.has-bg-image::before {
     pointer-events: none;
 }
 
-body.loaded.has-bg-image::before {
-    opacity: 1;
-}
-
 body.has-bg-image .app {
     position: relative;
     z-index: 1;

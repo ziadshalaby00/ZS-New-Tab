@@ -36,7 +36,7 @@ The project ships with two versions of the app logic and styling, side by side. 
 | Background image & custom icons | `IndexedDB` | `localStorage` (same store as everything else) |
 | First-load animation | Yes — background and grid fade in together | None — everything renders instantly |
 | Load speed | Fast | As fast as the browser can render — practically instant |
-| Storage ceiling | Effectively unlimited (IndexedDB has no ~5MB wall) | Bound by the browser's localStorage limit (~5MB), so realistically **up to about 100 sites, each with a custom uploaded icon**, plus a background image |
+| Storage ceiling | Effectively unlimited (IndexedDB has no 5–10 MB wall) | Bound by the browser's localStorage limit (5–10 MB), so practical capacity depends on the size and number of stored images and icons. |
 
 **Use the default (`script.js` / `styles.css`)** if you want no practical limit on how many sites or custom icons you keep, and don't mind a small fade-in on first load.
 
@@ -176,7 +176,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 ## Performance & UX details
 
 - **Default build**: on startup, the app waits for both the grid render and the background image to be ready before revealing anything, so the page appears as a single smooth transition instead of the background and bookmarks popping in at different times. A short timeout safeguard ensures a slow background load never blocks the page from appearing.
-- **Shadow build**: there's nothing to wait for — the background and every icon are already sitting in `localStorage` as part of the same state object, so they render synchronously with the rest of the page. No transition, no timeout safeguard needed; the trade-off is the shared ~5MB `localStorage` ceiling across sites, icons, and background combined.
+- **Shadow build**: there's nothing to wait for — the background and every icon are already sitting in `localStorage` as part of the same state object, so they render synchronously with the rest of the page. No transition, no timeout safeguard needed; the trade-off is the shared (5–10 MB) `localStorage` ceiling across sites, icons, and background combined.
 - **Automatic image resizing** (both builds): any image you upload (background or site icon) is resized on a `<canvas>` before being saved — backgrounds are capped at 1920×1080 and icons at 128×128 — cutting down storage size and speeding up future loads, with no manual compression needed from the user.
 
 ## Customization

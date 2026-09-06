@@ -1,11 +1,12 @@
 /**
  * ZS New Tab Shadow – Full Application
- * Uses localStorage for EVERYTHING: settings/state, background image, and site icons
- * (all stored as base64 Data URLs inside the same state object).
+ * Uses localStorage for settings/state, background image, and site icons.
  *
- * NOTE: localStorage has a ~5MB per-origin limit. Large backgrounds/icons can hit
- * that limit — saves are wrapped in try/catch and will alert the user if storage
- * is full instead of failing silently.
+ * Settings/site metadata are stored separately from the background image
+ * and custom site icons. Images are stored as base64 Data URL strings.
+ *
+ * NOTE: localStorage has a browser-dependent storage limit. Large backgrounds
+ * and icons can consume significant storage space.
  */
 (async function () {
     "use strict";
@@ -13,7 +14,9 @@
     // =============================================
     //  1. CONSTANTS
     // =============================================
-    const STORE_KEY = "ZSNewTab.v1";
+    const SETTINGS_KEY = "ZSNewTab.settings";
+    const BACKGROUND_KEY = "ZSNewTab.background";
+    const ICON_KEY_PREFIX = "ZSNewTab.icon.";
 
     // =============================================
     //  2. DEFAULT STATE
@@ -24,7 +27,6 @@
             rows: 4,
             cols: 6,
             engine: "https://www.google.com/search?q=",
-            bg: false // false = no background, or a "data:image/..." Data URL string
         },
         sites: [
             { id: "1", name: "Google", url: "https://google.com" },
@@ -61,20 +63,20 @@
     // =============================================
     function loadState() {
         try {
-            const raw = localStorage.getItem(STORE_KEY);
-            if (!raw) return JSON.parse(JSON.stringify(defaultState));
+            const raw = localStorage.getItem(SETTINGS_KEY);
+
+            if (!raw) {
+                return JSON.parse(JSON.stringify(defaultState));
+            }
 
             const parsed = JSON.parse(raw);
-            // Ensure required properties exist to prevent crashes on old states
-            if (!parsed.settings) parsed.settings = defaultState.settings;
-            if (!parsed.sites) parsed.sites = [];
 
-            // bg must be `false` or a data:image/... string; guard against corruption
-            if (
-                typeof parsed.settings.bg !== "string" ||
-                !parsed.settings.bg.startsWith("data:image")
-            ) {
-                parsed.settings.bg = false;
+            if (!parsed.settings) {
+                parsed.settings = { ...defaultState.settings };
+            }
+
+            if (!Array.isArray(parsed.sites)) {
+                parsed.sites = [];
             }
 
             return parsed;
@@ -95,11 +97,63 @@
     let tempIconData = null; // Temporary Data URL for uploaded icon in the modal
 
     function saveState() {
-        // Throws (e.g. QuotaExceededError) if the payload is too big for localStorage.
-        // Callers are responsible for wrapping this in try/catch where user data
-        // (icons/backgrounds) could push the total size over the limit.
-        localStorage.setItem(STORE_KEY, JSON.stringify(state));
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+                settings: state.settings,
+                sites: state.sites
+            })
+        );
     }
+
+    function getIconKey(siteId) {
+        return ICON_KEY_PREFIX + siteId;
+    }
+
+    function saveSiteIcon(siteId, dataUrl) {
+        localStorage.setItem(getIconKey(siteId), dataUrl);
+    }
+
+    function loadSiteIcon(siteId) {
+        return localStorage.getItem(getIconKey(siteId));
+    }
+
+    function deleteSiteIcon(siteId) {
+        localStorage.removeItem(getIconKey(siteId));
+    }
+
+    function saveBackground(dataUrl) {
+        localStorage.setItem(BACKGROUND_KEY, dataUrl);
+    }
+
+    function loadBackground() {
+        return localStorage.getItem(BACKGROUND_KEY);
+    }
+
+    function deleteBackground() {
+        localStorage.removeItem(BACKGROUND_KEY);
+    }
+
+    function deleteAllSiteIcons() {
+        const keysToDelete = [];
+
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+
+            if (key && key.startsWith(ICON_KEY_PREFIX)) {
+                keysToDelete.push(key);
+            }
+        }
+
+        for (const key of keysToDelete) {
+            localStorage.removeItem(key);
+        }
+    }
+
+    function clearAllStorageData() {
+        localStorage.removeItem(SETTINGS_KEY);
+        localStorage.removeItem(BACKGROUND_KEY);
+        deleteAllSiteIcons();
+    }
+
 
     function generateId() {
         return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -107,7 +161,7 @@
 
     // =============================================
     //  5. IMAGE CONVERSION HELPER (Blob -> Data URL)
-    //  Everything is stored as base64 Data URL strings directly inside `state`,
+    //  Convert a Blob/File into a Data URL string for localStorage storage.
     //  so this is the only conversion we still need (canvas.toBlob gives us a
     //  Blob after resizing; localStorage only stores strings).
     // =============================================
@@ -125,7 +179,7 @@
     // =============================================
     function applyBackground() {
         const body = document.body;
-        const bgData = state.settings.bg;
+        const bgData = loadBackground();
 
         if (typeof bgData === "string" && bgData.startsWith("data:image")) {
             body.style.setProperty('--bg-image', `url("${bgData}")`);
@@ -353,8 +407,9 @@
         const img = document.createElement("img");
 
         // Check if site has a custom icon (stored inline as a Data URL string)
-        if (typeof site.iconData === "string" && site.iconData.startsWith("data:image")) {
-            img.src = site.iconData;
+        const iconData = loadSiteIcon(site.id);
+        if (typeof iconData === "string" && iconData.startsWith("data:image")) {
+            img.src = iconData;
         } else {
             img.src = getFaviconUrl(site.url);
         }
@@ -395,6 +450,7 @@
             e.stopPropagation();
             if (await showConfirm(`Delete "${site.name}"?`, "Delete Site")) {
                 state.sites = state.sites.filter(s => s.id !== site.id);
+                deleteSiteIcon(site.id);
                 saveState();
                 renderWithTransition();
             }
@@ -563,10 +619,13 @@
         siteIconInput.value = "";
         iconPreview.style.display = "none";
 
-        if (site && typeof site.iconData === "string" && site.iconData.startsWith("data:image")) {
-            tempIconData = site.iconData;
-            iconPreviewImg.src = site.iconData;
-            iconPreview.style.display = "flex";
+        if (site) {
+            const existingIcon = loadSiteIcon(site.id);
+            if (typeof existingIcon === "string" && existingIcon.startsWith("data:image")) {
+                tempIconData = existingIcon;
+                iconPreviewImg.src = existingIcon;
+                iconPreview.style.display = "flex";
+            }
         }
 
         overlay.classList.add("open");
@@ -640,19 +699,25 @@
                     existing.name = name;
                     existing.url = url;
 
-                    if (typeof tempIconData === "string" && tempIconData.startsWith("data:")) {
-                        existing.iconData = tempIconData;
+                    if (typeof tempIconData === "string" && tempIconData.startsWith("data:image")) {
+                        saveSiteIcon(existing.id, tempIconData);
                     } else if (tempIconData === null) {
-                        delete existing.iconData;
+                        deleteSiteIcon(existing.id);
                     }
                 }
             } else {
                 // Create new site
-                const newSite = { id: generateId(), name, url };
-                if (tempIconData) {
-                    newSite.iconData = tempIconData;
-                }
+                const newSite = {
+                    id: generateId(),
+                    name,
+                    url
+                };
+
                 state.sites.push(newSite);
+
+                if (tempIconData) {
+                    saveSiteIcon(newSite.id, tempIconData);
+                }
             }
 
             saveState();
@@ -737,18 +802,14 @@
             return;
         }
 
-        const previousBg = state.settings.bg;
-
         try {
             const resizedBlob = await resizeImage(file, 1920, 1080, 0.82);
             const dataUrl = await blobToDataURL(resizedBlob);
 
-            state.settings.bg = dataUrl;
-            saveState();
+            saveBackground(dataUrl);
             applyBackground();
         } catch (err) {
             console.error("Failed to save background:", err);
-            state.settings.bg = previousBg;
             alert("Could not save background image — it may be too large for local storage. Try a smaller image.");
         }
         e.target.value = "";
@@ -756,8 +817,7 @@
 
     // Remove background image
     document.getElementById("removeBgBtn").addEventListener("click", function () {
-        state.settings.bg = false;
-        saveState();
+        deleteBackground();
         applyBackground();
         document.getElementById("bgImageInput").value = "";
     });
@@ -775,16 +835,35 @@
     // Export backup — state already contains everything (icons/bg as Data URLs)
     document.getElementById("exportBtn").addEventListener("click", function () {
         try {
+            const backup = {
+                settings: {
+                    ...state.settings,
+                    bg: loadBackground() || false
+                },
+                sites: state.sites.map(site => {
+                    const copy = { ...site };
+                    const iconData = loadSiteIcon(site.id);
+
+                    if (iconData) {
+                        copy.iconData = iconData;
+                    }
+
+                    return copy;
+                })
+            };
+
             const blob = new Blob(
-                [JSON.stringify(state, null, 2)],
+                [JSON.stringify(backup, null, 2)],
                 { type: "application/json" }
             );
+
             const a = document.createElement("a");
             const url = URL.createObjectURL(blob);
 
             a.href = url;
             a.download = `zs-new-tab-backup-${new Date().toISOString().slice(0, 10)}.json`;
             a.click();
+
             URL.revokeObjectURL(url);
         } catch (err) {
             console.error("Failed to export backup:", err);
@@ -802,48 +881,140 @@
         if (!file) return;
 
         const reader = new FileReader();
+
         reader.onload = function (ev) {
             const previousState = state;
 
             try {
                 const parsed = JSON.parse(ev.target.result);
-                if (!parsed.sites || !parsed.settings) {
-                    throw new Error("Invalid format");
+
+                // Basic validation
+                if (!parsed || !parsed.sites || !parsed.settings) {
+                    throw new Error("Invalid backup format");
                 }
+
+                if (!Array.isArray(parsed.sites)) {
+                    throw new Error("Invalid sites data");
+                }
+
+                /*
+                * The backup format still contains:
+                *
+                * settings.bg
+                * sites[].iconData
+                *
+                * but these are stored separately in localStorage.
+                */
+
+                // Validate background
+                let background = false;
 
                 if (
-                    typeof parsed.settings.bg !== "string" ||
-                    !parsed.settings.bg.startsWith("data:image")
+                    typeof parsed.settings.bg === "string" &&
+                    parsed.settings.bg.startsWith("data:image")
                 ) {
-                    parsed.settings.bg = false;
+                    background = parsed.settings.bg;
                 }
 
-                state = parsed;
+                // Build clean settings without the background.
+                const importedSettings = {
+                    name: parsed.settings.name ?? "",
+                    rows: parsed.settings.rows ?? 4,
+                    cols: parsed.settings.cols ?? 6,
+                    engine: parsed.settings.engine ?? "https://www.google.com/search?q="
+                };
+
+                // Build sites without iconData.
+                const importedSites = parsed.sites.map(site => ({
+                    id: site.id,
+                    name: site.name,
+                    url: site.url
+                }));
+
+                /*
+                * Save metadata first.
+                * No images are stored inside this key.
+                */
+                const newState = {
+                    settings: importedSettings,
+                    sites: importedSites
+                };
+
+                state = newState;
+
+                deleteAllSiteIcons();
+
+                /*
+                * Save images separately.
+                */
+                if (background) {
+                    saveBackground(background);
+                } else {
+                    deleteBackground();
+                }
+
+                /*
+                * Save every imported site icon.
+                */
+                for (const site of parsed.sites) {
+                    if (
+                        typeof site.iconData === "string" &&
+                        site.iconData.startsWith("data:image")
+                    ) {
+                        saveSiteIcon(site.id, site.iconData);
+                    }
+                }
+
+                /*
+                * Save settings/sites metadata.
+                */
                 saveState();
+
                 currentPage = 0;
 
                 renderWithTransition();
                 applyBackground();
                 panel.classList.remove("open");
+
             } catch (err) {
                 console.error("Import failed:", err);
+
                 state = previousState;
-                alert("This file doesn't look like a valid backup, or it's too large for local storage.");
+
+                alert(
+                    "This file doesn't look like a valid backup, " +
+                    "or it's too large for local storage."
+                );
             }
         };
+
         reader.readAsText(file);
         e.target.value = "";
     });
 
     // Reset everything to default
     document.getElementById("resetBtn").addEventListener("click", async function () {
-        if (await showConfirm("This removes all your sites and settings. Continue?", "Reset Everything")) {
-            state = JSON.parse(JSON.stringify(defaultState));
-            saveState();
-            currentPage = 0;
-            renderWithTransition();
-            applyBackground();
-            panel.classList.remove("open");
+        if (
+            await showConfirm(
+                "This removes all your sites and settings. Continue?",
+                "Reset Everything"
+            )
+        ) {
+            try {
+                clearAllStorageData();
+
+                state = JSON.parse(JSON.stringify(defaultState));
+                currentPage = 0;
+
+                saveState();
+                renderWithTransition();
+                applyBackground();
+
+                panel.classList.remove("open");
+            } catch (err) {
+                console.error("Reset failed:", err);
+                alert("Could not reset the application.");
+            }
         }
     });
 
@@ -967,29 +1138,56 @@
     // =============================================
     //  19. INITIALIZATION
     // =============================================
-    document.body.classList.add('loading');
-
-    updateGreeting();
-    setInterval(updateGreeting, 15000);
-
-    applyBackground();
     render();
-
-    requestAnimationFrame(() => {
-        document.body.classList.add('loaded');
-    });
+    updateGreeting();
+    
+    applyBackground();
+    setInterval(updateGreeting, 15000);
 })();
 
 // =============================================
 // GLOBAL UTILITY: Get LocalStorage Size (Call from Console)
 // =============================================
 function getLocalStorageSize() {
-    let total = 0;
-    for (let key in localStorage) {
-        if (localStorage.hasOwnProperty(key)) {
-            // Multiply by 2 because JS strings are UTF-16
-            total += (localStorage[key].length + key.length) * 2;
-        }
+    const items = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+
+        const value = localStorage.getItem(key);
+
+        // Multiply by 2 because JS strings are UTF-16
+        const size = (key.length + value.length) * 2;
+
+        items.push({
+            key,
+            bytes: size,
+            kb: size / 1024
+        });
     }
-    console.log(`Total localStorage size: ${(total / 1024).toFixed(2)} KB`);
+
+    // Largest items first
+    items.sort((a, b) => b.bytes - a.bytes);
+
+    console.table(
+        items.map(item => ({
+            Key: item.key,
+            "Size (KB)": item.kb.toFixed(2),
+            "Size (Bytes)": item.bytes
+        }))
+    );
+
+    const total = items.reduce((sum, item) => sum + item.bytes, 0);
+
+    console.log(
+        `Total localStorage size: ${(total / 1024).toFixed(2)} KB`
+    );
+
+    return {
+        totalBytes: total,
+        totalKB: total / 1024,
+        totalMB: total / (1024 * 1024),
+        items
+    };
 }
