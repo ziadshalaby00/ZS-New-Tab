@@ -1,0 +1,767 @@
+/* ============================================
+   1. ROOT VARIABLES & GLOBAL COLORS
+   ============================================ */
+:root {
+    --bg-0: #10141a;
+    --bg-1: #151a22;
+    --surface: #1a212b;
+    --surface-2: #222a36;
+    --border: #2b3442;
+    --text: #e7eaf0;
+    --text-dim: #8892a0;
+    
+    --accent: #e8a33d;
+    --accent-dim: #e8a33d55;
+    --cyan: #5fd3c4;
+    
+    --danger: #e2685f;
+    --danger-strong: #d92d20;
+    --danger-strong-hover: #b8241a;
+    
+    --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    
+    --cols: 6;
+    --radius: 16px;
+}
+
+/* ============================================
+   2. BASE RESET & BODY STYLES
+   ============================================ */
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    height: 100%;
+    font-family: var(--font-ui);
+    color: var(--text);
+    background: 
+        radial-gradient(1200px 600px at 50% -10%, #1c2430 0%, transparent 60%), 
+        var(--bg-0);
+    background-attachment: fixed;
+    overflow: auto;
+    -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+    background: var(--accent-dim);
+}
+
+button,
+input,
+select {
+    font-family: inherit;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* ============================================
+   3. BACKGROUND IMAGE OVERLAY
+   ============================================ */
+body.has-bg-image {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+body.has-bg-image::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: rgba(10, 13, 17, 0.30);
+    z-index: 0;
+    pointer-events: none;
+}
+
+body.has-bg-image .app {
+    position: relative;
+    z-index: 1;
+}
+
+/* ============================================
+   4. APP CONTAINER
+   ============================================ */
+.app {
+    position: relative;
+    z-index: 1;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 7vh 5vw 4vh;
+}
+
+/* ============================================
+   5. TOP BAR (SETTINGS & CONTROLS)
+   ============================================ */
+.top-bar {
+    position: fixed;
+    top: 18px;
+    right: 22px;
+    z-index: 20;
+    display: flex;
+    gap: 8px;
+}
+
+.icon-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.icon-btn:hover {
+    color: var(--text);
+    border-color: var(--accent-dim);
+    background: var(--surface-2);
+}
+
+.icon-btn svg {
+    width: 17px;
+    height: 17px;
+}
+
+/* ============================================
+   6. HERO SECTION (GREETING & TIME)
+   ============================================ */
+.hero {
+    text-align: center;
+    margin-bottom: 34px;
+}
+
+.greeting {
+    font-size: 26px;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+.greeting .name {
+    color: var(--accent);
+}
+
+/* ============================================
+   7. SEARCH BAR
+   ============================================ */
+form.search {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: min(560px, 90vw);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 8px 6px 18px;
+    margin-bottom: 46px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+form.search:focus-within {
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 0 4px #e8a33d1a;
+}
+
+form.search select {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 13px;
+    padding-right: 10px;
+    border-right: 1px solid var(--border);
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+form.search select:focus {
+    outline: none;
+}
+
+form.search input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 15px;
+    padding: 10px 0;
+    outline: none;
+}
+
+form.search input::placeholder {
+    color: #5b6472;
+}
+
+form.search button {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    color: #1a1408;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: 0.15s;
+}
+
+form.search button:hover {
+    filter: brightness(1.08);
+}
+
+form.search button svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* ============================================
+   8. GRID & NAVIGATION ARROWS
+   ============================================ */
+.grid-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    justify-content: center;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), 95px);
+    grid-auto-rows: 95px;
+    gap: 14px 10px;
+    justify-content: center;
+}
+
+.page-nav {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.grid-wrap:hover .page-nav.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.page-nav:hover {
+    color: var(--text);
+    border-color: var(--accent-dim);
+}
+
+.page-nav svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ============================================
+   9. TILES (BOOKMARKS)
+   ============================================ */
+.tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    padding-top: 2px;
+}
+
+.tile .icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    box-shadow: inset 0 0 0 1px var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.tile:hover .icon {
+    box-shadow: 0 0 0 2px var(--accent), 0 8px 22px -8px #e8a33d80;
+    transform: translateY(-2px);
+}
+
+.tile .icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tile .icon .letter {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 19px;
+    color: #fff;
+}
+
+.tile .label {
+    font-size: 11.5px;
+    color: var(--text-dim);
+    max-width: 78px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tile .tile-actions {
+    position: absolute;
+    top: -6px;
+    right: 8px;
+    display: none;
+    gap: 4px;
+}
+
+.tile:hover .tile-actions {
+    display: flex;
+}
+
+.tile-actions button {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-1);
+    color: var(--text-dim);
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tile-actions button:hover {
+    color: var(--text);
+}
+
+.tile-actions button.del:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+.tile.add .icon {
+    background: transparent;
+    border: 1.5px dashed var(--border);
+    box-shadow: none;
+    color: var(--text-dim);
+    font-size: 22px;
+}
+
+.tile.add:hover .icon {
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: none;
+    transform: none;
+}
+
+.tile[draggable="true"].dragging {
+    opacity: 0.35;
+}
+
+.tile.empty {
+    pointer-events: none;
+    cursor: default;
+    opacity: 0;
+}
+
+.tile.empty .icon {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    opacity: 0 !important;
+    transform: none !important;
+}
+
+.tile.empty .label {
+    opacity: 0;
+}
+
+/* ============================================
+   10. PAGINATION DOTS
+   ============================================ */
+.dots {
+    display: flex;
+    gap: 7px;
+    margin-top: 26px;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.dot.active {
+    background: var(--accent);
+    width: 18px;
+    border-radius: 4px;
+}
+
+/* ============================================
+   11. SIDE PANEL (SETTINGS)
+   ============================================ */
+.panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 340px;
+    max-width: 88vw;
+    background: var(--bg-1);
+    border-left: 1px solid var(--border);
+    padding: 24px 22px;
+    z-index: 30;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.22s ease;
+}
+
+.panel.open {
+    transform: translateX(0);
+}
+
+.panel h2 {
+    font-size: 16px;
+    margin: 0 0 18px;
+}
+
+.panel .field {
+    margin-bottom: 16px;
+}
+
+.panel label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+}
+
+.panel input[type="text"],
+.panel input[type="number"],
+.panel select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-size: 13px;
+    outline: none;
+}
+
+.panel input:focus,
+.panel select:focus {
+    border-color: var(--accent-dim);
+}
+
+.row2 {
+    display: flex;
+    gap: 10px;
+}
+
+.row2 .field {
+    flex: 1;
+}
+
+.panel .btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: 0.15s;
+}
+
+.panel .btn:hover {
+    border-color: var(--accent-dim);
+}
+
+.panel .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #1a1408;
+    font-weight: 600;
+}
+
+.panel .btn.primary:hover {
+    filter: brightness(1.06);
+}
+
+.panel .btn.danger {
+    color: var(--danger);
+}
+
+.panel .btn.danger:hover {
+    border-color: var(--danger);
+}
+
+.panel hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 20px 0;
+}
+
+.panel .hint {
+    font-size: 11px;
+    color: #5b6472;
+    margin-top: -8px;
+    margin-bottom: 14px;
+    line-height: 1.5;
+}
+
+.panel-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.panel-close:hover {
+    color: var(--text);
+    border-color: var(--accent-dim);
+    background: var(--surface-2);
+}
+
+.panel-close svg {
+    width: 15px;
+    height: 15px;
+}
+
+.panel input[type="file"] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.panel input[type="file"]::file-selector-button {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.panel input[type="file"]::file-selector-button:hover {
+    border-color: var(--accent-dim);
+}
+
+/* ============================================
+   12. MODAL OVERLAY & DIALOG
+   ============================================ */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: #0a0d12b0;
+    backdrop-filter: blur(2px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 40;
+}
+
+.overlay.open {
+    display: flex;
+}
+
+.modal {
+    width: 320px;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+}
+
+.modal h2 {
+    font-size: 15px;
+    margin: 0 0 16px;
+}
+
+.modal .field {
+    margin-bottom: 13px;
+}
+
+.modal label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+}
+
+.modal input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-size: 13px;
+    outline: none;
+}
+
+.modal input:focus {
+    border-color: var(--accent-dim);
+}
+
+.modal .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.modal .actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.modal .actions .save {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #1a1408;
+    font-weight: 600;
+}
+
+.modal .actions .cancel:hover {
+    border-color: var(--text-dim);
+}
+
+.modal .actions .save.danger-fill {
+    background: var(--danger-strong);
+    border-color: var(--danger-strong);
+    color: #fff;
+}
+
+.modal .actions .save.danger-fill:hover {
+    background: var(--danger-strong-hover);
+    border-color: var(--danger-strong-hover);
+    filter: none;
+}
+
+#iconPreview {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+#iconPreviewImg {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface-2);
+}
+
+#removeIconBtn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+}
+
+#removeIconBtn:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+/* ============================================
+   13. CUSTOM SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--surface-2);
+    border-radius: 8px;
+}
+
+/* ============================================
+   14. RESPONSIVE ADJUSTMENTS
+   ============================================ */
+@media (max-width: 600px) {
+    .grid {
+        grid-template-columns: repeat(var(--cols), 72px);
+        grid-auto-rows: 86px;
+    }
+
+    .tile .icon {
+        width: 46px;
+        height: 46px;
+    }
+}

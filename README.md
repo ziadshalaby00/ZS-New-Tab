@@ -149,21 +149,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 ```
 
-## Project structure
-
-```
-├── manifest.json             # Chrome extension manifest (MV3)
-├── index.html                # New tab page markup (points to either the default or shadow files)
-├── styles.css                # Default styling — dark theme, responsive grid, panels, modal, first-load transition
-├── styles.shadow.css         # Same styling as styles.css, minus the first-load transition
-├── script.js                 # Default app logic — state, rendering, IndexedDB (background/icons), drag & drop, import/export
-├── script.shadow.js          # Same app logic as script.js, but background image and custom icons are stored in localStorage instead of IndexedDB
-├── CONTRIBUTING.md           # How to set up the project and submit changes
-├── ISSUES.md                 # Known issues and how to report bugs
-├── icons/
-└── images/
-```
-
 ## Tech stack
 
 - Vanilla HTML, CSS, and JavaScript — no build step, no dependencies
