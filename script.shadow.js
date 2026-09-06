@@ -864,7 +864,7 @@
 
         const reader = new FileReader();
 
-        reader.onload = function (ev) {
+        reader.onload = async function (ev) {
             const previousState = state;
 
             try {
@@ -887,6 +887,12 @@
                 *
                 * but these are stored separately in localStorage.
                 */
+
+                const ans = await showConfirm(
+                    "Current data will be lost when you import this file."
+                )
+
+                if(!ans) return;
 
                 // Validate background
                 let background = false;

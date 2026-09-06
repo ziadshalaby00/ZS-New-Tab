@@ -1103,6 +1103,12 @@
                     throw new Error("Invalid format");
                 }
 
+                const ans = await showConfirm(
+                    "Current data will be lost when you import this file."
+                )
+
+                if(!ans) return;
+
                 // Now that the backup is valid, clear old assets
                 await clearAllStorageData();
 
