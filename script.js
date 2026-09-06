@@ -238,8 +238,9 @@
         return deleteImageBlob(getIconKey(siteId));
     }
 
-    function clearAllStorageData() {
+    async function clearAllStorageData() {
         localStorage.clear();
+        await clearStoredAssets();
     }
 
     // Lazily loads icons only for the sites passed in (i.e. the sites on the
@@ -1103,8 +1104,7 @@
                 }
 
                 // Now that the backup is valid, clear old assets
-                await clearStoredAssets();
-                clearAllStorageData();
+                await clearAllStorageData();
 
                 // 1. Import background
                 const bgDataURL = parsed.settings.bg;
@@ -1159,28 +1159,31 @@
 
     // Reset everything to default
     document.getElementById("resetBtn").addEventListener("click", async function () {
-        if (await showConfirm("This removes all your sites and settings. Continue?", "Reset Everything")) {
+        if (
+            await showConfirm(
+                "This removes all your sites and settings. Continue?",
+                "Reset Everything"
+            )
+        ) {
             try {
-                await deleteBackgroundBlob();
-                for (const site of state.sites) {
-                    if (site.iconData === true) {
-                        await deleteSiteIcon(site.id);
-                    }
-                }
-            } catch (_) {
-                // Ignore cleanup errors
+                await clearAllStorageData();
+            } catch (err) {
+                console.warn("Failed to clear stored data:", err);
             }
 
-            for (const url of iconCache.values()) URL.revokeObjectURL(url);
+            for (const url of iconCache.values()) {
+                URL.revokeObjectURL(url);
+            }
             iconCache.clear();
 
-            clearAllStorageData();
-            
             state = JSON.parse(JSON.stringify(defaultState));
             saveState();
+
             currentPage = 0;
+
             renderWithTransition();
             applyBackground();
+
             panel.classList.remove("open");
         }
     });
