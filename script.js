@@ -238,6 +238,10 @@
         return deleteImageBlob(getIconKey(siteId));
     }
 
+    function clearAllStorageData() {
+        localStorage.clear();
+    }
+
     // Lazily loads icons only for the sites passed in (i.e. the sites on the
     // currently visible page), instead of pulling every custom icon out of
     // IndexedDB up front. Already-cached icons are skipped.
@@ -1100,6 +1104,7 @@
 
                 // Now that the backup is valid, clear old assets
                 await clearStoredAssets();
+                clearAllStorageData();
 
                 // 1. Import background
                 const bgDataURL = parsed.settings.bg;
@@ -1168,6 +1173,8 @@
 
             for (const url of iconCache.values()) URL.revokeObjectURL(url);
             iconCache.clear();
+
+            clearAllStorageData();
             
             state = JSON.parse(JSON.stringify(defaultState));
             saveState();

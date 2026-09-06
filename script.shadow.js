@@ -132,26 +132,8 @@
         localStorage.removeItem(BACKGROUND_KEY);
     }
 
-    function deleteAllSiteIcons() {
-        const keysToDelete = [];
-
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-
-            if (key && key.startsWith(ICON_KEY_PREFIX)) {
-                keysToDelete.push(key);
-            }
-        }
-
-        for (const key of keysToDelete) {
-            localStorage.removeItem(key);
-        }
-    }
-
     function clearAllStorageData() {
-        localStorage.removeItem(SETTINGS_KEY);
-        localStorage.removeItem(BACKGROUND_KEY);
-        deleteAllSiteIcons();
+        localStorage.clear();
     }
 
 
@@ -942,7 +924,7 @@
 
                 state = newState;
 
-                deleteAllSiteIcons();
+                clearAllStorageData();
 
                 /*
                 * Save images separately.
