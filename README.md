@@ -38,7 +38,7 @@ The project uses a modular architecture. A **shared foundation** handles all UI 
 | **Background & custom icons** | N/A | `IndexedDB` | `localStorage` |
 | **First-load animation** | N/A | Yes — background and grid fade in together | None — everything renders instantly |
 | **Load speed** | N/A | Fast | As fast as the browser can render — practically instant |
-| **Storage ceiling** | N/A | Effectively unlimited (IndexedDB has no 5–10 MB wall) | Bound by `localStorage` limit (5–10 MB). Safe for ~100 custom-icon sites or fewer. |
+| **Storage ceiling** | N/A | Effectively unlimited (IndexedDB has no 5–10 MB wall) | Bound by `localStorage` limit (5–10 MB). |
 
 **Use the Default Build** if you want no practical limit on how many sites or custom icons you keep, and don't mind a small fade-in on first load.
 
