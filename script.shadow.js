@@ -147,9 +147,23 @@
         actions.appendChild(editBtn); actions.appendChild(delBtn);
         tile.appendChild(icon); tile.appendChild(label); tile.appendChild(actions);
 
-        tile.addEventListener("click", () => window.location.href = site.url);
-        tile.addEventListener("auxclick", e => { if (e.button === 1) { e.preventDefault(); window.open(site.url, "_blank"); }});
-        
+        tile.addEventListener("click", () => {
+            window.location.href = site.url;
+        });
+
+        tile.addEventListener("mousedown", e => {
+            if (e.button === 1) {
+                e.preventDefault();
+            }
+        });
+
+        tile.addEventListener("auxclick", e => {
+            if (e.button === 1) {
+                e.preventDefault();
+                window.open(site.url, "_blank");
+            }
+        });
+
         tile.addEventListener("dragstart", e => {
             dragSourceId = site.id; tile.classList.add("dragging");
             if (e.dataTransfer) { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", site.id); }
