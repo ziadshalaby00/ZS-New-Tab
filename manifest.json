@@ -14,5 +14,10 @@
     "48": "./icons/favicon-32x32.png",
     "128": "./icons/android-chrome-192x192.png"
   },
-  "incognito": "split"
+  "incognito": "split",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "newtab@ziadshalaby.dev"
+    }
+  }
 }
