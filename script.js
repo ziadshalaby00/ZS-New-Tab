@@ -493,6 +493,12 @@
         onPageChange: (newPage) => { currentPage = newPage; renderWithTransition(); }
     });
 
+    ZSShared.setupDragEdgeNavigation(".grid-wrap", {
+        canGoPrev: () => currentPage > 0,
+        canGoNext: () => currentPage < ZSShared.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols) - 1,
+        onNavigate: (dir) => { currentPage += dir; renderWithTransition(); }
+    });
+
     document.body.classList.add('loading');
     try { await initDB(); } catch (err) { console.warn(err); }
     const bgTimeout = new Promise((resolve) => setTimeout(resolve, 350));

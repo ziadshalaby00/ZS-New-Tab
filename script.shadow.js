@@ -371,6 +371,12 @@
         onPageChange: (newPage) => { currentPage = newPage; renderWithTransition(); }
     });
 
+        ZSShared.setupDragEdgeNavigation(".grid-wrap", {
+        canGoPrev: () => currentPage > 0,
+        canGoNext: () => currentPage < ZSShared.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols) - 1,
+        onNavigate: (dir) => { currentPage += dir; renderWithTransition(); }
+    });
+
     render();
     applyBackground();
 })();

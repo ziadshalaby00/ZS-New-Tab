@@ -283,6 +283,38 @@ form.search button svg {
     height: 14px;
 }
 
+.grid-wrap.drag-edge-left::before,
+.grid-wrap.drag-edge-right::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.2s ease;
+}
+
+.grid-wrap.drag-edge-left::before {
+    background: linear-gradient(
+        to right,
+        rgba(232, 163, 61, 0.85) 0px,
+        rgba(232, 163, 61, 0.55) 6px,
+        rgba(232, 163, 61, 0.28) 14px,
+        rgba(232, 163, 61, 0.10) 22px,
+        rgba(232, 163, 61, 0) 30px
+    );
+}
+
+.grid-wrap.drag-edge-right::before {
+    background: linear-gradient(
+        to left,
+        rgba(232, 163, 61, 0.85) 0px,
+        rgba(232, 163, 61, 0.55) 6px,
+        rgba(232, 163, 61, 0.28) 14px,
+        rgba(232, 163, 61, 0.10) 22px,
+        rgba(232, 163, 61, 0) 30px
+    );
+}
+
 /* ============================================
    9. TILES (BOOKMARKS)
    ============================================ */

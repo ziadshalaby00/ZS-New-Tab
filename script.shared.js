@@ -333,6 +333,72 @@ window.ZSShared = (function () {
         });
     }
 
+    function setupDragEdgeNavigation(gridWrapSelector, callbacks, edgeSize = 30, holdMs = 500) {
+        const gridWrap = document.querySelector(gridWrapSelector);
+        if (!gridWrap) return;
+
+        let hoverTimer = null;
+        let activeDir = 0;
+
+        function clearTimer() {
+            if (hoverTimer) clearTimeout(hoverTimer);
+
+            hoverTimer = null;
+            activeDir = 0;
+
+            gridWrap.classList.remove("drag-edge-left", "drag-edge-right");
+        }
+
+        gridWrap.addEventListener("dragover", e => {
+            e.preventDefault();
+
+            const rect = gridWrap.getBoundingClientRect();
+            const x = e.clientX;
+
+            let dir = 0;
+
+            if (x - rect.left < edgeSize) dir = -1;
+            else if (rect.right - x < edgeSize) dir = 1;
+
+            if (dir === 0) {
+                clearTimer();
+                return;
+            }
+
+            const canGo = dir === -1 ? callbacks.canGoPrev() : callbacks.canGoNext();
+            if (!canGo) {
+                clearTimer();
+                return;
+            }
+
+            // Already waiting for the same direction
+            if (activeDir === dir && hoverTimer) {
+                return;
+            }
+
+            clearTimer();
+
+            activeDir = dir;
+
+            gridWrap.classList.add(dir === -1 ? "drag-edge-left" : "drag-edge-right");
+
+            hoverTimer = setTimeout(() => {
+                callbacks.onNavigate(dir);
+
+                hoverTimer = null;
+                activeDir = 0;
+
+                gridWrap.classList.remove("drag-edge-left", "drag-edge-right");
+            }, holdMs);
+        });
+
+        gridWrap.addEventListener("dragleave", e => {
+            if (!gridWrap.contains(e.relatedTarget)) clearTimer();
+        });
+
+        gridWrap.addEventListener("drop", clearTimer);
+    }
+
     // =============================================
     //  6. STORAGE INSPECTOR (Global Utility)
     // =============================================
@@ -374,6 +440,7 @@ window.ZSShared = (function () {
         setupKeyboardShortcuts,
         setupClickOutsidePanel,
         setupScrollNavigation,
+        setupDragEdgeNavigation,
         getLocalStorageSize
     };
 })();
