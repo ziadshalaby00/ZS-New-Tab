@@ -378,4 +378,4 @@ window.ZSShared = (function () {
     };
 })();
 
-window.getLocalStorageSize = ZSShared.getLocalStorageSize;
+window.gl = ZSShared.getLocalStorageSize;
