@@ -315,6 +315,20 @@ form.search button svg {
     );
 }
 
+.tile.drop-before::before,
+.tile.drop-after::after {
+    content: "";
+    position: absolute;
+    top: var(--drop-line-top, 0);
+    height: var(--drop-line-h, 100%);
+    width: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+}
+
+.tile.drop-before::before { left: -6px; }
+.tile.drop-after::after { right: -6px; }
+
 /* ============================================
    9. TILES (BOOKMARKS)
    ============================================ */

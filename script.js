@@ -207,6 +207,19 @@
         ZSShared.updatePaginationUI(total, currentPage, (idx) => { currentPage = idx; renderWithTransition(); });
     }
 
+    let currentDropTarget = null;
+    let currentDropSide = null;
+
+    function clearDropIndicator() {
+        if (currentDropTarget) {
+            currentDropTarget.classList.remove("drop-before", "drop-after");
+            currentDropTarget.style.removeProperty("--drop-line-top");
+            currentDropTarget.style.removeProperty("--drop-line-h");
+        }
+        currentDropTarget = null;
+        currentDropSide = null;
+    }
+
     function buildTile(site) {
         const tile = document.createElement("div");
         tile.className = "tile";
@@ -282,16 +295,54 @@
             dragSourceId = site.id; tile.classList.add("dragging");
             if (e.dataTransfer) { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", site.id); }
         });
-        tile.addEventListener("dragend", () => tile.classList.remove("dragging"));
-        tile.addEventListener("dragover", e => e.preventDefault());
-        tile.addEventListener("drop", e => {
+        tile.addEventListener("dragend", () => {
+            tile.classList.remove("dragging");
+            clearDropIndicator();
+        });
+
+        tile.addEventListener("dragover", e => {
             e.preventDefault();
             if (!dragSourceId || dragSourceId === site.id) return;
+
+            const rect = tile.getBoundingClientRect();
+            const isLeftHalf = (e.clientX - rect.left) < rect.width / 2;
+            const side = isLeftHalf ? "before" : "after";
+
+            if (currentDropTarget !== tile || currentDropSide !== side) {
+                clearDropIndicator();
+                currentDropTarget = tile;
+                currentDropSide = side;
+
+                const icon = tile.querySelector(".icon");
+                tile.style.setProperty("--drop-line-top", icon.offsetTop + "px");
+                tile.style.setProperty("--drop-line-h", icon.offsetHeight + "px");
+                tile.classList.add(side === "before" ? "drop-before" : "drop-after");
+            }
+        });
+
+        tile.addEventListener("dragleave", e => {
+            if (currentDropTarget === tile && !tile.contains(e.relatedTarget)) {
+                clearDropIndicator();
+            }
+        });
+
+        tile.addEventListener("drop", e => {
+            e.preventDefault();
+            const side = currentDropSide;
+            clearDropIndicator();
+
+            if (!dragSourceId || dragSourceId === site.id) return;
+
             const fromIndex = state.sites.findIndex(s => s.id === dragSourceId);
-            const toIndex = state.sites.findIndex(s => s.id === site.id);
-            if (fromIndex === -1 || toIndex === -1) return;
+            if (fromIndex === -1) return;
+
             const moved = state.sites.splice(fromIndex, 1)[0];
-            state.sites.splice(toIndex, 0, moved);
+            const toIndex = state.sites.findIndex(s => s.id === site.id);
+            if (toIndex === -1) { state.sites.splice(fromIndex, 0, moved); return; }
+
+            const insertIndex = side === "after" ? toIndex + 1 : toIndex;
+            state.sites.splice(insertIndex, 0, moved);
+
             saveState(); render();
         });
         return tile;
