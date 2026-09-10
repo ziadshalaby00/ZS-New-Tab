@@ -215,15 +215,17 @@
 
         const icon = document.createElement("div");
         icon.className = "icon";
-        icon.style.background = ZSShared.getColorForName(site.name);
+        icon.style.background = "transparent";
 
         const img = document.createElement("img");
         if (site.iconData === true && iconCache.has(site.id)) img.src = iconCache.get(site.id);
         else img.src = ZSShared.getFaviconUrl(site.url);
-        img.alt = "";
         
+        img.alt = "";
         img.onerror = () => {
             icon.innerHTML = "";
+            icon.style.background = ZSShared.getColorForName(site.name);
+
             const span = document.createElement("span");
             span.className = "letter";
             span.textContent = ZSShared.getFirstLetter(site.name);

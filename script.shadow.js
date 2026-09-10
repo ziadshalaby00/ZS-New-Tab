@@ -105,7 +105,7 @@
 
         const icon = document.createElement("div");
         icon.className = "icon";
-        icon.style.background = ZSShared.getColorForName(site.name);
+        icon.style.background = "transparent";
 
         const img = document.createElement("img");
         const iconData = loadSiteIcon(site.id);
@@ -115,6 +115,8 @@
         img.alt = "";
         img.onerror = () => {
             icon.innerHTML = "";
+            icon.style.background = ZSShared.getColorForName(site.name);
+
             const span = document.createElement("span");
             span.className = "letter";
             span.textContent = ZSShared.getFirstLetter(site.name);
