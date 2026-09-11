@@ -358,12 +358,22 @@ window.ZSShared = (function () {
     /**
      * Sets up global keyboard shortcuts, such as focusing the search input on "/" and triggering an escape callback.
      */
-    function setupKeyboardShortcuts(searchInputId, onEscapeFn) {
+    function setupKeyboardShortcuts(searchInputId, onEscapeFn, onToggleSettingsFn) {
         document.addEventListener("keydown", (e) => {
-            if (e.key === "/" && document.activeElement.tagName !== "INPUT") {
+            const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(
+                document.activeElement.tagName
+            );
+
+            if (e.key === "/" && !isTyping) {
                 e.preventDefault();
                 document.getElementById(searchInputId)?.focus();
             }
+
+            if (e.key.toLowerCase() === "p" && !isTyping && onToggleSettingsFn) {
+                e.preventDefault();
+                onToggleSettingsFn();
+            }
+
             if (e.key === "Escape" && onEscapeFn) {
                 onEscapeFn();
             }

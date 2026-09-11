@@ -613,7 +613,7 @@
     ZSShared.setupKeyboardShortcuts("searchInput", () => { 
         closeModal(); 
         panel.classList.remove("open"); 
-    });
+    }, () => panel.classList.toggle("open"));
     ZSShared.setupClickOutsidePanel("panel", "settingsToggle");
     ZSShared.setupGreeting(".greeting");
 
