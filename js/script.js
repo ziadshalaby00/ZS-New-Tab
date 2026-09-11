@@ -623,12 +623,13 @@
     //  8. SETTINGS PANEL & ACTIONS
     // =============================================
     const panel = document.getElementById("panel");
-    document.getElementById("settingsToggle").addEventListener("click", () => {
+    function openSettingsPanel() {
         document.getElementById("displayName").value = state.settings.name;
         document.getElementById("rowsInput").value = state.settings.rows;
         document.getElementById("colsInput").value = state.settings.cols;
         panel.classList.toggle("open");
-    });
+    }
+    document.getElementById("settingsToggle").addEventListener("click", openSettingsPanel);
     document.getElementById("panelClose").addEventListener("click", () => panel.classList.remove("open"));
 
     /**
@@ -800,7 +801,7 @@
     ZSShared.setupKeyboardShortcuts("searchInput", () => { 
         closeModal(); 
         panel.classList.remove("open"); 
-    }, () => panel.classList.toggle("open"));
+    }, openSettingsPanel);
     ZSShared.setupClickOutsidePanel("panel", "settingsToggle");
     ZSShared.setupGreeting(".greeting");
 

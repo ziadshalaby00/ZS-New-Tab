@@ -22,7 +22,7 @@ A minimal, fast, and fully offline **New Tab** replacement for Chrome — a pers
 - **Custom background** — upload any image as your background
 - **Smart image compression** — background and icon uploads are automatically downscaled (via canvas, before saving) to keep storage lean and loading fast, without a visible quality hit
 - **Backup & restore** — export your full setup (sites, settings, background image) to a `.json` file, and import it back anytime
-* **Keyboard shortcuts** — `/` to focus search, `P` to open the settings panel, `Esc` to close any open panel or modal
+- **Keyboard shortcuts** — `/` to focus search, `P` to toggle the settings panel, `Esc` to close any open panel or modal
 - **Dark UI** — clean dark theme built with plain CSS (no frameworks)
 - **Modular Architecture** — DRY (Don't Repeat Yourself) codebase with shared logic, separated from environment-specific storage implementations.
 - **Two performance modes** — a default build and a "shadow" build; see [Default vs Shadow](#default-vs-shadow-performance-mode) below
