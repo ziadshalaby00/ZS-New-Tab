@@ -22,18 +22,18 @@ A minimal, fast, and fully offline **New Tab** replacement for Chrome — a pers
 - **Custom background** — upload any image as your background
 - **Smart image compression** — background and icon uploads are automatically downscaled (via canvas, before saving) to keep storage lean and loading fast, without a visible quality hit
 - **Backup & restore** — export your full setup (sites, settings, background image) to a `.json` file, and import it back anytime
-- **Keyboard shortcuts** — `/` to focus search, `Esc` to close any open panel or modal
+* **Keyboard shortcuts** — `/` to focus search, `P` to open the settings panel, `Esc` to close any open panel or modal
 - **Dark UI** — clean dark theme built with plain CSS (no frameworks)
 - **Modular Architecture** — DRY (Don't Repeat Yourself) codebase with shared logic, separated from environment-specific storage implementations.
 - **Two performance modes** — a default build and a "shadow" build; see [Default vs Shadow](#default-vs-shadow-performance-mode) below
 
 ## Default vs Shadow (performance mode)
 
-The project uses a modular architecture. A **shared foundation** handles all UI rendering, utilities, and default states. On top of that, you choose one of two environment-specific builds that differ only in *where data is stored* and *how the first load looks*.
+The project uses a modular architecture. A **shared foundation** handles default state, utilities, and common UI components. On top of that, you choose one of two environment-specific builds that differ only in *where data is stored* and *how the first load looks*.
 
-| Feature | Shared Foundation | Default Build (`script.js` + `styles.css`) | Shadow Build (`script.shadow.js` + `styles.shadow.css`) |
+| Feature | Shared Foundation | Default Build (`js/script.js` + `styles/styles.css`) | Shadow Build (`js/script.shadow.js` + `styles/styles.shadow.css`) |
 |---|---|---|---|
-| **Core Logic & UI** | `script.shared.js` + `styles.shared.css` | *(Uses Shared)* | *(Uses Shared)* |
+| **Core Logic & UI** | `js/script.shared.js` + `styles/styles.shared.css` | *(Uses Shared)* | *(Uses Shared)* |
 | **Sites & settings** | N/A | `localStorage` | `localStorage` |
 | **Background & custom icons** | N/A | `IndexedDB` | `localStorage` |
 | **First-load animation** | N/A | Yes — background and grid fade in together | None — everything renders instantly |
@@ -50,33 +50,35 @@ Open `index.html`. The **shared foundation files must always be loaded first**, 
 
 ```html
 <!-- 1. ALWAYS load the shared foundation first -->
-<link rel="stylesheet" href="styles.shared.css">
+<link rel="stylesheet" href="./styles/styles.shared.css">
 <!-- ... -->
-<script src="script.shared.js"></script>
+<script src="./js/script.shared.js"></script>
 
 <!-- 2. Load EITHER the Default OR the Shadow build (never mix them) -->
 
 <!-- OPTION A: Default -->
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="./styles/styles.css">
 <!-- ... -->
-<script src="script.js"></script>
+<script src="./js/script.js"></script>
 
 <!-- OPTION B: Shadow (max speed, no first-load animation) -->
-<link rel="stylesheet" href="styles.shadow.css">
+<link rel="stylesheet" href="./styles/styles.shadow.css">
 <!-- ... -->
-<script src="script.shadow.js"></script>
+<script src="./js/script.shadow.js"></script>
 ```
 
 > **⚠️ Important:** When switching between modes, do it in this order to avoid data conflicts: **Export backup** → **Reset everything** → **Switch the files in `index.html`** → **Import backup**.
 
 ## Supported browsers
 
-Built on Manifest V3 (minimum Chrome 88), so it works on any Chromium-based browser:
+Primarily built on Manifest V3 (minimum Chrome 88) for Chromium-based browsers:
 - Chrome
 - Edge
 - Brave
 - Opera
 - Vivaldi
+
+Also tested on **Firefox Developer Edition**.
 
 ## Installation
 
@@ -153,7 +155,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 ## Tech stack
 
 - **Vanilla HTML, CSS, and JavaScript** — no build step, no dependencies.
-- **Modular Architecture** — Shared logic, state defaults, and UI components are isolated in `script.shared.js` and `styles.shared.css` to keep the codebase DRY (Don't Repeat Yourself).
+- **Modular Architecture** — Shared logic, default state, utilities, and common UI components are isolated in `js/script.shared.js` and `styles/styles.shared.css`.
 - **Storage**: `localStorage` for app state (sites and settings) in both builds.
   - *Default build*: `IndexedDB` for background images and custom site icons.
   - *Shadow build*: `localStorage` for background images and custom site icons too, for instant synchronous reads.
@@ -162,17 +164,17 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 ## Performance & UX details
 
-- **Shared Rendering Pipeline**: All DOM manipulation and UI rendering are handled centrally by `script.shared.js`, ensuring consistent behavior and easier maintenance across both builds.
+- **Shared utilities and UI components**: Common helpers and components (e.g., `buildAddTile`, `buildEmptyTile`, `createRenderer`, `updatePaginationUI`, image resizing, favicon helpers) live in `js/script.shared.js`. Each build handles its own state, storage, and main render loop.
 - **Default build**: On startup, the app waits for both the grid render and the background image to be ready before revealing anything, so the page appears as a single smooth transition instead of the background and bookmarks popping in at different times. A short timeout safeguard ensures a slow background load never blocks the page from appearing.
-- **Shadow build**: There's nothing to wait for — the background and every icon are already sitting in `localStorage` as part of the same state object, so they render synchronously with the rest of the page. No transition, no timeout safeguard needed.
+- **Shadow build**: There's nothing to wait for — the background and every icon are stored directly in `localStorage` and read synchronously, so they render together with the rest of the page. No transition, no timeout safeguard needed.
 - **Automatic image resizing** (both builds): Any image you upload (background or site icon) is resized on a `<canvas>` before being saved — backgrounds are capped at 1920×1080 and icons at 128×128 — cutting down storage size and speeding up future loads, with no manual compression needed from the user.
 
 ## Customization
 
 - **Search engines**: Add more options in the `<select id="engineSelect">` element in `index.html`.
-- **Colors**: All theme colors are CSS variables at the top of **`styles.shared.css`** (`:root { --accent, --bg-0, ... }`). Change them in this single file to re-theme the whole app for both builds.
-- **Default bookmarks**: Edit the `defaultState.sites` array in **`script.shared.js`** to change what ships by default for a fresh install.
-- **Resize limits**: Adjust the max width/height/quality passed to the `resizeImage()` function inside **`script.shared.js`** if you want larger or smaller stored images.
+- **Colors**: All theme colors are CSS variables at the top of **`styles/styles.shared.css`** (`:root { --accent, --bg-0, ... }`). Change them in this single file to re-theme the whole app for both builds.
+- **Default bookmarks**: Edit the `defaultState.sites` array in **`js/script.shared.js`** to change what ships by default for a fresh install.
+- **Resize limits**: Adjust the max width/height/quality passed to the `resizeImage()` function inside **`js/script.shared.js`** if you want larger or smaller stored images.
 
 ## Data & privacy
 
@@ -180,7 +182,7 @@ Almost everything lives in your browser only:
 - Sites and settings → `localStorage` (both builds)
 - Background image and custom site icons →
   - *Default build*: `IndexedDB` (resized before storage to keep things light)
-  - *Shadow build*: `localStorage`, alongside everything else (same resizing applies)
+  - *Shadow build*: `localStorage`, under separate keys (`ZSNewTab.background` and `ZSNewTab.icon.<id>`) (same resizing applies)
 
 Two things do reach outside your browser:
 - **Favicon lookups**, via Google's public favicon service (`https://www.google.com/s2/favicons`), used to fetch each site's icon.
