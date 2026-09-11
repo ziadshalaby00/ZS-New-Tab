@@ -50,30 +50,55 @@ window.ZSShared = (function () {
     // =============================================
     //  2. UTILITY FUNCTIONS
     // =============================================
+
+    /**
+     * Generates a unique alphanumeric ID based on the current timestamp and a random string.
+     */
     function generateId() {
         return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     }
 
+    /**
+     * Extracts the hostname from a given URL string, returning an empty string if the URL is invalid.
+     */
     function getHostname(url) {
-        try { return new URL(url).hostname; } catch (_) { return ""; }
+        try { 
+            return new URL(url).hostname; 
+        } catch (_) { 
+            return ""; 
+        }
     }
 
+    /**
+     * Returns the Google favicon URL for a given website URL.
+     */
     function getFaviconUrl(url) {
         const host = getHostname(url);
         return host ? `https://www.google.com/s2/favicons?sz=128&domain=${host}` : "";
     }
 
+    /**
+     * Returns the first uppercase letter of a given name, or "?" if the name is empty.
+     */
     function getFirstLetter(name) {
         return (name || "?").trim().charAt(0).toUpperCase();
     }
 
+    /**
+     * Generates a consistent color from a predefined palette based on the sum of character codes in the name.
+     */
     function getColorForName(name) {
         const palette = ["#e8a33d", "#5fd3c4", "#6f9be0", "#c77dd1", "#e2685f", "#7fbf7f", "#d4a24d", "#8a8fe0"];
         let sum = 0;
-        for (let i = 0; i < name.length; i++) sum += name.charCodeAt(i);
+        for (let i = 0; i < name.length; i++) {
+            sum += name.charCodeAt(i);
+        }
         return palette[sum % palette.length];
     }
 
+    /**
+     * Converts a Blob object to a Data URL string using a Promise.
+     */
     function blobToDataURL(blob) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -83,16 +108,24 @@ window.ZSShared = (function () {
         });
     }
 
+    /**
+     * Converts a Data URL string back to a Blob object with the correct MIME type.
+     */
     function dataURLToBlob(dataURL) {
         const parts = dataURL.split(",");
         const mime = parts[0].match(/:(.*?);/)[1];
         const byteString = atob(parts[1]);
         const ab = new ArrayBuffer(byteString.length);
         const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
         return new Blob([ab], { type: mime });
     }
 
+    /**
+     * Displays a custom confirmation modal and returns a Promise that resolves to true or false based on user action.
+     */
     function showConfirm(message, title = "Confirm") {
         return new Promise((resolve) => {
             const overlay = document.createElement("div");
@@ -117,7 +150,9 @@ window.ZSShared = (function () {
 
             modal.querySelector(".cancel").addEventListener("click", () => cleanup(false));
             modal.querySelector(".save").addEventListener("click", () => cleanup(true));
-            overlay.addEventListener("click", (e) => { if (e.target === overlay) cleanup(false); });
+            overlay.addEventListener("click", (e) => { 
+                if (e.target === overlay) cleanup(false); 
+            });
 
             function onKey(e) {
                 if (e.key === "Escape") {
@@ -129,6 +164,9 @@ window.ZSShared = (function () {
         });
     }
 
+    /**
+     * Resizes an image file to fit within specified maximum width and height, returning a Promise that resolves to a resized Blob.
+     */
     function resizeImage(file, maxWidth, maxHeight, quality = 0.82) {
         return new Promise((resolve, reject) => {
             const img = new Image();
@@ -138,7 +176,9 @@ window.ZSShared = (function () {
                 URL.revokeObjectURL(objectUrl);
                 let { width, height } = img;
 
-                if (width <= maxWidth && height <= maxHeight) return resolve(file);
+                if (width <= maxWidth && height <= maxHeight) {
+                    return resolve(file);
+                }
 
                 const ratio = Math.min(maxWidth / width, maxHeight / height);
                 width = Math.round(width * ratio);
@@ -165,6 +205,10 @@ window.ZSShared = (function () {
     // =============================================
     //  3. UI COMPONENTS & RENDER HELPERS
     // =============================================
+
+    /**
+     * Creates and returns an empty, non-interactive DOM element to represent an empty grid tile.
+     */
     function buildEmptyTile() {
         const tile = document.createElement("div");
         tile.className = "tile empty";
@@ -185,6 +229,9 @@ window.ZSShared = (function () {
         return tile;
     }
 
+    /**
+     * Creates and returns a DOM element for an "Add site" tile with an attached click event listener.
+     */
     function buildAddTile(onClickFn) {
         const tile = document.createElement("div");
         tile.className = "tile add";
@@ -203,11 +250,15 @@ window.ZSShared = (function () {
         return tile;
     }
 
+    /**
+     * Creates and returns a render function that applies a smooth fade transition effect when updating a specific grid element.
+     */
     function createRenderer(gridId, renderFn) {
         let isTransitioning = false;
         return function (force = false) {
             const grid = document.getElementById(gridId);
             if (!grid) return;
+            
             if (force) {
                 renderFn();
                 grid.style.transition = 'none';
@@ -215,6 +266,7 @@ window.ZSShared = (function () {
                 isTransitioning = false;
                 return;
             }
+            
             if (isTransitioning) return;
             
             grid.style.transition = 'opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -231,6 +283,9 @@ window.ZSShared = (function () {
         };
     }
 
+    /**
+     * Updates the visual state of pagination dots and prev/next buttons based on the current page and total pages.
+     */
     function updatePaginationUI(total, currentPage, onPageSelect) {
         const dotsContainer = document.getElementById("dots");
         if (dotsContainer) {
@@ -251,10 +306,17 @@ window.ZSShared = (function () {
     // =============================================
     //  4. PAGINATION MATH
     // =============================================
+
+    /**
+     * Calculates the total number of items that can fit on a single page based on rows and columns.
+     */
     function getPageSize(rows, cols) {
         return rows * cols;
     }
 
+    /**
+     * Calculates the total number of pages needed for a given number of sites, rows, and columns.
+     */
     function getTotalPages(sitesCount, rows, cols) {
         return Math.max(1, Math.ceil((sitesCount + 1) / getPageSize(rows, cols)));
     }
@@ -262,6 +324,10 @@ window.ZSShared = (function () {
     // =============================================
     //  5. GLOBAL EVENT SETUPS
     // =============================================
+
+    /**
+     * Sets up a dynamic greeting message based on the current time of day and updates it periodically.
+     */
     function setupGreeting(selector) {
         const node = document.querySelector(selector)?.firstChild;
         if (!node) return;
@@ -274,6 +340,9 @@ window.ZSShared = (function () {
         setInterval(update, 15000);
     }
 
+    /**
+     * Attaches a submit event listener to a search form to handle URL detection or search engine queries.
+     */
     function setupSearchForm(formId, inputId, getEngineFn) {
         const form = document.getElementById(formId);
         if (!form) return;
@@ -286,6 +355,9 @@ window.ZSShared = (function () {
         });
     }
 
+    /**
+     * Sets up global keyboard shortcuts, such as focusing the search input on "/" and triggering an escape callback.
+     */
     function setupKeyboardShortcuts(searchInputId, onEscapeFn) {
         document.addEventListener("keydown", (e) => {
             if (e.key === "/" && document.activeElement.tagName !== "INPUT") {
@@ -298,6 +370,9 @@ window.ZSShared = (function () {
         });
     }
 
+    /**
+     * Adds a document-level click listener to close a specified panel if the click occurs outside of it and its toggle button.
+     */
     function setupClickOutsidePanel(panelId, toggleBtnId) {
         document.addEventListener("click", (e) => {
             const panel = document.getElementById(panelId);
@@ -310,6 +385,9 @@ window.ZSShared = (function () {
         });
     }
 
+    /**
+     * Enables mouse wheel scrolling to navigate between pages in a grid wrapper, with a debounce mechanism to prevent rapid firing.
+     */
     function setupScrollNavigation(gridWrapSelector, callbacks) {
         const gridWrap = document.querySelector(gridWrapSelector);
         if (!gridWrap) return;
@@ -333,6 +411,9 @@ window.ZSShared = (function () {
         });
     }
 
+    /**
+     * Triggers page navigation when a dragged item hovers near the left or right edge of the grid wrapper for a specified duration.
+     */
     function setupDragEdgeNavigation(gridWrapSelector, callbacks, edgeSize = 30, holdMs = 500) {
         const gridWrap = document.querySelector(gridWrapSelector);
         if (!gridWrap) return;
@@ -342,10 +423,8 @@ window.ZSShared = (function () {
 
         function clearTimer() {
             if (hoverTimer) clearTimeout(hoverTimer);
-
             hoverTimer = null;
             activeDir = 0;
-
             gridWrap.classList.remove("drag-edge-left", "drag-edge-right");
         }
 
@@ -354,7 +433,6 @@ window.ZSShared = (function () {
 
             const rect = gridWrap.getBoundingClientRect();
             const x = e.clientX;
-
             let dir = 0;
 
             if (x - rect.left < edgeSize) dir = -1;
@@ -371,23 +449,18 @@ window.ZSShared = (function () {
                 return;
             }
 
-            // Already waiting for the same direction
             if (activeDir === dir && hoverTimer) {
                 return;
             }
 
             clearTimer();
-
             activeDir = dir;
-
             gridWrap.classList.add(dir === -1 ? "drag-edge-left" : "drag-edge-right");
 
             hoverTimer = setTimeout(() => {
                 callbacks.onNavigate(dir);
-
                 hoverTimer = null;
                 activeDir = 0;
-
                 gridWrap.classList.remove("drag-edge-left", "drag-edge-right");
             }, holdMs);
         });
@@ -402,6 +475,10 @@ window.ZSShared = (function () {
     // =============================================
     //  6. STORAGE INSPECTOR (Global Utility)
     // =============================================
+
+    /**
+     * Calculates and logs the size of all items in localStorage to the console, returning a summary object with total size metrics.
+     */
     function getLocalStorageSize() {
         const items = [];
         for (let i = 0; i < localStorage.length; i++) {
