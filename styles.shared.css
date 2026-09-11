@@ -2,38 +2,42 @@
    1. ROOT VARIABLES & GLOBAL COLORS
    ============================================ */
 :root {
+    /* Background & Surface Colors */
     --bg-0: #10141a;
     --bg-1: #151a22;
     --surface: #1a212b;
     --surface-2: #222a36;
     --border: #2b3442;
+    
+    /* Text Colors */
     --text: #e7eaf0;
     --text-dim: #8892a0;
     
+    /* Accent & Brand Colors */
     --accent: #e8a33d;
     --accent-dim: #e8a33d55;
     --cyan: #5fd3c4;
     
+    /* Status Colors (Danger) */
     --danger: #e2685f;
     --danger-strong: #d92d20;
     --danger-strong-hover: #b8241a;
     
+    /* Typography & Layout */
     --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-    
     --cols: 6;
     --radius: 16px;
 }
 
 /* ============================================
-   2. BASE RESET & BODY STYLES
+   2. BASE RESET & GLOBAL STYLES
    ============================================ */
 * {
     box-sizing: border-box;
 }
 
-html,
-body {
+html, body {
     margin: 0;
     height: 100%;
     font-family: var(--font-ui);
@@ -50,9 +54,8 @@ body {
     background: var(--accent-dim);
 }
 
-button,
-input,
-select {
+/* Form Elements & Links Reset */
+button, input, select {
     font-family: inherit;
 }
 
@@ -68,7 +71,6 @@ body.has-bg-image {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-attachment: fixed;
 }
 
 body.has-bg-image::before {
@@ -90,7 +92,7 @@ body.has-bg-image .app {
 }
 
 /* ============================================
-   4. APP CONTAINER
+   4. APP CONTAINER & LAYOUT
    ============================================ */
 .app {
     position: relative;
@@ -103,7 +105,7 @@ body.has-bg-image .app {
 }
 
 /* ============================================
-   5. TOP BAR (SETTINGS & CONTROLS)
+   5. TOP BAR & ICON BUTTONS
    ============================================ */
 .top-bar {
     position: fixed;
@@ -125,7 +127,7 @@ body.has-bg-image .app {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: 0.15s;
+    transition: all 0.15s ease;
 }
 
 .icon-btn:hover {
@@ -163,14 +165,13 @@ body.has-bg-image .app {
 form.search {
     display: flex;
     align-items: center;
-    gap: 0;
     width: min(560px, 90vw);
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 999px;
     padding: 6px 8px 6px 18px;
     margin-bottom: 46px;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 form.search:focus-within {
@@ -178,13 +179,14 @@ form.search:focus-within {
     box-shadow: 0 0 0 4px #e8a33d1a;
 }
 
+/* Search Engine Selector */
 form.search select {
     background: transparent;
     border: none;
+    border-right: 1px solid var(--border);
     color: var(--text-dim);
     font-size: 13px;
     padding-right: 10px;
-    border-right: 1px solid var(--border);
     margin-right: 10px;
     cursor: pointer;
 }
@@ -193,6 +195,7 @@ form.search select:focus {
     outline: none;
 }
 
+/* Search Input */
 form.search input {
     flex: 1;
     border: none;
@@ -207,6 +210,7 @@ form.search input::placeholder {
     color: #5b6472;
 }
 
+/* Search Submit Button */
 form.search button {
     width: 34px;
     height: 34px;
@@ -219,7 +223,7 @@ form.search button {
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: 0.15s;
+    transition: filter 0.15s ease;
 }
 
 form.search button:hover {
@@ -232,7 +236,7 @@ form.search button svg {
 }
 
 /* ============================================
-   8. GRID & NAVIGATION ARROWS
+   8. GRID SYSTEM & NAVIGATION ARROWS
    ============================================ */
 .grid-wrap {
     position: relative;
@@ -251,6 +255,7 @@ form.search button svg {
     justify-content: center;
 }
 
+/* Page Navigation Arrows */
 .page-nav {
     width: 30px;
     height: 30px;
@@ -263,7 +268,7 @@ form.search button svg {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: 0.15s;
+    transition: all 0.15s ease;
     opacity: 0;
     pointer-events: none;
 }
@@ -283,6 +288,7 @@ form.search button svg {
     height: 14px;
 }
 
+/* Drag & Drop Edge Gradients */
 .grid-wrap.drag-edge-left::before,
 .grid-wrap.drag-edge-right::before {
     content: "";
@@ -294,27 +300,14 @@ form.search button svg {
 }
 
 .grid-wrap.drag-edge-left::before {
-    background: linear-gradient(
-        to right,
-        rgba(232, 163, 61, 0.85) 0px,
-        rgba(232, 163, 61, 0.55) 6px,
-        rgba(232, 163, 61, 0.28) 14px,
-        rgba(232, 163, 61, 0.10) 22px,
-        rgba(232, 163, 61, 0) 30px
-    );
+    background: linear-gradient(to right, rgba(232, 163, 61, 0.85) 0px, rgba(232, 163, 61, 0.55) 6px, rgba(232, 163, 61, 0.28) 14px, rgba(232, 163, 61, 0.10) 22px, rgba(232, 163, 61, 0) 30px);
 }
 
 .grid-wrap.drag-edge-right::before {
-    background: linear-gradient(
-        to left,
-        rgba(232, 163, 61, 0.85) 0px,
-        rgba(232, 163, 61, 0.55) 6px,
-        rgba(232, 163, 61, 0.28) 14px,
-        rgba(232, 163, 61, 0.10) 22px,
-        rgba(232, 163, 61, 0) 30px
-    );
+    background: linear-gradient(to left, rgba(232, 163, 61, 0.85) 0px, rgba(232, 163, 61, 0.55) 6px, rgba(232, 163, 61, 0.28) 14px, rgba(232, 163, 61, 0.10) 22px, rgba(232, 163, 61, 0) 30px);
 }
 
+/* Drop Indicators (Lines) */
 .tile.drop-before::before,
 .tile.drop-after::after {
     content: "";
@@ -327,7 +320,7 @@ form.search button svg {
 }
 
 .tile.drop-before::before { left: -6px; }
-.tile.drop-after::after { right: -6px; }
+.tile.drop-after::after  { right: -6px; }
 
 /* ============================================
    9. TILES (BOOKMARKS)
@@ -343,17 +336,17 @@ form.search button svg {
     padding-top: 2px;
 }
 
+/* Tile Icon */
 .tile .icon {
     width: 70px;
     height: 70px;
     border-radius: 50%;
     background: var(--surface-2);
-    /* box-shadow: inset 0 0 0 1px var(--border); */
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    transition: box-shadow 0.15s, transform 0.15s;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .tile:hover .icon {
@@ -374,6 +367,7 @@ form.search button svg {
     color: #fff;
 }
 
+/* Tile Label */
 .tile .label {
     font-size: 11.5px;
     color: var(--text-dim);
@@ -384,6 +378,7 @@ form.search button svg {
     text-overflow: ellipsis;
 }
 
+/* Tile Actions (Edit/Delete) */
 .tile .tile-actions {
     position: absolute;
     top: -6px;
@@ -408,6 +403,7 @@ form.search button svg {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.15s ease;
 }
 
 .tile-actions button:hover {
@@ -419,6 +415,7 @@ form.search button svg {
     border-color: var(--danger);
 }
 
+/* Add Tile Button */
 .tile.add .icon {
     background: transparent;
     border: 1.5px dashed var(--border);
@@ -430,10 +427,10 @@ form.search button svg {
 .tile.add:hover .icon {
     border-color: var(--accent);
     color: var(--accent);
-    box-shadow: none;
     transform: none;
 }
 
+/* Dragging & Empty States */
 .tile[draggable="true"].dragging {
     opacity: 0.35;
 }
@@ -471,7 +468,7 @@ form.search button svg {
     border-radius: 50%;
     background: var(--border);
     cursor: pointer;
-    transition: 0.15s;
+    transition: all 0.15s ease;
 }
 
 .dot.active {
@@ -503,6 +500,7 @@ form.search button svg {
     transform: translateX(0);
 }
 
+/* Panel Typography & Layout */
 .panel h2 {
     font-size: 16px;
     margin: 0 0 18px;
@@ -519,6 +517,16 @@ form.search button svg {
     margin-bottom: 6px;
 }
 
+.row2 {
+    display: flex;
+    gap: 10px;
+}
+
+.row2 .field {
+    flex: 1;
+}
+
+/* Panel Form Controls */
 .panel input[type="text"],
 .panel input[type="number"],
 .panel select {
@@ -530,6 +538,7 @@ form.search button svg {
     padding: 9px 10px;
     font-size: 13px;
     outline: none;
+    transition: border-color 0.15s ease;
 }
 
 .panel input:focus,
@@ -537,15 +546,7 @@ form.search button svg {
     border-color: var(--accent-dim);
 }
 
-.row2 {
-    display: flex;
-    gap: 10px;
-}
-
-.row2 .field {
-    flex: 1;
-}
-
+/* Panel Buttons */
 .panel .btn {
     width: 100%;
     padding: 10px;
@@ -560,7 +561,7 @@ form.search button svg {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    transition: 0.15s;
+    transition: all 0.15s ease;
 }
 
 .panel .btn:hover {
@@ -586,6 +587,7 @@ form.search button svg {
     border-color: var(--danger);
 }
 
+/* Panel Misc Elements */
 .panel hr {
     border: none;
     border-top: 1px solid var(--border);
@@ -614,7 +616,7 @@ form.search button svg {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: 0.15s;
+    transition: all 0.15s ease;
 }
 
 .panel-close:hover {
@@ -628,6 +630,7 @@ form.search button svg {
     height: 15px;
 }
 
+/* File Input Styling */
 .panel input[type="file"] {
     width: 100%;
     background: var(--surface);
@@ -647,6 +650,7 @@ form.search button svg {
     padding: 6px 10px;
     margin-right: 8px;
     cursor: pointer;
+    transition: border-color 0.15s ease;
 }
 
 .panel input[type="file"]::file-selector-button:hover {
@@ -671,6 +675,7 @@ form.search button svg {
     display: flex;
 }
 
+/* Modal Container */
 .modal {
     width: 320px;
     background: var(--bg-1);
@@ -695,6 +700,7 @@ form.search button svg {
     margin-bottom: 6px;
 }
 
+/* Modal Form Controls */
 .modal input {
     width: 100%;
     background: var(--surface);
@@ -704,12 +710,14 @@ form.search button svg {
     padding: 9px 10px;
     font-size: 13px;
     outline: none;
+    transition: border-color 0.15s ease;
 }
 
 .modal input:focus {
     border-color: var(--accent-dim);
 }
 
+/* Modal Actions (Buttons) */
 .modal .actions {
     display: flex;
     gap: 8px;
@@ -725,6 +733,7 @@ form.search button svg {
     color: var(--text);
     font-size: 13px;
     cursor: pointer;
+    transition: all 0.15s ease;
 }
 
 .modal .actions .save {
@@ -750,6 +759,7 @@ form.search button svg {
     filter: none;
 }
 
+/* Icon Preview inside Modal */
 #iconPreview {
     display: none;
     align-items: center;
@@ -777,7 +787,7 @@ form.search button svg {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: 0.15s;
+    transition: all 0.15s ease;
 }
 
 #removeIconBtn:hover {
