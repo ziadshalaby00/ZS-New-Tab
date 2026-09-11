@@ -822,7 +822,6 @@
         }
     });
 
-    document.body.classList.add('loading');
     try { 
         await initDB(); 
     } catch (err) { 
