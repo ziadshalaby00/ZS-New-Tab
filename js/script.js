@@ -173,6 +173,18 @@
         tile.draggable = true;
         tile.dataset.id = site.id;
 
+        tile.tabIndex = 0;
+        tile.addEventListener("keydown", e => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                if (e.ctrlKey || e.metaKey) {
+                    window.open(site.url, "_blank");
+                } else {
+                    window.location.href = site.url;
+                }
+            }
+        });
+
         const icon = document.createElement("div");
         icon.className = "icon";
         icon.style.background = "transparent";
@@ -691,6 +703,60 @@
     // =============================================
     //  7. NAVIGATION & INITIALIZATION
     // =============================================
+    function focusTileAtEdge(fromEnd) {
+        setTimeout(() => {
+            const grid = document.getElementById("grid");
+            const tiles = Array.from(grid.querySelectorAll(".tile:not(.empty)"));
+            if (!tiles.length) return;
+            (fromEnd ? tiles[tiles.length - 1] : tiles[0]).focus();
+        }, 180);
+    }
+
+    function setupGridKeyboardNav() {
+        const grid = document.getElementById("grid");
+        grid.addEventListener("keydown", e => {
+            if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) return;
+
+            const tiles = Array.from(grid.querySelectorAll(".tile:not(.empty)"));
+            const currentIndex = tiles.indexOf(document.activeElement);
+            if (currentIndex === -1) return;
+
+            const cols = parseInt(state.settings.cols, 10) || 1;
+            const totalPages = ZSCore.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols);
+
+            // آخر عنصر + يمين → الصفحة الجاية
+            if (e.key === "ArrowRight" && currentIndex === tiles.length - 1 && currentPage < totalPages - 1) {
+                e.preventDefault();
+                currentPage++;
+                renderWithTransition();
+                focusTileAtEdge(false);
+                return;
+            }
+
+            // أول عنصر + شمال → الصفحة اللي فاتت
+            if (e.key === "ArrowLeft" && currentIndex === 0 && currentPage > 0) {
+                e.preventDefault();
+                currentPage--;
+                renderWithTransition();
+                focusTileAtEdge(true);
+                return;
+            }
+
+            let target;
+            if (e.key === "ArrowRight") target = currentIndex + 1;
+            else if (e.key === "ArrowLeft") target = currentIndex - 1;
+            else if (e.key === "ArrowDown") target = currentIndex + cols;
+            else if (e.key === "ArrowUp") target = currentIndex - cols;
+
+            if (target >= 0 && target < tiles.length) {
+                e.preventDefault();
+                tiles[target].focus();
+            }
+        });
+    }
+
+    setupGridKeyboardNav();
+
     document.getElementById("prevPage").addEventListener("click", () => { 
         if (currentPage > 0) { 
             currentPage--; 

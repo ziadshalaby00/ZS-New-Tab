@@ -291,18 +291,25 @@ window.ZSCore = (function () {
     function buildAddTile(onClickFn) {
         const tile = document.createElement("div");
         tile.className = "tile add";
-        
+        tile.tabIndex = 0;
+
         const icon = document.createElement("div");
         icon.className = "icon";
         icon.textContent = "+";
-        
+
         const label = document.createElement("div");
         label.className = "label";
         label.textContent = "Add site";
-        
+
         tile.appendChild(icon);
         tile.appendChild(label);
         tile.addEventListener("click", onClickFn);
+        tile.addEventListener("keydown", e => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClickFn();
+            }
+        });
         return tile;
     }
 

@@ -377,6 +377,16 @@ form.search button svg {
     padding-top: 2px;
 }
 
+.tile:focus {
+    outline: none;
+}
+
+.tile:hover .icon,
+.tile:focus-visible .icon {
+    box-shadow: 0 0 0 2px var(--accent), 0 8px 22px -8px #e8a33d80;
+    transform: translateY(-2px);
+}
+
 /* Tile Icon */
 .tile .icon {
     width: 70px;
@@ -388,11 +398,6 @@ form.search button svg {
     justify-content: center;
     overflow: hidden;
     transition: box-shadow 0.15s ease, transform 0.15s ease;
-}
-
-.tile:hover .icon {
-    box-shadow: 0 0 0 2px var(--accent), 0 8px 22px -8px #e8a33d80;
-    transform: translateY(-2px);
 }
 
 .tile .icon img {
@@ -467,7 +472,8 @@ form.search button svg {
     font-size: 22px;
 }
 
-.tile.add:hover .icon {
+.tile.add:hover .icon,
+.tile.add:focus-visible .icon {
     border-color: var(--accent);
     color: var(--accent);
     transform: none;
