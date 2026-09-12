@@ -2,7 +2,7 @@
  * ZS New Tab – IndexedDB storage layer (single background)
  * Stores ONE background blob in the meta store.
  */
-(async function () {
+(function () {
     "use strict";
 
     // =============================================

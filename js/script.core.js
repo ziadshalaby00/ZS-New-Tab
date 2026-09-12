@@ -406,8 +406,14 @@ window.ZSCore = (function () {
             e.preventDefault();
             const query = document.getElementById(inputId).value.trim();
             if (!query) return;
-            const looksLikeUrl = /^https?:\/\//i.test(query) || (/^[\w-]+(\.[\w-]+)+(\/.*)?$/.test(query) && !query.includes(" "));
-            window.location.href = looksLikeUrl ? (/^https?:\/\//i.test(query) ? query : `https://${query}`) : getEngineFn() + encodeURIComponent(query);
+
+            const hasScheme = /^https?:\/\//i.test(query);
+            const looksLikeDomain = /^[\w-]+(\.[\w-]+)+(\/.*)?$/.test(query)
+                && !query.includes(" ")
+                && /^[a-z]{2,}(\/.*)?$/i.test(query.split("/")[0].split(".").pop());
+
+            const looksLikeUrl = hasScheme || looksLikeDomain;
+            window.location.href = looksLikeUrl ? (hasScheme ? query : `https://${query}`) : getEngineFn() + encodeURIComponent(query);
         });
     }
 
@@ -419,13 +425,14 @@ window.ZSCore = (function () {
             const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(
                 document.activeElement.tagName
             );
+            const isModalOpen = document.getElementById("overlay")?.classList.contains("open");
 
             if (e.key === "/" && !isTyping) {
                 e.preventDefault();
                 document.getElementById(searchInputId)?.focus();
             }
 
-            if (e.key.toLowerCase() === "p" && !isTyping && onToggleSettingsFn) {
+            if (e.key.toLowerCase() === "p" && !isTyping && !isModalOpen && onToggleSettingsFn) {
                 e.preventDefault();
                 onToggleSettingsFn();
             }

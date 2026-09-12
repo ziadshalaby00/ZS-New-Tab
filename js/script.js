@@ -51,9 +51,17 @@
 
     /**
      * Saves the current settings and sites array to localStorage.
+     * Returns true on success, false if the write failed (e.g. quota exceeded).
      */
-    function saveState() { 
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify({ settings: state.settings, sites: state.sites })); 
+    function saveState() {
+        try {
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify({ settings: state.settings, sites: state.sites }));
+            return true;
+        } catch (err) {
+            console.error("saveState failed:", err);
+            alert("Couldn't save changes — local storage may be full.");
+            return false;
+        }
     }
     
     /**
@@ -574,7 +582,9 @@
         const reader = new FileReader();
 
         reader.onload = async ev => {
+            // snapshot
             const previousState = state;
+            const previousBgBlob = await ZSDB.getBackground();
 
             try {
                 const parsed = JSON.parse(ev.target.result);
@@ -630,7 +640,11 @@
                 state = previousState;
 
                 try {
-                    await ZSDB.applyBackground();
+                    if (previousBgBlob) {
+                        await ZSDB.setBackground(previousBgBlob);
+                    } else {
+                        await ZSDB.removeBackground();
+                    }
                 } catch (_) {}
 
                 alert("This file doesn't look like a valid backup, or it's too large.");
