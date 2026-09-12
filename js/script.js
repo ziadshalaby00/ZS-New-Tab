@@ -32,7 +32,9 @@
             const raw = localStorage.getItem(SETTINGS_KEY);
             if (!raw) return JSON.parse(JSON.stringify(ZSCore.defaultState));
             const parsed = JSON.parse(raw);
-            if (!parsed.settings) parsed.settings = { ...ZSCore.defaultState.settings };
+
+            parsed.settings = { ...ZSCore.defaultState.settings, ...(parsed.settings || {}) };
+
             if (!Array.isArray(parsed.sites)) parsed.sites = [];
             return parsed;
         } catch (_) {
@@ -123,6 +125,8 @@
      * Main render function that updates the grid, pagination, and settings UI based on the current state.
      */
     function render() {
+        ZSCore.applyAccent(state.settings.accent);
+
         document.documentElement.style.setProperty("--cols", state.settings.cols);
         renderName();
         document.getElementById("engineSelect").value = state.settings.engine;
@@ -474,6 +478,56 @@
         });
     });
 
+
+    // =============================================
+    //  5.5 ACCENT COLOR PALETTE
+    // =============================================
+    /**
+     * Renders the preset swatches and marks the active one.
+     */
+    function renderSwatches() {
+        const wrap = document.getElementById("swatches");
+        if (!wrap) return;
+
+        const current = String(state.settings.accent || "").toLowerCase();
+
+        if (!wrap.dataset.built) {
+            wrap.innerHTML = "";
+            ZSCore.THEMES.forEach(theme => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "swatch";
+                btn.style.background = theme.accent;
+                btn.title = theme.name;
+                btn.setAttribute("aria-label", theme.name);
+                btn.dataset.accent = theme.accent.toLowerCase();
+                btn.addEventListener("click", () => setAccent(theme.accent));
+                wrap.appendChild(btn);
+            });
+            wrap.dataset.built = "1";
+        }
+
+        wrap.querySelectorAll(".swatch").forEach(btn => {
+            btn.classList.toggle("active", btn.dataset.accent === current);
+        });
+    }
+
+    /**
+     * Applies + persists a new accent color and syncs the whole palette UI.
+     */
+    function setAccent(hex) {
+        if (!ZSCore.applyAccent(hex)) return;
+
+        state.settings.accent = hex;
+        saveState();
+
+        const picker = document.getElementById("customAccent");
+        if (picker) picker.value = hex;
+
+        renderSwatches();
+    }
+
+
     // =============================================
     //  6. SETTINGS PANEL
     // =============================================
@@ -482,6 +536,7 @@
         document.getElementById("displayName").value = state.settings.name;
         document.getElementById("rowsInput").value = state.settings.rows;
         document.getElementById("colsInput").value = state.settings.cols;
+        renderSwatches();
         panel.classList.toggle("open");
     }
     document.getElementById("settingsToggle").addEventListener("click", openSettingsPanel);
@@ -509,6 +564,10 @@
     document.getElementById("engineSelect").addEventListener("change", e => { 
         state.settings.engine = e.target.value; 
         saveState(); 
+    });
+
+    document.getElementById("customAccent").addEventListener("input", e => {
+        setAccent(e.target.value);
     });
 
     const bgImageInput = document.getElementById("bgImageInput");
@@ -629,6 +688,9 @@
                     rows:   settingsOnly.rows   ?? 4,
                     cols:   settingsOnly.cols   ?? 6,
                     engine: settingsOnly.engine ?? "https://www.google.com/search?q=",
+                    accent: /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(settingsOnly.accent || "")
+                                ? settingsOnly.accent
+                                : ZSCore.defaultState.settings.accent,
                 };
                 const importedSites = parsed.sites.map(site => ({
                     id: site.id, name: site.name, url: site.url,

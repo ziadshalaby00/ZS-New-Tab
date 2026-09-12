@@ -15,6 +15,7 @@ window.ZSCore = (function () {
             rows: 4,
             cols: 6,
             engine: "https://www.google.com/search?q=",
+            accent: "#e8a33d",
         },
         sites: [
             { id: "1", name: "Google", url: "https://google.com" },
@@ -258,6 +259,71 @@ window.ZSCore = (function () {
         });
     }
 
+    /**
+     * Preset accent colors shown in the settings panel.
+     */
+    const THEMES = [
+        { name: "Amber",  accent: "#E8A33D" },
+        { name: "Orange", accent: "#E58A4E" },
+        { name: "Coral",  accent: "#E4776A" },
+        { name: "Rose",   accent: "#D96B91" },
+        { name: "Pink",   accent: "#D477B5" },
+        { name: "Violet", accent: "#B47BD6" },
+        { name: "Indigo", accent: "#7E86D8" },
+        { name: "Blue",   accent: "#6F9FE3" },
+        { name: "Azure",  accent: "#5FBAE8" },
+        { name: "Cyan",   accent: "#5CCBCB" },
+        { name: "Teal",   accent: "#55BFA8" },
+        { name: "Mint",   accent: "#72C69A" },
+        { name: "Green",  accent: "#79B86B" },
+        { name: "Lime",   accent: "#A8C45A" },
+        { name: "Olive",  accent: "#B0A84F" },
+        { name: "Slate",  accent: "#8995A5" },
+        { name: "Silver", accent: "#A8ADB7" },
+        { name: "Graphite", accent: "#727A86" },
+    ];
+
+    /**
+     * Converts "#rrggbb" (or "#rgb") into { r, g, b }, or null if invalid.
+     */
+    function hexToRgb(hex) {
+        let h = String(hex || "").trim().replace(/^#/, "");
+        if (h.length === 3) h = h.split("").map(c => c + c).join("");
+        if (!/^[0-9a-f]{6}$/i.test(h)) return null;
+        return {
+            r: parseInt(h.slice(0, 2), 16),
+            g: parseInt(h.slice(2, 4), 16),
+            b: parseInt(h.slice(4, 6), 16),
+        };
+    }
+
+    /**
+     * Applies an accent color to the whole UI by updating the CSS variables.
+     * --accent-dim / --accent-soft / --accent-glow derive from --accent-rgb
+     * automatically, so we only need to set two variables here.
+     * @returns {boolean} false if the color is invalid
+     */
+    function applyAccent(hex) {
+        const rgb = hexToRgb(hex);
+        if (!rgb) return false;
+
+        const root = document.documentElement;
+        const norm = "#" + [rgb.r, rgb.g, rgb.b]
+            .map(v => v.toString(16).padStart(2, "0"))
+            .join("");
+
+        // Perceived brightness → pick readable text on top of the accent
+        const brightness = 0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b;
+
+        root.style.setProperty("--accent", norm);
+        root.style.setProperty("--accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+        root.style.setProperty(
+            "--accent-contrast",
+            brightness > 150 ? "#1a1408" : "#ffffff"
+        );
+        return true;
+    }
+
     // =============================================
     //  3. UI COMPONENTS & RENDER HELPERS
     // =============================================
@@ -460,10 +526,15 @@ window.ZSCore = (function () {
         document.addEventListener("click", (e) => {
             const panel = document.getElementById(panelId);
             const toggle = document.getElementById(toggleBtnId);
-            if (panel?.classList.contains("open")) {
-                if (!panel.contains(e.target) && e.target !== toggle && !toggle?.contains(e.target)) {
-                    panel.classList.remove("open");
-                }
+            if (!panel?.classList.contains("open")) return;
+
+            const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+
+            const clickedInsidePanel = path.includes(panel) || panel.contains(e.target);
+            const clickedToggle = (toggle && path.includes(toggle)) || toggle?.contains(e.target);
+
+            if (!clickedInsidePanel && !clickedToggle) {
+                panel.classList.remove("open");
             }
         });
     }
@@ -580,6 +651,9 @@ window.ZSCore = (function () {
 
     return {
         defaultState,
+        THEMES,
+        hexToRgb,
+        applyAccent,
         generateId,
         getHostname,
         getFaviconUrl,

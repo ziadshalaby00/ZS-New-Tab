@@ -68,21 +68,26 @@
     --surface: #1a212b;
     --surface-2: #222a36;
     --border: #2b3442;
-    
+
     /* Text Colors */
     --text: #e7eaf0;
     --text-dim: #8892a0;
-    
+
     /* Accent & Brand Colors */
     --accent: #e8a33d;
-    --accent-dim: #e8a33d55;
+    --accent-rgb: 232, 163, 61;               /* R, G, B */
+    --accent-dim: rgba(var(--accent-rgb), 0.33);
+    --accent-soft: rgba(var(--accent-rgb), 0.10);
+    --accent-glow: rgba(var(--accent-rgb), 0.50);
+    --accent-contrast: #1a1408;
+
     --cyan: #5fd3c4;
-    
+
     /* Status Colors (Danger) */
     --danger: #e2685f;
     --danger-strong: #d92d20;
     --danger-strong-hover: #b8241a;
-    
+
     /* Typography & Layout */
     --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -217,7 +222,7 @@ form.search {
 
 form.search:focus-within {
     border-color: var(--accent-dim);
-    box-shadow: 0 0 0 4px #e8a33d1a;
+    box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
 /* Search Engine Selector */
@@ -258,7 +263,7 @@ form.search button {
     border-radius: 50%;
     border: none;
     background: var(--accent);
-    color: #1a1408;
+    color: var(--accent-contrast);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -341,11 +346,21 @@ form.search button svg {
 }
 
 .grid-wrap.drag-edge-left::before {
-    background: linear-gradient(to right, rgba(232, 163, 61, 0.85) 0px, rgba(232, 163, 61, 0.55) 6px, rgba(232, 163, 61, 0.28) 14px, rgba(232, 163, 61, 0.10) 22px, rgba(232, 163, 61, 0) 30px);
+    background: linear-gradient(to right,
+        rgba(var(--accent-rgb), 0.85) 0px,
+        rgba(var(--accent-rgb), 0.55) 6px,
+        rgba(var(--accent-rgb), 0.28) 14px,
+        rgba(var(--accent-rgb), 0.10) 22px,
+        rgba(var(--accent-rgb), 0) 30px);
 }
 
 .grid-wrap.drag-edge-right::before {
-    background: linear-gradient(to left, rgba(232, 163, 61, 0.85) 0px, rgba(232, 163, 61, 0.55) 6px, rgba(232, 163, 61, 0.28) 14px, rgba(232, 163, 61, 0.10) 22px, rgba(232, 163, 61, 0) 30px);
+    background: linear-gradient(to left,
+        rgba(var(--accent-rgb), 0.85) 0px,
+        rgba(var(--accent-rgb), 0.55) 6px,
+        rgba(var(--accent-rgb), 0.28) 14px,
+        rgba(var(--accent-rgb), 0.10) 22px,
+        rgba(var(--accent-rgb), 0) 30px);
 }
 
 /* Drop Indicators (Lines) */
@@ -383,7 +398,7 @@ form.search button svg {
 
 .tile:hover .icon,
 .tile:focus-visible .icon {
-    box-shadow: 0 0 0 2px var(--accent), 0 8px 22px -8px #e8a33d80;
+    box-shadow: 0 0 0 2px var(--accent), 0 8px 22px -8px var(--accent-glow);
     transform: translateY(-2px);
 }
 
@@ -620,7 +635,7 @@ form.search button svg {
 .panel .btn.primary {
     background: var(--accent);
     border-color: var(--accent);
-    color: #1a1408;
+    color: var(--accent-contrast);
     font-weight: 600;
 }
 
@@ -788,7 +803,7 @@ form.search button svg {
 .modal .actions .save {
     background: var(--accent);
     border-color: var(--accent);
-    color: #1a1408;
+    color: var(--accent-contrast);
     font-weight: 600;
 }
 
@@ -945,4 +960,54 @@ body.has-bg-image .app {
     body.bg-layer-2::after {
         opacity: 1;
     }
+}
+
+/* ============================================
+   16. COLOR PALETTE
+   ============================================ */
+.swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7.5px;
+}
+
+.swatch {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.swatch:hover {
+    transform: scale(1.1);
+}
+
+.swatch.active {
+    border-color: var(--text);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.panel input[type="color"] {
+    width: 100%;
+    height: 38px;
+    padding: 3px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.panel input[type="color"]:hover {
+    border-color: var(--accent-dim);
+}
+
+.panel input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.panel input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 6px;
 }
