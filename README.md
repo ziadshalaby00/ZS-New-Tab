@@ -19,55 +19,35 @@ A minimal, fast, and fully offline **New Tab** replacement for Chrome — a pers
 - **Quick search** — search from the new tab directly, with a switchable search engine (Google, DuckDuckGo, Brave, Bing), or type a URL to go straight there
 - **Pagination** — grid pages with dot navigation, arrow buttons, and mouse-wheel scrolling
 - **Settings panel** — customize your display name, grid rows/columns, and background image
-- **Custom background** — upload any image as your background
-- **Smart image compression** — background and icon uploads are automatically downscaled (via canvas, before saving) to keep storage lean and loading fast, without a visible quality hit
+- **Custom background** — upload any image as your background, with a smooth crossfade whenever it changes
+- **Smart image compression** — background images and site icons are automatically downscaled and re-encoded (via canvas, before saving) to keep storage lean and loading fast, without a visible quality hit
 - **Backup & restore** — export your full setup (sites, settings, background image) to a `.json` file, and import it back anytime
 - **Keyboard shortcuts** — `/` to focus search, `P` to toggle the settings panel, `Esc` to close any open panel or modal
 - **Dark UI** — clean dark theme built with plain CSS (no frameworks)
-- **Modular Architecture** — DRY (Don't Repeat Yourself) codebase with shared logic, separated from environment-specific storage implementations.
-- **Two performance modes** — a default build and a "shadow" build; see [Default vs Shadow](#default-vs-shadow-performance-mode) below
+- **Modular architecture** — a shared core module (`ZSCore`) holds default state, helpers, and UI logic; a dedicated storage module (`ZSDB`) handles the background image
 
-## Default vs Shadow (performance mode)
+## Architecture & storage
 
-The project uses a modular architecture. A **shared foundation** handles default state, utilities, and common UI components. On top of that, you choose one of two environment-specific builds that differ only in *where data is stored* and *how the first load looks*.
+The app is a single, unified build (there is no longer a "default" vs "shadow" split). Storage is split by what each piece of data needs:
 
-| Feature | Shared Foundation | Default Build (`js/script.js` + `styles/styles.css`) | Shadow Build (`js/script.shadow.js` + `styles/styles.shadow.css`) |
-|---|---|---|---|
-| **Core Logic & UI** | `js/script.shared.js` + `styles/styles.shared.css` | *(Uses Shared)* | *(Uses Shared)* |
-| **Sites & settings** | N/A | `localStorage` | `localStorage` |
-| **Background & custom icons** | N/A | `IndexedDB` | `localStorage` |
-| **First-load animation** | N/A | Yes — background and grid fade in together | None — everything renders instantly |
-| **Load speed** | N/A | Fast | As fast as the browser can render — practically instant |
-| **Storage ceiling** | N/A | Effectively unlimited (IndexedDB has no 5–10 MB wall) | Bound by `localStorage` limit (5–10 MB). |
+| Data | Storage | Why |
+|---|---|---|
+| Sites & settings | `localStorage` | Small, needs to be read instantly on every load |
+| Custom site icons | `localStorage` (as WebP data URLs) | Small after compression, read synchronously alongside the grid — no async wait before a tile can render |
+| Background image | `IndexedDB` (via `script.db.js` / `ZSDB`) | Can be large; IndexedDB has no practical size ceiling, unlike `localStorage`'s ~5–10 MB limit |
 
-**Use the Default Build** if you want no practical limit on how many sites or custom icons you keep, and don't mind a small fade-in on first load.
+**Why the background gets its own module:** the background is the one asset that can genuinely be large, so it's kept out of `localStorage` and given a dedicated, resilient storage layer (`ZSDB`) with:
+- A snapshot-and-rollback save: if writing the new background fails (or the image fails to decode), the previous background is restored automatically — you're never left in a broken state.
+- A smooth crossfade transition whenever the background is set, changed, or removed, instead of a hard cut.
 
-**Use the Shadow Build** if you want the absolute fastest possible open — the grid, icons, and background all appear in a single blink, with zero transition — and your setup comfortably fits under the `localStorage` ceiling.
+## Tech stack
 
-### How to switch
-
-Open `index.html`. The **shared foundation files must always be loaded first**, followed by your chosen environment-specific files:
-
-```html
-<!-- 1. ALWAYS load the shared foundation first -->
-<link rel="stylesheet" href="./styles/styles.shared.css">
-<!-- ... -->
-<script src="./js/script.shared.js"></script>
-
-<!-- 2. Load EITHER the Default OR the Shadow build (never mix them) -->
-
-<!-- OPTION A: Default -->
-<link rel="stylesheet" href="./styles/styles.css">
-<!-- ... -->
-<script src="./js/script.js"></script>
-
-<!-- OPTION B: Shadow (max speed, no first-load animation) -->
-<link rel="stylesheet" href="./styles/styles.shadow.css">
-<!-- ... -->
-<script src="./js/script.shadow.js"></script>
-```
-
-> **⚠️ Important:** When switching between modes, do it in this order to avoid data conflicts: **Export backup** → **Reset everything** → **Switch the files in `index.html`** → **Import backup**.
+- **Vanilla HTML, CSS, and JavaScript** — no build step, no dependencies.
+- **`js/script.core.js` (`ZSCore`)** — default state, utility functions (favicon URLs, color generation, image resizing, HTML escaping), reusable UI components (tiles, pagination, confirm dialogs), and global event wiring (search, shortcuts, scroll/drag navigation).
+- **`js/script.db.js` (`ZSDB`)** — a small, self-contained IndexedDB wrapper responsible only for the background image: get / set / remove / apply, with rollback on failure and a crossfade transition.
+- **`js/script.js`** — the main application: state management, rendering, the add/edit site modal, the settings panel, and backup import/export. Uses `ZSCore` for shared logic and `ZSDB` for the background.
+- **Canvas-based image resizing** — icons are resized to 96×96 and re-encoded as WebP; the background is capped at 1920×1080 as JPEG/PNG.
+- **Self-hosted fonts** — Inter and JetBrains Mono are bundled locally in the project (`fonts/`) via `@font-face`, not loaded from an external CDN.
 
 ## Supported browsers
 
@@ -152,47 +132,27 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 ```
 
-## Tech stack
-
-- **Vanilla HTML, CSS, and JavaScript** — no build step, no dependencies.
-- **Modular Architecture** — Shared logic, default state, utilities, and common UI components are isolated in `js/script.shared.js` and `styles/styles.shared.css`.
-- **Storage**: `localStorage` for app state (sites and settings) in both builds.
-  - *Default build*: `IndexedDB` for background images and custom site icons.
-  - *Shadow build*: `localStorage` for background images and custom site icons too, for instant synchronous reads.
-- **Canvas-based image resizing** pipeline for compressing uploads before storage.
-- **Google Fonts** (Inter, JetBrains Mono) loaded via CDN.
-
-## Performance & UX details
-
-- **Shared utilities and UI components**: Common helpers and components (e.g., `buildAddTile`, `buildEmptyTile`, `createRenderer`, `updatePaginationUI`, image resizing, favicon helpers) live in `js/script.shared.js`. Each build handles its own state, storage, and main render loop.
-- **Default build**: On startup, the app waits for both the grid render and the background image to be ready before revealing anything, so the page appears as a single smooth transition instead of the background and bookmarks popping in at different times. A short timeout safeguard ensures a slow background load never blocks the page from appearing.
-- **Shadow build**: There's nothing to wait for — the background and every icon are stored directly in `localStorage` and read synchronously, so they render together with the rest of the page. No transition, no timeout safeguard needed.
-- **Automatic image resizing** (both builds): Any image you upload (background or site icon) is resized on a `<canvas>` before being saved — backgrounds are capped at 1920×1080 and icons at 128×128 — cutting down storage size and speeding up future loads, with no manual compression needed from the user.
-
 ## Customization
 
 - **Search engines**: Add more options in the `<select id="engineSelect">` element in `index.html`.
-- **Colors**: All theme colors are CSS variables at the top of **`styles/styles.shared.css`** (`:root { --accent, --bg-0, ... }`). Change them in this single file to re-theme the whole app for both builds.
-- **Default bookmarks**: Edit the `defaultState.sites` array in **`js/script.shared.js`** to change what ships by default for a fresh install.
-- **Resize limits**: Adjust the max width/height/quality passed to the `resizeImage()` function inside **`js/script.shared.js`** if you want larger or smaller stored images.
+- **Colors**: All theme colors are CSS variables at the top of **`styles/styles.css`** (`:root { --accent, --bg-0, ... }`).
+- **Default bookmarks**: Edit the `defaultState.sites` array in **`js/script.core.js`** to change what ships by default for a fresh install.
+- **Resize limits**: Icon and background dimensions/quality are set inside the `resizeImage(file, type)` function in **`js/script.core.js`** — `type: "icon"` controls the 96×96 WebP icons, anything else controls the 1920×1080 background.
 
 ## Data & privacy
 
 Almost everything lives in your browser only:
-- Sites and settings → `localStorage` (both builds)
-- Background image and custom site icons →
-  - *Default build*: `IndexedDB` (resized before storage to keep things light)
-  - *Shadow build*: `localStorage`, under separate keys (`ZSNewTab.background` and `ZSNewTab.icon.<id>`) (same resizing applies)
+- Sites, settings, and custom site icons → `localStorage`
+- Background image → `IndexedDB` (via `script.db.js`)
 
-Two things do reach outside your browser:
-- **Favicon lookups**, via Google's public favicon service (`https://www.google.com/s2/favicons`), used to fetch each site's icon.
-- **Google Fonts**, loaded from `fonts.googleapis.com` and `fonts.gstatic.com` for the Inter and JetBrains Mono typefaces used in the UI.
+One thing does reach outside your browser:
+- **Favicon lookups**, via Google's public favicon service (`https://www.google.com/s2/favicons`), used to fetch each site's icon. Fonts are bundled locally and never fetched externally.
 
 No account, analytics, or backend is involved beyond that.
 
 ## Backup
 
-Use **Export backup (.json)** in the settings panel to save your full setup, and **Import backup** to restore it — on this browser or a fresh install. This works seamlessly regardless of which build (default or shadow) you're running, and a backup exported from one build can be imported into the other. Only backup files exported by this extension are supported; a manually edited or malformed JSON file will show an "invalid backup" alert.
+Use **Export backup (.json)** in the settings panel to save your full setup (sites, settings, site icons, and background), and **Import backup** to restore it — on this browser or a fresh install. Only backup files exported by this extension are supported; a manually edited or malformed JSON file will show an "invalid backup" alert.
 
 ## Contributing
 

@@ -1,38 +1,42 @@
 /**
  * ZS New Tab – Full Application
- * Uses localStorage for settings/state and IndexedDB for large assets (backgrounds/icons).
+ * Uses localStorage for settings, site's, icons and IndexedDB for backgrounds.
  */
 (async function () {
     "use strict";
-    const { ZSShared } = window;
-    if (!ZSShared) return console.error("ZSShared is missing. Please load script.shared.js first.");
+    const { ZSCore, ZSDB } = window;
+    if (!ZSCore) return console.error("ZSCore is missing. Please load script.shared.js first.");
+    if (!ZSDB) return console.error("ZSDB is missing. Please load script.db.js first.");
 
     // =============================================
     //  1. CONSTANTS
     // =============================================
-    const STORE_KEY = "ZSNewTab.v1";
-    const DB_NAME = "NewTabDB";
-    const STORE_NAME = "background";
+    const SETTINGS_KEY = "ZSNewTab.settings";
+    const ICON_KEY_PREFIX = "ZSNewTab.icon.";
 
     // =============================================
     //  2. LOCAL STORAGE HELPERS
     // =============================================
+    /**
+     * In-memory cache for site icons.
+     * key   = site id
+     * value = data URL string, or null if the site does not have a custom icon.
+     */
+    const iconCache = new Map();
 
     /**
      * Loads the application state from localStorage, falling back to the default state if empty or invalid.
      */
     function loadState() {
         try {
-            const raw = localStorage.getItem(STORE_KEY);
-            if (!raw) return JSON.parse(JSON.stringify(ZSShared.defaultState));
-            
+            const raw = localStorage.getItem(SETTINGS_KEY);
+            if (!raw) return JSON.parse(JSON.stringify(ZSCore.defaultState));
             const parsed = JSON.parse(raw);
-            if (!parsed.settings) parsed.settings = ZSShared.defaultState.settings;
-            if (!parsed.sites) parsed.sites = [];
-            if (typeof parsed.settings.bg !== "boolean") parsed.settings.bg = false;
+            if (!parsed.settings) parsed.settings = { ...ZSCore.defaultState.settings };
+            if (!Array.isArray(parsed.sites)) parsed.sites = [];
             return parsed;
         } catch (_) {
-            return JSON.parse(JSON.stringify(ZSShared.defaultState));
+            return JSON.parse(JSON.stringify(ZSCore.defaultState));
         }
     }
 
@@ -40,247 +44,65 @@
     //  3. GLOBAL VARIABLES
     // =============================================
     let state = loadState();
-    let iconCache = new Map();
-
     let currentPage = 0;
     let editingId = null;
     let dragSourceId = null;
     let tempIconData = null;
 
     /**
-     * Saves the current application state to localStorage.
+     * Saves the current settings and sites array to localStorage.
      */
-    function saveState() {
-        localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    function saveState() { 
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify({ settings: state.settings, sites: state.sites })); 
     }
-
-    // =============================================
-    //  4. INDEXEDDB HELPERS (backgrounds + icons)
-    // =============================================
-    let db = null;
-    let dbOpenPromise = null;
     
     /**
-     * Opens and initializes the IndexedDB database, creating the object store if it doesn't exist.
-     */
-    function openDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, 2);
-            request.onupgradeneeded = (e) => {
-                const database = e.target.result;
-                if (!database.objectStoreNames.contains(STORE_NAME)) {
-                    database.createObjectStore(STORE_NAME);
-                }
-            };
-            request.onsuccess = (e) => resolve(e.target.result);
-            request.onerror = (e) => reject(e.target.error);
-        });
-    }
-
-    /**
-     * Ensures the database is opened and cached, preventing multiple simultaneous open requests.
-     */
-    async function initDB() {
-        if (db) return db;
-        if (dbOpenPromise) return dbOpenPromise;
-        dbOpenPromise = openDB().then((opened) => {
-            db = opened;
-            db.onclose = () => { db = null; };
-            db.onversionchange = () => { db.close(); db = null; };
-            return db;
-        }).finally(() => { dbOpenPromise = null; });
-        return dbOpenPromise;
-    }
-
-    window.addEventListener("beforeunload", () => { if (db) db.close(); });
-
-    /**
-     * Executes a generic read/write transaction on the IndexedDB object store.
-     */
-    async function executeDBRequest(type, action, key, data = null) {
-        const database = await initDB();
-        return new Promise((resolve, reject) => {
-            const tx = database.transaction(STORE_NAME, type);
-            const store = tx.objectStore(STORE_NAME);
-            const request = action === "put" ? store.put(data, key) : action === "get" ? store.get(key) : action === "delete" ? store.delete(key) : store.clear();
-            
-            if (action === "get") request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-            if (action !== "get") tx.oncomplete = () => resolve();
-            tx.onerror = () => reject(tx.error);
-        });
-    }
-
-    /**
-     * Clears all assets from the IndexedDB object store.
-     */
-    async function clearStoredAssets() { 
-        return executeDBRequest("readwrite", "clear"); 
-    }
-
-    /**
-     * Saves a Blob to the IndexedDB store under a specific key.
-     */
-    async function saveImageBlob(key, blob) { 
-        return executeDBRequest("readwrite", "put", key, blob); 
-    }
-
-    /**
-     * Retrieves a Blob from the IndexedDB store by its key.
-     */
-    async function loadImageBlob(key) { 
-        return executeDBRequest("readonly", "get", key); 
-    }
-
-    /**
-     * Deletes a Blob from the IndexedDB store by its key.
-     */
-    async function deleteImageBlob(key) { 
-        return executeDBRequest("readwrite", "delete", key); 
-    }
-
-    /**
-     * Saves the background image Blob to IndexedDB.
-     */
-    async function saveBackgroundBlob(blob) { 
-        return saveImageBlob("bg", blob); 
-    }
-
-    /**
-     * Loads the background image Blob from IndexedDB.
-     */
-    async function loadBackgroundBlob() { 
-        return loadImageBlob("bg"); 
-    }
-
-    /**
-     * Deletes the background image Blob from IndexedDB.
-     */
-    async function deleteBackgroundBlob() { 
-        return deleteImageBlob("bg"); 
-    }
-
-    /**
-     * Generates the IndexedDB key for a specific site's icon.
+     * Generates the localStorage key for a specific site's icon.
      */
     function getIconKey(siteId) { 
-        return `icon_${siteId}`; 
+        return ICON_KEY_PREFIX + siteId; 
     }
 
     /**
-     * Saves a site's icon Blob to IndexedDB.
+     * Saves a site's icon data URL to localStorage and keeps the cache in sync.
      */
-    async function saveSiteIcon(siteId, blob) { 
-        return saveImageBlob(getIconKey(siteId), blob); 
+    function saveSiteIcon(siteId, dataUrl) {
+        localStorage.setItem(getIconKey(siteId), dataUrl);
+        iconCache.set(siteId, dataUrl);
     }
 
     /**
-     * Loads a site's icon Blob from IndexedDB.
+     * Retrieves a site's icon data URL
      */
-    async function loadSiteIcon(siteId) { 
-        return loadImageBlob(getIconKey(siteId)); 
+    function loadSiteIcon(siteId) {
+        if (iconCache.has(siteId)) return iconCache.get(siteId);
+        const dataUrl = localStorage.getItem(getIconKey(siteId));
+        iconCache.set(siteId, dataUrl);
+        return dataUrl;
     }
 
     /**
-     * Deletes a site's icon Blob from IndexedDB.
+     * Removes a specific site's icon from localStorage and cache.
      */
-    async function deleteSiteIcon(siteId) { 
-        return deleteImageBlob(getIconKey(siteId)); 
+    function deleteSiteIcon(siteId) {
+        localStorage.removeItem(getIconKey(siteId));
+        iconCache.set(siteId, null);
     }
 
     /**
-     * Clears both localStorage and all IndexedDB assets.
+     * Clears all data from localStorage and the icon cache.
      */
-    async function clearAllStorageData() {
-        localStorage.clear();
-        await clearStoredAssets();
-    }
-
-    /**
-     * Asynchronously loads and caches icons for sites that are marked to have custom icons.
-     */
-    async function loadIconsForSites(sites) {
-        const toLoad = sites.filter(s => s.iconData === true && !iconCache.has(s.id));
-        if (toLoad.length === 0) return;
-
-        await Promise.all(toLoad.map(async (site) => {
-            try {
-                const blob = await loadSiteIcon(site.id);
-                if (blob && state.sites.some(s => s.id === site.id) && !iconCache.has(site.id)) {
-                    setIconCache(site.id, blob);
-                    const img = document.querySelector(`.tile[data-id="${site.id}"] img`);
-                    if (img) img.src = iconCache.get(site.id);
-                }
-            } catch (e) { 
-                console.warn(`Failed to load icon for site ${site.id}`, e); 
-            }
-        }));
-    }
-
-    /**
-     * Stores a Blob in the icon cache as an Object URL, revoking the old URL if it exists to prevent memory leaks.
-     */
-    function setIconCache(siteId, blob) {
-        const old = iconCache.get(siteId);
-        if (old) URL.revokeObjectURL(old);
-        iconCache.set(siteId, URL.createObjectURL(blob));
-    }
-
-    /**
-     * Removes a site's icon from the cache and revokes its Object URL.
-     */
-    function clearIconCache(siteId) {
-        const old = iconCache.get(siteId);
-        if (old) {
-            URL.revokeObjectURL(old);
-            iconCache.delete(siteId);
-        }
+    function clearLocalStorageData() {
+        iconCache.clear();
+        Object.keys(localStorage)
+            .filter(k => k.startsWith("ZSNewTab."))
+            .forEach(k => localStorage.removeItem(k));
     }
 
     // =============================================
-    //  5. BACKGROUND IMAGE MANAGEMENT
+    //  4. RENDERING FUNCTIONS
     // =============================================
-
-    /**
-     * Applies the saved background image to the document body using an Object URL, or removes it if disabled/missing.
-     */
-    async function applyBackground() {
-        const body = document.body;
-        if (state.settings.bg === true) {
-            try {
-                const blob = await loadBackgroundBlob();
-                if (blob) {
-                    const url = URL.createObjectURL(blob);
-                    await new Promise((resolve, reject) => {
-                        const img = new Image();
-                        img.onload = resolve;
-                        img.onerror = reject;
-                        img.src = url;
-                    });
-                    body.style.setProperty('--bg-image', `url("${url}")`);
-                    body.classList.add('has-bg-image');
-                    if (window._bgUrl) URL.revokeObjectURL(window._bgUrl);
-                    window._bgUrl = url;
-                    return;
-                }
-                state.settings.bg = false;
-                saveState();
-            } catch (e) { 
-                console.warn("Failed to load background", e); 
-            }
-        }
-        body.classList.remove('has-bg-image');
-        body.style.removeProperty('--bg-image');
-        if (window._bgUrl) { 
-            URL.revokeObjectURL(window._bgUrl); 
-            window._bgUrl = null; 
-        }
-    }
-
-    // =============================================
-    //  6. RENDERING FUNCTIONS
-    // =============================================
-    const renderWithTransition = ZSShared.createRenderer('grid', render);
+    const renderWithTransition = ZSCore.createRenderer('grid', render);
 
     /**
      * Updates the greeting element with the user's saved name or a default placeholder.
@@ -290,19 +112,18 @@
     }
 
     /**
-     * Main asynchronous render function that updates the grid, pagination, and loads necessary icons for the current page.
+     * Main render function that updates the grid, pagination, and settings UI based on the current state.
      */
-    async function render() {
+    function render() {
         document.documentElement.style.setProperty("--cols", state.settings.cols);
-        document.documentElement.style.setProperty("--rows", state.settings.rows);
         renderName();
         document.getElementById("engineSelect").value = state.settings.engine;
 
-        const total = ZSShared.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols);
+        const total = ZSCore.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols);
         if (currentPage >= total) currentPage = total - 1;
         if (currentPage < 0) currentPage = 0;
 
-        const pageSize = ZSShared.getPageSize(state.settings.rows, state.settings.cols);
+        const pageSize = ZSCore.getPageSize(state.settings.rows, state.settings.cols);
         const start = currentPage * pageSize;
         const pageSites = state.sites.slice(start, start + pageSize);
 
@@ -310,13 +131,10 @@
         grid.innerHTML = "";
 
         pageSites.forEach(site => grid.appendChild(buildTile(site)));
-        await loadIconsForSites(pageSites);
+        if (pageSites.length < pageSize) grid.appendChild(ZSCore.buildAddTile(() => openModal(null)));
+        for (let i = pageSites.length + 1; i < pageSize; i++) grid.appendChild(ZSCore.buildEmptyTile());
 
-        if (pageSites.length < pageSize) grid.appendChild(ZSShared.buildAddTile(() => openModal(null)));
-        
-        for (let i = pageSites.length + 1; i < pageSize; i++) grid.appendChild(ZSShared.buildEmptyTile());
-
-        ZSShared.updatePaginationUI(total, currentPage, (idx) => { 
+        ZSCore.updatePaginationUI(total, currentPage, (idx) => { 
             currentPage = idx; 
             renderWithTransition(); 
         });
@@ -339,7 +157,7 @@
     }
 
     /**
-     * Creates and configures a DOM element for a single site tile, including drag-and-drop, click, and action handlers, using cached icons if available.
+     * Creates and configures a DOM element for a single site tile, including drag-and-drop, click, and action handlers.
      */
     function buildTile(site) {
         const tile = document.createElement("div");
@@ -352,20 +170,21 @@
         icon.style.background = "transparent";
 
         const img = document.createElement("img");
-        if (site.iconData === true && iconCache.has(site.id)) {
-            img.src = iconCache.get(site.id);
+        const iconData = loadSiteIcon(site.id);
+        if (typeof iconData === "string" && iconData.startsWith("data:image")) {
+            img.src = iconData;
         } else {
-            img.src = ZSShared.getFaviconUrl(site.url);
+            img.src = ZSCore.getFaviconUrl(site.url);
         }
-        
+
         img.alt = "";
         img.onerror = () => {
             icon.innerHTML = "";
-            icon.style.background = ZSShared.getColorForName(site.name);
+            icon.style.background = ZSCore.getColorForName(site.name);
 
             const span = document.createElement("span");
             span.className = "letter";
-            span.textContent = ZSShared.getFirstLetter(site.name);
+            span.textContent = ZSCore.getFirstLetter(site.name);
             icon.appendChild(span);
         };
         icon.appendChild(img);
@@ -389,13 +208,17 @@
         delBtn.textContent = "✕";
         delBtn.addEventListener("click", async e => {
             e.stopPropagation();
-            if (await ZSShared.showConfirm(`Delete "${site.name}"?`, "Delete Site")) {
-                try { 
-                    await deleteSiteIcon(site.id); 
-                    clearIconCache(site.id); 
-                } catch (err) {}
+            if (await ZSCore.showConfirm(
+                `Delete "${site.name}"? This can't be undone.`,
+                {
+                    title: "Delete site",
+                    confirmLabel: "Delete",
+                    cancelLabel: "Cancel",
+                }
+            )) {
                 state.sites = state.sites.filter(s => s.id !== site.id);
-                saveState();
+                deleteSiteIcon(site.id); 
+                saveState(); 
                 renderWithTransition();
             }
         });
@@ -432,11 +255,12 @@
                 e.dataTransfer.setData("text/plain", site.id); 
             }
         });
+        
         tile.addEventListener("dragend", () => {
             tile.classList.remove("dragging");
             clearDropIndicator();
         });
-
+        
         tile.addEventListener("dragover", e => {
             e.preventDefault();
             if (!dragSourceId || dragSourceId === site.id) return;
@@ -490,7 +314,7 @@
     }
 
     // =============================================
-    //  7. MODAL (ADD / EDIT SITE)
+    //  5. MODAL (ADD / EDIT SITE)
     // =============================================
     const overlay = document.getElementById("overlay");
     const siteIconInput = document.getElementById("siteIcon");
@@ -499,7 +323,7 @@
     const removeIconBtn = document.getElementById("removeIconBtn");
 
     /**
-     * Opens and populates the add/edit site modal, loading the icon preview from the cache or IndexedDB if applicable.
+     * Opens and populates the add/edit site modal with existing data or defaults.
      */
     function openModal(site) {
         editingId = site ? site.id : null;
@@ -509,21 +333,13 @@
         tempIconData = null; 
         siteIconInput.value = ""; 
         iconPreview.style.display = "none";
-        
-        if (site && site.iconData === true) {
-            tempIconData = true; 
-            iconPreview.style.display = "flex";
-            if (iconCache.has(site.id)) {
-                iconPreviewImg.src = iconCache.get(site.id);
-            } else {
-                loadSiteIcon(site.id).then(blob => {
-                    if (blob) { 
-                        setIconCache(site.id, blob); 
-                        iconPreviewImg.src = iconCache.get(site.id); 
-                    }
-                }).catch(() => { 
-                    iconPreview.style.display = "none"; 
-                });
+
+        if (site) {
+            const existingIcon = loadSiteIcon(site.id);
+            if (typeof existingIcon === "string" && existingIcon.startsWith("data:image")) {
+                tempIconData = existingIcon; 
+                iconPreviewImg.src = existingIcon; 
+                iconPreview.style.display = "flex";
             }
         }
         overlay.classList.add("open");
@@ -550,8 +366,8 @@
         if (!file) return;
         if (!file.type.startsWith("image/")) return alert("Please select an image file.");
         try {
-            const resizedBlob = await ZSShared.resizeImage(file, 128, 128, 0.85);
-            tempIconData = await ZSShared.blobToDataURL(resizedBlob);
+            const resizedBlob = await ZSCore.resizeImage(file, "icon");
+            tempIconData = await ZSCore.blobToDataURL(resizedBlob);
             iconPreviewImg.src = tempIconData; 
             iconPreview.style.display = "flex";
         } catch (err) { 
@@ -566,46 +382,57 @@
     });
 
     /**
-     * Validates and saves a new or edited site to the state and IndexedDB, handling icon Blob conversions and cache updates.
+     * Validates and saves a new or edited site to the state and localStorage, handling icon updates.
      */
-    async function saveSite() {
+    function saveSite() {
         const name = document.getElementById("siteName").value.trim();
         let url = document.getElementById("siteUrl").value.trim();
         if (!name || !url) return;
         if (!/^https?:\/\//i.test(url)) url = "https://" + url;
-        
+
+        const stateSnapshot = JSON.parse(JSON.stringify(state));
+        const targetId = editingId || ZSCore.generateId();
+        const iconKey = getIconKey(targetId);
+        const iconSnapshot = localStorage.getItem(iconKey);
+        const hadCacheEntry = iconCache.has(targetId);
+        const cacheSnapshot = iconCache.get(targetId);
+
         try {
             if (editingId) {
                 const existing = state.sites.find(s => s.id === editingId);
                 if (existing) {
-                    existing.name = name; 
+                    existing.name = name;
                     existing.url = url;
-                    if (typeof tempIconData === "string" && tempIconData.startsWith("data:")) {
-                        const blob = ZSShared.dataURLToBlob(tempIconData);
-                        await saveSiteIcon(existing.id, blob);
-                        existing.iconData = true; 
-                        setIconCache(existing.id, blob);
-                    } else if (tempIconData === null) {
-                        if (existing.iconData) await deleteSiteIcon(existing.id);
-                        delete existing.iconData; 
-                        clearIconCache(existing.id);
-                    }
                 }
             } else {
-                const newSite = { id: ZSShared.generateId(), name, url };
-                state.sites.push(newSite);
-                if (tempIconData) {
-                    const blob = ZSShared.dataURLToBlob(tempIconData);
-                    await saveSiteIcon(newSite.id, blob);
-                    newSite.iconData = true; 
-                    setIconCache(newSite.id, blob);
-                }
+                state.sites.push({ id: targetId, name, url });
             }
-            saveState(); 
-            closeModal(); 
+
+            if (typeof tempIconData === "string" && tempIconData.startsWith("data:image")) {
+                saveSiteIcon(targetId, tempIconData);
+            } else if (tempIconData === null) {
+                deleteSiteIcon(targetId);
+            }
+
+            saveState();
+            closeModal();
             renderWithTransition();
-        } catch (err) { 
-            alert("Could not save site icon."); 
+        } catch (err) {
+            // rollback state
+            state = stateSnapshot;
+
+            if (iconSnapshot === null) {
+                localStorage.removeItem(iconKey);
+            } else {
+                localStorage.setItem(iconKey, iconSnapshot);
+            }
+            if (hadCacheEntry) {
+                iconCache.set(targetId, cacheSnapshot);
+            } else {
+                iconCache.delete(targetId);
+            }
+
+            alert("Could not save site — local storage may be full.");
         }
     }
 
@@ -620,7 +447,7 @@
     });
 
     // =============================================
-    //  8. SETTINGS PANEL & ACTIONS
+    //  6. SETTINGS PANEL
     // =============================================
     const panel = document.getElementById("panel");
     function openSettingsPanel() {
@@ -656,133 +483,191 @@
         saveState(); 
     });
 
-    document.getElementById("bgImageInput").addEventListener("change", async e => {
+    const bgImageInput = document.getElementById("bgImageInput");
+    const removeBgBtn = document.getElementById("removeBgBtn");
+    bgImageInput.addEventListener("change", async e => {
         const file = e.target.files[0];
         if (!file || !file.type.startsWith("image/")) return;
+        
         try {
-            const resizedBlob = await ZSShared.resizeImage(file, 1920, 1080, 0.82);
-            await saveBackgroundBlob(resizedBlob);
-            state.settings.bg = true; 
-            saveState(); 
-            await applyBackground();
-        } catch (err) { 
-            alert("Could not save background image."); 
+            const resizedBlob = await ZSCore.resizeImage(file, 'bg');
+            await ZSDB.setBackground(resizedBlob);
+        } catch (err) {
+            alert("Could not save background image.");
+        } finally {
+            e.target.value = "";
         }
-        e.target.value = "";
     });
 
-    document.getElementById("removeBgBtn").addEventListener("click", async () => {
+    removeBgBtn.addEventListener("click", async () => {
+        if (removeBgBtn.disabled) return;
+
+        const ok = await ZSCore.showConfirm(
+            "This will delete the saved background. You can't undo this.",
+            {
+                title: "Remove background",
+                confirmLabel: "Remove",
+                cancelLabel: "Keep",
+            }
+        );
+        if (!ok) return;
+
+        removeBgBtn.disabled = true;
         try {
-            await deleteBackgroundBlob(); 
-            state.settings.bg = false; 
-            saveState();
-            await applyBackground(); 
-            document.getElementById("bgImageInput").value = "";
-        } catch (err) {}
+            await ZSDB.removeBackground();
+            bgImageInput.value = "";
+        } catch (err) {
+            console.error("Failed to remove background", err);
+        } finally {
+            removeBgBtn.disabled = false;
+        }
     });
 
     document.getElementById("exportBtn").addEventListener("click", async () => {
+        const btn = document.getElementById("exportBtn");
+        if (btn.disabled) return;
+        btn.disabled = true;
+
         try {
-            const exportData = JSON.parse(JSON.stringify(state));
-            if (state.settings.bg) {
-                try { 
-                    const blob = await loadBackgroundBlob(); 
-                    exportData.settings.bg = blob ? await ZSShared.blobToDataURL(blob) : false; 
-                } catch (e) { 
-                    exportData.settings.bg = false; 
-                }
-            }
-            for (const site of exportData.sites) {
-                if (site.iconData !== true) continue;
-                try { 
-                    const blob = await loadSiteIcon(site.id); 
-                    if (blob) site.iconData = await ZSShared.blobToDataURL(blob); 
-                    else delete site.iconData; 
-                } catch (e) { 
-                    delete site.iconData; 
-                }
-            }
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-            const a = document.createElement("a"); 
+            const bgBlob = await ZSDB.getBackground();
+            const bgDataUrl = bgBlob ? await ZSCore.blobToDataURL(bgBlob) : null;
+
+            const backup = {
+                settings: {
+                    ...state.settings,
+                    bg: bgDataUrl, 
+                },
+                sites: state.sites.map(site => {
+                    const copy = { ...site };
+                    const iconData = loadSiteIcon(site.id);
+                    if (iconData) copy.iconData = iconData;
+                    return copy;
+                }),
+            };
+
+            const blob = new Blob([JSON.stringify(backup, null, 2)], {
+                type: "application/json",
+            });
             const url = URL.createObjectURL(blob);
-            a.href = url; 
-            a.download = `zs-new-tab-backup-${new Date().toISOString().slice(0, 10)}.json`; 
-            a.click(); 
-            URL.revokeObjectURL(url);
-        } catch (err) { 
-            alert("Could not create backup."); 
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `zs-new-tab-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (err) {
+            console.error("Export failed", err);
+            alert("Could not create backup.");
+        } finally {
+            btn.disabled = false;
         }
     });
 
-    document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
-    
-    // Handles the file reading and parsing logic when a backup file is selected for import
+    document.getElementById("importBtn").addEventListener("click", () =>
+        document.getElementById("importFile").click()
+    );
+
     document.getElementById("importFile").addEventListener("change", e => {
-        const file = e.target.files[0]; 
+        const file = e.target.files[0];
         if (!file) return;
+
         const reader = new FileReader();
+
         reader.onload = async ev => {
+            const previousState = state;
+
             try {
                 const parsed = JSON.parse(ev.target.result);
-                if (!parsed.sites || !parsed.settings) throw new Error("Invalid format");
-                if (!(await ZSShared.showConfirm("Current data will be lost when you import this file."))) return;
-                
-                await clearAllStorageData();
-                if (typeof parsed.settings.bg === "string" && parsed.settings.bg.startsWith("data:image")) {
-                    try { 
-                        await saveBackgroundBlob(ZSShared.dataURLToBlob(parsed.settings.bg)); 
-                        parsed.settings.bg = true; 
-                    } catch (err) { 
-                        parsed.settings.bg = false; 
-                    }
-                } else {
-                    parsed.settings.bg = !!parsed.settings.bg;
+
+                if (!parsed || !parsed.sites || !parsed.settings || !Array.isArray(parsed.sites)) {
+                    throw new Error("Invalid backup format");
                 }
+
+                if (!(await ZSCore.showConfirm(
+                    "Current data will be lost when you import this file.",
+                    {
+                        title: "Import backup",
+                        confirmLabel: "Import",
+                        cancelLabel: "Cancel",
+                    }
+                ))) return;
+
+                const { bg, ...settingsOnly } = parsed.settings;
+
+                const importedSettings = {
+                    name:   settingsOnly.name   ?? "",
+                    rows:   settingsOnly.rows   ?? 4,
+                    cols:   settingsOnly.cols   ?? 6,
+                    engine: settingsOnly.engine ?? "https://www.google.com/search?q=",
+                };
+                const importedSites = parsed.sites.map(site => ({
+                    id: site.id, name: site.name, url: site.url,
+                }));
+
+                if (typeof bg === "string" && bg.startsWith("data:image")) {
+                    await ZSDB.setBackground(ZSCore.dataURLToBlob(bg));
+                } else {
+                    await ZSDB.removeBackground();
+                }
+
+                state = { settings: importedSettings, sites: importedSites };
+                clearLocalStorageData();
 
                 for (const site of parsed.sites) {
                     if (typeof site.iconData === "string" && site.iconData.startsWith("data:image")) {
-                        try { 
-                            await saveSiteIcon(site.id, ZSShared.dataURLToBlob(site.iconData)); 
-                            site.iconData = true; 
-                        } catch (err) { 
-                            delete site.iconData; 
-                        }
+                        saveSiteIcon(site.id, site.iconData);
                     }
                 }
-                state = parsed; 
-                saveState(); 
+
+                saveState();
                 currentPage = 0;
-                for (const url of iconCache.values()) URL.revokeObjectURL(url);
-                iconCache.clear();
-                renderWithTransition(); 
-                await applyBackground(); 
+                renderWithTransition();
                 panel.classList.remove("open");
-            } catch (err) { 
-                alert("This file doesn't look like a valid backup."); 
+
+            } catch (err) {
+                console.error("Import failed", err);
+
+                state = previousState;
+
+                try {
+                    await ZSDB.applyBackground();
+                } catch (_) {}
+
+                alert("This file doesn't look like a valid backup, or it's too large.");
             }
         };
-        reader.readAsText(file); 
+
+        reader.readAsText(file);
         e.target.value = "";
     });
 
     document.getElementById("resetBtn").addEventListener("click", async () => {
-        if (await ZSShared.showConfirm("This removes all your sites and settings. Continue?", "Reset Everything")) {
-            try { 
-                await clearAllStorageData(); 
-            } catch (err) {}
-            for (const url of iconCache.values()) URL.revokeObjectURL(url);
-            iconCache.clear();
-            state = JSON.parse(JSON.stringify(ZSShared.defaultState)); 
-            saveState();
-            currentPage = 0; 
-            renderWithTransition(); 
-            applyBackground(); 
-            panel.classList.remove("open");
+        if (await ZSCore.showConfirm(
+            "This removes all your sites, settings and background. Continue?",
+            {
+                title: "Reset everything",
+                confirmLabel: "Reset",
+                cancelLabel: "Cancel",
+            }
+        )) {
+            try {
+                clearLocalStorageData();
+                await ZSDB.removeBackground();
+
+                state = JSON.parse(JSON.stringify(ZSCore.defaultState));
+                currentPage = 0;
+
+                saveState(); 
+                renderWithTransition(); 
+                panel.classList.remove("open");
+            } catch (err) { 
+                alert("Could not reset the application."); 
+            }
         }
     });
 
     // =============================================
-    //  9. NAVIGATION & INITIALIZATION
+    //  7. NAVIGATION & INITIALIZATION
     // =============================================
     document.getElementById("prevPage").addEventListener("click", () => { 
         if (currentPage > 0) { 
@@ -790,23 +675,24 @@
             renderWithTransition(); 
         } 
     });
+    
     document.getElementById("nextPage").addEventListener("click", () => { 
-        if (currentPage < ZSShared.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols) - 1) { 
+        if (currentPage < ZSCore.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols) - 1) { 
             currentPage++; 
             renderWithTransition(); 
         } 
     });
 
-    ZSShared.setupSearchForm("searchForm", "searchInput", () => state.settings.engine);
-    ZSShared.setupKeyboardShortcuts("searchInput", () => { 
+    ZSCore.setupSearchForm("searchForm", "searchInput", () => state.settings.engine);
+    ZSCore.setupKeyboardShortcuts("searchInput", () => { 
         closeModal(); 
         panel.classList.remove("open"); 
     }, openSettingsPanel);
-    ZSShared.setupClickOutsidePanel("panel", "settingsToggle");
-    ZSShared.setupGreeting(".greeting");
+    ZSCore.setupClickOutsidePanel("panel", "settingsToggle");
+    ZSCore.setupGreeting();
 
-    ZSShared.setupScrollNavigation('.grid-wrap', {
-        getTotalPages: () => ZSShared.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols),
+    ZSCore.setupScrollNavigation('.grid-wrap', {
+        getTotalPages: () => ZSCore.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols),
         getCurrentPage: () => currentPage,
         onPageChange: (newPage) => { 
             currentPage = newPage; 
@@ -814,21 +700,20 @@
         }
     });
 
-    ZSShared.setupDragEdgeNavigation(".grid-wrap", {
+    ZSCore.setupDragEdgeNavigation(".grid-wrap", {
         canGoPrev: () => currentPage > 0,
-        canGoNext: () => currentPage < ZSShared.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols) - 1,
+        canGoNext: () => currentPage < ZSCore.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols) - 1,
         onNavigate: (dir) => { 
             currentPage += dir; 
             renderWithTransition(); 
         }
     });
 
-    try { 
-        await initDB(); 
-    } catch (err) { 
-        console.warn(err); 
+    render();
+
+    try {
+        await ZSDB.applyBackground();
+    } catch (err) {
+        console.warn("Background failed", err);
     }
-    const bgTimeout = new Promise((resolve) => setTimeout(resolve, 350));
-    await Promise.all([Promise.race([applyBackground(), bgTimeout]), render()]);
-    requestAnimationFrame(() => document.body.classList.add('loaded'));
 })();
