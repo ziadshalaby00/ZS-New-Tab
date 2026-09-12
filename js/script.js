@@ -1,11 +1,11 @@
 /**
  * ZS New Tab – Full Application
- * Uses localStorage for settings, site's, icons and IndexedDB for backgrounds.
+ * Uses localStorage for settings, sites, icons and IndexedDB for backgrounds.
  */
 (async function () {
     "use strict";
     const { ZSCore, ZSDB } = window;
-    if (!ZSCore) return console.error("ZSCore is missing. Please load script.shared.js first.");
+    if (!ZSCore) return console.error("ZSCore is missing. Please load script.core.js first.");
     if (!ZSDB) return console.error("ZSDB is missing. Please load script.db.js first.");
 
     // =============================================

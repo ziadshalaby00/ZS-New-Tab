@@ -448,7 +448,9 @@ form.search button svg {
 }
 
 .tile-actions button:hover {
-    color: var(--text);
+    color: var(--accent);
+    border-color: var(--accent-dim);
+    background: var(--surface-2);
 }
 
 .tile-actions button.del:hover {
@@ -784,6 +786,10 @@ form.search button svg {
     font-weight: 600;
 }
 
+.modal .actions .save:hover {
+    filter: brightness(1.08);
+}
+
 .modal .actions .cancel:hover {
     border-color: var(--text-dim);
 }
@@ -866,7 +872,9 @@ form.search button svg {
 /* ============================================
    15. Background fade-in transitions
    ============================================ */
-body::before {
+/* Background layers */
+body::before,
+body::after {
     content: "";
     position: fixed;
     inset: 0;
@@ -874,28 +882,61 @@ body::before {
     pointer-events: none;
 
     background-color: rgba(10, 13, 17, 0.30);
-    background-image: var(--bg-image, none);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
 
     opacity: 0;
-    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+
+    transform: scale(1.02);
+    filter: blur(2px);
+
+    transition:
+        opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+        filter 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-body.has-bg-image::before {
+/* Background layer 1 */
+body::before {
+    background-image: var(--bg-image-1, none);
+}
+
+/* Background layer 2 */
+body::after {
+    background-image: var(--bg-image-2, none);
+}
+
+/* Active layers */
+body.bg-layer-1::before,
+body.bg-layer-2::after {
     opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
 }
 
-body.no-fade::before {
+/* During initial application */
+body.no-fade::before,
+body.no-fade::after {
     transition: none;
 }
 
+/* Keep the app above the background */
+body.has-bg-image .app {
+    position: relative;
+    z-index: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
-    body::before {
+    body::before,
+    body::after {
         transition: none;
+        transform: none;
+        filter: none;
     }
-    body.has-bg-image::before {
+
+    body.bg-layer-1::before,
+    body.bg-layer-2::after {
         opacity: 1;
     }
 }

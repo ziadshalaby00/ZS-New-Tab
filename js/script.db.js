@@ -87,8 +87,9 @@
         });
     }
 
-    const FADE_MS = 850;
+    const FADE_MS = 750;
     let _currentBgUrl = null;
+    let _activeLayer = 1;
 
     function waitForImage(url) {
         return new Promise((resolve, reject) => {
@@ -99,55 +100,122 @@
         });
     }
 
-    async function applyBlob(blob) {
+    async function applyBlob(blob, { animate = true } = {}) {
+        if (!blob) {
+            clearApplied();
+            return;
+        }
+
         const url = URL.createObjectURL(blob);
 
         try {
             await waitForImage(url);
-        } catch (err) {
+
+            const body = document.body;
+
+            /*
+            * Initial background:
+            * apply instantly without animation.
+            */
+            if (!_currentBgUrl) {
+                const nextLayer = 1;
+
+                body.style.setProperty(
+                    "--bg-image-1",
+                    `url("${url}")`
+                );
+
+                if (!animate) {
+                    body.classList.add("no-fade");
+                }
+
+                void body.offsetHeight;
+
+                body.classList.add("bg-layer-1");
+                body.classList.add("has-bg-image");
+
+                void body.offsetHeight;
+
+                if (!animate) {
+                    body.classList.remove("no-fade");
+                }
+
+                _currentBgUrl = url;
+                _activeLayer = nextLayer;
+
+                return;
+            }
+
+            /*
+            * Switch to the other layer.
+            * This creates a real crossfade between
+            * the old and new background images.
+            */
+            const nextLayer = _activeLayer === 1 ? 2 : 1;
+            const variableName =
+                nextLayer === 1 ? "--bg-image-1" : "--bg-image-2";
+
+            body.style.setProperty(
+                variableName,
+                `url("${url}")`
+            );
+
+            /*
+            * Force style calculation so the browser
+            * sees the new image before starting the transition.
+            */
+            void body.offsetHeight;
+
+            if (nextLayer === 1) {
+                body.classList.remove("bg-layer-2");
+                body.classList.add("bg-layer-1");
+            } else {
+                body.classList.remove("bg-layer-1");
+                body.classList.add("bg-layer-2");
+            }
+
+            const oldUrl = _currentBgUrl;
+
+            _currentBgUrl = url;
+            _activeLayer = nextLayer;
+
+            /*
+            * The old object URL is no longer needed after
+            * the crossfade has completed.
+            */
+            setTimeout(() => {
+                if (oldUrl && oldUrl !== _currentBgUrl) {
+                    URL.revokeObjectURL(oldUrl);
+                }
+            }, FADE_MS);
+
+        } catch (error) {
             URL.revokeObjectURL(url);
-            throw err;
-        }
-
-        const body = document.body;
-        const oldUrl = _currentBgUrl;
-        _currentBgUrl = url;
-
-        body.classList.add("no-fade");
-        body.classList.remove("has-bg-image");
-        body.style.setProperty("--bg-image", `url("${url}")`);
-        void body.offsetHeight;              // flush #1
-
-        body.classList.remove("no-fade");
-        void body.offsetHeight;              // flush #2
-
-        body.classList.add("has-bg-image");
-
-        if (oldUrl) {
-            setTimeout(() => URL.revokeObjectURL(oldUrl), FADE_MS);
+            throw error;
         }
     }
 
     function clearApplied() {
         const body = document.body;
+
+        body.classList.remove(
+            "has-bg-image",
+            "bg-layer-1",
+            "bg-layer-2"
+        );
+
         const oldUrl = _currentBgUrl;
 
-        if (!body.classList.contains("has-bg-image")) {
-            if (oldUrl) URL.revokeObjectURL(oldUrl);
-            body.style.removeProperty("--bg-image");
-            _currentBgUrl = null;
-            return;
-        }
-
-        void body.offsetHeight;
-
-        body.classList.remove("has-bg-image");
+        _currentBgUrl = null;
 
         setTimeout(() => {
-            body.style.removeProperty("--bg-image");
-            if (oldUrl) URL.revokeObjectURL(oldUrl);
-            if (_currentBgUrl === oldUrl) _currentBgUrl = null;
-        }, 900);
+            body.style.removeProperty("--bg-image-1");
+            body.style.removeProperty("--bg-image-2");
+
+            if (oldUrl) {
+                URL.revokeObjectURL(oldUrl);
+            }
+        }, FADE_MS);
     }
 
     // =============================================
@@ -174,7 +242,7 @@
 
         try {
             await dbPut(STORE_META, { blob, createdAt: Date.now() }, BG_KEY);
-            await applyBlob(blob);
+            await applyBlob(blob, { animate: true });
         } catch (err) {
             // rollback
             try {
@@ -207,7 +275,7 @@
         const blob = await getBackground();
         if (blob) {
             try {
-                await applyBlob(blob);
+                await applyBlob(blob, { animate: true });
             } catch (err) {
                 console.warn("Stored background failed to apply", err);
                 clearApplied();
