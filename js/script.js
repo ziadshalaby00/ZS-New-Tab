@@ -197,6 +197,14 @@
         };
         icon.appendChild(img);
 
+        // Right-click on icon → Edit
+        icon.addEventListener("contextmenu", e => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            openModal(site);
+        });
+
         const label = document.createElement("div");
         label.className = "label";
         label.textContent = site.name;
