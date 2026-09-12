@@ -408,11 +408,14 @@ window.ZSCore = (function () {
             if (!query) return;
 
             const hasScheme = /^https?:\/\//i.test(query);
+
+            const looksLikeIp = /^(\d{1,3}\.){3}\d{1,3}(:\d+)?(\/.*)?$/.test(query);
+
             const looksLikeDomain = /^[\w-]+(\.[\w-]+)+(\/.*)?$/.test(query)
                 && !query.includes(" ")
                 && /^[a-z]{2,}(\/.*)?$/i.test(query.split("/")[0].split(".").pop());
 
-            const looksLikeUrl = hasScheme || looksLikeDomain;
+            const looksLikeUrl = hasScheme || looksLikeIp || looksLikeDomain;
             window.location.href = looksLikeUrl ? (hasScheme ? query : `https://${query}`) : getEngineFn() + encodeURIComponent(query);
         });
     }
