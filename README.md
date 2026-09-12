@@ -1,6 +1,6 @@
 # ZS New Tab
 
-A minimal, fast, and fully offline **New Tab** replacement for Chrome — a personal bookmark dashboard with a search bar, a customizable grid, and a settings panel. No accounts, no tracking, no backend. Everything is stored locally in your browser.
+A minimal, fast, fully offline **New Tab** replacement for Chrome — a personal bookmark dashboard with a search bar, customizable grid, and settings panel. No accounts, no tracking, no backend. Everything is stored locally.
 
 ![Version](https://img.shields.io/github/v/release/ziadshalaby00/ZS-New-Tab)
 ![Stars](https://img.shields.io/github/stars/ziadshalaby00/ZS-New-Tab)
@@ -15,74 +15,65 @@ A minimal, fast, and fully offline **New Tab** replacement for Chrome — a pers
 ## Features
 
 - **Bookmark grid** — add, edit, delete, and reorder sites with drag & drop
-- **Custom icons** — auto-fetched favicons, with the option to upload your own icon per site, and a colored-letter fallback if a favicon fails to load
-- **Quick search** — search from the new tab directly, with a switchable search engine (Google, DuckDuckGo, Brave, Bing), or type a URL to go straight there
-- **Pagination** — grid pages with dot navigation, arrow buttons, and mouse-wheel scrolling
-- **Settings panel** — customize your display name, grid rows/columns, and background image
-- **Custom background** — upload any image as your background, with a smooth crossfade whenever it changes
-- **Smart image compression** — background images and site icons are automatically downscaled and re-encoded (via canvas, before saving) to keep storage lean and loading fast, without a visible quality hit
-- **Backup & restore** — export your full setup (sites, settings, background image) to a `.json` file, and import it back anytime
-- **Keyboard shortcuts** — `/` to focus search, `P` to toggle the settings panel, `Esc` to close any open panel or modal
-- **Dark UI** — clean dark theme built with plain CSS (no frameworks)
-- **Modular architecture** — a shared core module (`ZSCore`) holds default state, helpers, and UI logic; a dedicated storage module (`ZSDB`) handles the background image
+- **Custom icons** — auto-fetched favicons, optional per-site upload, colored-letter fallback
+- **Quick search** — switchable engines (Google, DuckDuckGo, Brave, Bing); typing a URL, IP, or bare domain (e.g. `github.com`) navigates directly
+- **Pagination** — dot navigation, arrow buttons, mouse-wheel scrolling, and drag-to-edge paging (hold a dragged tile near the left/right edge to flip pages)
+- **Accent colors** — 18 presets + custom color picker; the whole UI re-themes instantly
+- **Settings panel** — display name, grid rows/columns, background image, accent color
+- **Custom background** — upload any image, with a smooth crossfade on change
+- **Smart compression** — icons (96×96 WebP) and backgrounds (1920×1080) are downscaled before saving
+- **Backup & restore** — export/import your full setup (sites, settings, icons, background) as `.json`
+- **Styled confirm dialogs** — custom in-app modals for destructive actions
+- **Dark UI** — plain CSS, no frameworks
 
-## Architecture & storage
+### Keyboard & mouse shortcuts
 
-The app is a single, unified build (there is no longer a "default" vs "shadow" split). Storage is split by what each piece of data needs:
+| Input | Action |
+|---|---|
+| `/` | Focus search |
+| `P` | Toggle settings panel |
+| `Esc` | Close any open panel / modal / dialog |
+| `Enter` / `Ctrl`+`Enter` | Open focused tile (current / new tab) |
+| Arrow keys | Move focus between tiles; flips page at edges |
+| Middle-click / `Ctrl`+click | Open tile in new tab |
+| Right-click tile icon | Edit site |
+| Scroll over grid | Previous / next page |
+
+## Storage
 
 | Data | Storage | Why |
 |---|---|---|
-| Sites & settings | `localStorage` | Small, needs to be read instantly on every load |
-| Custom site icons | `localStorage` (as WebP data URLs) | Small after compression, read synchronously alongside the grid — no async wait before a tile can render |
-| Background image | `IndexedDB` (via `script.db.js` / `ZSDB`) | Can be large; IndexedDB has no practical size ceiling, unlike `localStorage`'s ~5–10 MB limit |
+| Sites & settings | `localStorage` | Small, read instantly on every load |
+| Custom site icons | `localStorage` (WebP data URLs) | Small after compression, read synchronously |
+| Background image | `IndexedDB` (`ZSDB`) | Can be large; no practical size ceiling |
 
-**Why the background gets its own module:** the background is the one asset that can genuinely be large, so it's kept out of `localStorage` and given a dedicated, resilient storage layer (`ZSDB`) with:
-- A snapshot-and-rollback save: if writing the new background fails (or the image fails to decode), the previous background is restored automatically — you're never left in a broken state.
-- A smooth crossfade transition whenever the background is set, changed, or removed, instead of a hard cut.
+The background has its own module (`js/script.db.js`) with a **snapshot-and-rollback** save (restores the previous image if anything fails) and a **two-layer crossfade** transition.
 
-## Tech stack
+## Project structure
 
-- **Vanilla HTML, CSS, and JavaScript** — no build step, no dependencies.
-- **`js/script.core.js` (`ZSCore`)** — default state, utility functions (favicon URLs, color generation, image resizing, HTML escaping), reusable UI components (tiles, pagination, confirm dialogs), and global event wiring (search, shortcuts, scroll/drag navigation).
-- **`js/script.db.js` (`ZSDB`)** — a small, self-contained IndexedDB wrapper responsible only for the background image: get / set / remove / apply, with rollback on failure and a crossfade transition.
-- **`js/script.js`** — the main application: state management, rendering, the add/edit site modal, the settings panel, and backup import/export. Uses `ZSCore` for shared logic and `ZSDB` for the background.
-- **Canvas-based image resizing** — icons are resized to 96×96 and re-encoded as WebP; the background is capped at 1920×1080 as JPEG/PNG.
-- **Self-hosted fonts** — Inter and JetBrains Mono are bundled locally in the project (`fonts/`) via `@font-face`, not loaded from an external CDN.
+- **`js/script.core.js` (`ZSCore`)** — default state, utilities (favicons, colors, image resizing, HTML escaping), shared UI components, accent theme system, global event wiring.
+- **`js/script.db.js` (`ZSDB`)** — IndexedDB wrapper for the background image.
+- **`js/script.js`** — main app: state, rendering, add/edit modal, settings panel, keyboard grid navigation, backup import/export.
+- **`styles/styles.css`** — theme variables at the top; accent derived from `--accent-rgb` at runtime.
+- **Self-hosted fonts** — Inter and JetBrains Mono, bundled locally.
 
 ## Supported browsers
 
-Primarily built on Manifest V3 (minimum Chrome 88) for Chromium-based browsers:
-- Chrome
-- Edge
-- Brave
-- Opera
-- Vivaldi
-
-Also tested on **Firefox Developer Edition**.
+Chromium-based (Chrome, Edge, Brave, Opera, Vivaldi) on Manifest V3, minimum Chrome 88. Also tested on **Firefox Developer Edition**.
 
 ## Installation
 
-### From source (developer mode)
+1. Clone or download this repo.
+2. Go to `chrome://extensions` → enable **Developer mode** → **Load unpacked** → select the project folder.
+3. Open a new tab.
 
-1. Clone or download this repository.
-2. Open Chrome and go to `chrome://extensions`.
-3. Enable **Developer mode** (top-right toggle).
-4. Click **Load unpacked** and select the project folder.
-5. Open a new tab — you're done.
-
-### Enable in Incognito (optional)
-
-Go to `chrome://extensions`, find **ZS New Tab**, click **Details**, and toggle **Allow in incognito**.
+**Incognito:** `chrome://extensions` → **ZS New Tab** → **Details** → toggle **Allow in incognito**.
 
 ## Opera Support
 
-Opera's extension store enforces stricter validation on `chrome_url_overrides.newtab` for side-loaded / unpacked extensions, and rejects it with:
+Opera rejects `chrome_url_overrides.newtab` for side-loaded extensions. Replace `manifest.json` with the MV2 variant below and add a `background.js` that redirects Opera's start-page URLs to `index.html`.
 
-> `'chrome_url_overrides' is not allowed for specified extension ID.`
-
-To use **ZS New Tab** on Opera, replace `manifest.json` with the following, and add a `background.js` file next to it. Instead of overriding the new tab page directly, this approach uses a background script that listens for Opera's default start page / new tab URLs and redirects them to `index.html`.
-
-**`manifest.json` (Opera variant):**
+**`manifest.json`:**
 ```json
 {
   "manifest_version": 2,
@@ -93,9 +84,7 @@ To use **ZS New Tab** on Opera, replace `manifest.json` with the following, and 
   "author": "Ziad Shalaby",
   "minimum_chrome_version": "88",
   "permissions": [ "tabs" ],
-  "background": {
-    "scripts": ["background.js"]
-  },
+  "background": { "scripts": ["background.js"] },
   "icons": {
     "16": "./icons/favicon-16x16.png",
     "48": "./icons/favicon-32x32.png",
@@ -108,58 +97,48 @@ To use **ZS New Tab** on Opera, replace `manifest.json` with the following, and 
 **`background.js`:**
 ```javascript
 function redirectToIndex(tabId) {
-  chrome.tabs.update(tabId, {
-    url: chrome.runtime.getURL("index.html")
-  });
+  chrome.tabs.update(tabId, { url: chrome.runtime.getURL("index.html") });
 }
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   const currentUrl = changeInfo.url || tab.pendingUrl || tab.url || "";
+  if (!currentUrl) return;
 
-  if (currentUrl) {
-    const startPages = [
-      "opera://startpage",
-      "chrome://startpage",
-      "chrome://newtab",
-      "edge://newtab",
-      "about:blank"
-    ];
+  const startPages = [
+    "opera://startpage", "chrome://startpage", "chrome://newtab",
+    "edge://newtab", "about:blank"
+  ];
 
-    if (startPages.some(page => currentUrl.startsWith(page))) {
-      redirectToIndex(tabId);
-    }
+  if (startPages.some(page => currentUrl.startsWith(page))) {
+    redirectToIndex(tabId);
   }
 });
 ```
 
 ## Customization
 
-- **Search engines**: Add more options in the `<select id="engineSelect">` element in `index.html`.
-- **Colors**: All theme colors are CSS variables at the top of **`styles/styles.css`** (`:root { --accent, --bg-0, ... }`).
-- **Default bookmarks**: Edit the `defaultState.sites` array in **`js/script.core.js`** to change what ships by default for a fresh install.
-- **Resize limits**: Icon and background dimensions/quality are set inside the `resizeImage(file, type)` function in **`js/script.core.js`** — `type: "icon"` controls the 96×96 WebP icons, anything else controls the 1920×1080 background.
+- **Search engines** — edit `<select id="engineSelect">` in `index.html`.
+- **Accent presets** — edit `ZSCore.THEMES` in `js/script.core.js`.
+- **Theme colors** — CSS variables at the top of `styles/styles.css`.
+- **Default bookmarks** — `defaultState.sites` in `js/script.core.js`.
+- **Resize limits** — inside `resizeImage()` in `js/script.core.js`.
 
-## Data & privacy
+## Debugging
 
-Almost everything lives in your browser only:
-- Sites, settings, and custom site icons → `localStorage`
-- Background image → `IndexedDB` (via `script.db.js`)
+Run `window.gl()` in the DevTools console for a table of every `ZSNewTab.*` `localStorage` key with its size and the total — useful when checking quota usage.
 
-One thing does reach outside your browser:
-- **Favicon lookups**, via Google's public favicon service (`https://www.google.com/s2/favicons`), used to fetch each site's icon. Fonts are bundled locally and never fetched externally.
+## Privacy
 
-No account, analytics, or backend is involved beyond that.
+Everything lives in your browser. The only external request is favicon lookups via Google's public favicon service (`https://www.google.com/s2/favicons`). Fonts are bundled locally. No accounts, analytics, or backend.
 
 ## Backup
 
-Use **Export backup (.json)** in the settings panel to save your full setup (sites, settings, site icons, and background), and **Import backup** to restore it — on this browser or a fresh install. Only backup files exported by this extension are supported; a manually edited or malformed JSON file will show an "invalid backup" alert.
+**Export backup (.json)** saves sites, settings, icons, and background. **Import backup** restores them. The importer is strict (only accepts files exported by this extension), sanitizes invalid fields, and snapshots current state + background before running — rolling back automatically if anything fails.
 
 ## Contributing
 
-Contributions are welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) for setup instructions and the PR workflow. Found a bug or have a feature request? Check [ISSUES.md](./ISSUES.md) for the bug report format and a list of known issues before opening a new one.
+See [CONTRIBUTING.md](./CONTRIBUTING.md). Bug reports and feature requests — check [ISSUES.md](./ISSUES.md) first.
 
 ## License
 
-Developed entirely by [Ziad Shalaby](https://github.com/ziadshalaby00).
-
-MIT — do whatever you'd like with it.
+Developed by [Ziad Shalaby](https://github.com/ziadshalaby00). MIT — do whatever you'd like with it.
