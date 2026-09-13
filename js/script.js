@@ -146,9 +146,10 @@
         if (pageSites.length < pageSize) grid.appendChild(ZSCore.buildAddTile(() => openModal(null)));
         for (let i = pageSites.length + 1; i < pageSize; i++) grid.appendChild(ZSCore.buildEmptyTile());
 
-        ZSCore.updatePaginationUI(total, currentPage, (idx) => { 
-            currentPage = idx; 
-            renderWithTransition(); 
+        ZSCore.updatePaginationUI(total, currentPage, (idx) => {
+            const dir = idx > currentPage ? 1 : -1;
+            currentPage = idx;
+            renderWithTransition({ type: 'page', direction: dir });
         });
     }
 
@@ -249,9 +250,9 @@
                 }
             )) {
                 state.sites = state.sites.filter(s => s.id !== site.id);
-                deleteSiteIcon(site.id); 
-                saveState(); 
-                renderWithTransition();
+                deleteSiteIcon(site.id);
+                saveState();
+                renderWithTransition({ type: 'delete', tileId: site.id });
             }
         });
 
@@ -339,8 +340,8 @@
             const insertIndex = side === "after" ? toIndex + 1 : toIndex;
             state.sites.splice(insertIndex, 0, moved);
 
-            saveState(); 
-            render();
+            saveState();
+            renderWithTransition({ type: 'reorder', tileId: dragSourceId });
         });
         return tile;
     }
@@ -446,9 +447,14 @@
                 deleteSiteIcon(targetId);
             }
 
+            const wasEditing = !!editingId;
+
             saveState();
             closeModal();
-            renderWithTransition();
+            renderWithTransition({
+                type: wasEditing ? 'edit' : 'add',
+                tileId: targetId,
+            });
         } catch (err) {
             // rollback state
             state = stateSnapshot;
@@ -549,7 +555,7 @@
         state.settings[field] = value; 
         saveState();
         if (isName) renderName(); 
-        else renderWithTransition();
+        else renderWithTransition({ type: 'layout' });
     }
     
     document.getElementById("displayName").addEventListener("input", e => applySetting("name", e.target.value, true));
@@ -713,7 +719,7 @@
 
                 saveState();
                 currentPage = 0;
-                renderWithTransition();
+                renderWithTransition({ type: 'fade' });
                 panel.classList.remove("open");
 
             } catch (err) {
@@ -753,8 +759,8 @@
                 state = JSON.parse(JSON.stringify(ZSCore.defaultState));
                 currentPage = 0;
 
-                saveState(); 
-                renderWithTransition(); 
+                saveState();
+                renderWithTransition({ type: 'fade' });
                 panel.classList.remove("open");
             } catch (err) { 
                 alert("Could not reset the application."); 
@@ -766,12 +772,10 @@
     //  7. NAVIGATION & INITIALIZATION
     // =============================================
     function focusTileAtEdge(fromEnd) {
-        setTimeout(() => {
-            const grid = document.getElementById("grid");
-            const tiles = Array.from(grid.querySelectorAll(".tile:not(.empty)"));
-            if (!tiles.length) return;
-            (fromEnd ? tiles[tiles.length - 1] : tiles[0]).focus();
-        }, 180);
+        const grid = document.getElementById("grid");
+        const tiles = Array.from(grid.querySelectorAll(".tile:not(.empty)"));
+        if (!tiles.length) return;
+        (fromEnd ? tiles[tiles.length - 1] : tiles[0]).focus();
     }
 
     function setupGridKeyboardNav() {
@@ -786,21 +790,18 @@
             const cols = parseInt(state.settings.cols, 10) || 1;
             const totalPages = ZSCore.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols);
 
-            // آخر عنصر + يمين → الصفحة الجاية
             if (e.key === "ArrowRight" && currentIndex === tiles.length - 1 && currentPage < totalPages - 1) {
                 e.preventDefault();
                 currentPage++;
-                renderWithTransition();
-                focusTileAtEdge(false);
+                renderWithTransition({ type: 'page', direction: 1 })
+                    .then(() => focusTileAtEdge(false));
                 return;
             }
-
-            // أول عنصر + شمال → الصفحة اللي فاتت
             if (e.key === "ArrowLeft" && currentIndex === 0 && currentPage > 0) {
                 e.preventDefault();
                 currentPage--;
-                renderWithTransition();
-                focusTileAtEdge(true);
+                renderWithTransition({ type: 'page', direction: -1 })
+                    .then(() => focusTileAtEdge(true));
                 return;
             }
 
@@ -819,18 +820,21 @@
 
     setupGridKeyboardNav();
 
-    document.getElementById("prevPage").addEventListener("click", () => { 
-        if (currentPage > 0) { 
-            currentPage--; 
-            renderWithTransition(); 
-        } 
+    document.getElementById("prevPage").addEventListener("click", () => {
+        if (currentPage > 0) {
+            currentPage--;
+            renderWithTransition({ type: 'page', direction: -1 });
+        }
     });
-    
-    document.getElementById("nextPage").addEventListener("click", () => { 
-        if (currentPage < ZSCore.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols) - 1) { 
-            currentPage++; 
-            renderWithTransition(); 
-        } 
+
+    document.getElementById("nextPage").addEventListener("click", () => {
+        const total = ZSCore.getTotalPages(
+            state.sites.length, state.settings.rows, state.settings.cols
+        );
+        if (currentPage < total - 1) {
+            currentPage++;
+            renderWithTransition({ type: 'page', direction: 1 });
+        }
     });
 
     ZSCore.setupSearchForm("searchForm", "searchInput", () => state.settings.engine);
@@ -844,18 +848,19 @@
     ZSCore.setupScrollNavigation('.grid-wrap', {
         getTotalPages: () => ZSCore.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols),
         getCurrentPage: () => currentPage,
-        onPageChange: (newPage) => { 
-            currentPage = newPage; 
-            renderWithTransition(); 
+        onPageChange: (newPage) => {
+            const dir = newPage > currentPage ? 1 : -1;
+            currentPage = newPage;
+            renderWithTransition({ type: 'page', direction: dir });
         }
     });
 
     ZSCore.setupDragEdgeNavigation(".grid-wrap", {
         canGoPrev: () => currentPage > 0,
         canGoNext: () => currentPage < ZSCore.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols) - 1,
-        onNavigate: (dir) => { 
-            currentPage += dir; 
-            renderWithTransition(); 
+        onNavigate: (dir) => {
+            currentPage += dir;
+            renderWithTransition({ type: 'page', direction: dir });
         }
     });
 

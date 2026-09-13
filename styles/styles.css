@@ -291,6 +291,7 @@ form.search button svg {
     gap: 6px;
     width: fit-content;
     justify-content: center;
+    --edge-size: 45px
 }
 
 .grid {
@@ -348,19 +349,19 @@ form.search button svg {
 .grid-wrap.drag-edge-left::before {
     background: linear-gradient(to right,
         rgba(var(--accent-rgb), 0.85) 0px,
-        rgba(var(--accent-rgb), 0.55) 6px,
-        rgba(var(--accent-rgb), 0.28) 14px,
-        rgba(var(--accent-rgb), 0.10) 22px,
-        rgba(var(--accent-rgb), 0) 30px);
+        rgba(var(--accent-rgb), 0.55) calc(25/100*var(--edge-size)),
+        rgba(var(--accent-rgb), 0.28) calc(55/100*var(--edge-size)),
+        rgba(var(--accent-rgb), 0.10) calc(80/100*var(--edge-size)),
+        rgba(var(--accent-rgb), 0) var(--edge-size));
 }
 
 .grid-wrap.drag-edge-right::before {
     background: linear-gradient(to left,
         rgba(var(--accent-rgb), 0.85) 0px,
-        rgba(var(--accent-rgb), 0.55) 6px,
-        rgba(var(--accent-rgb), 0.28) 14px,
-        rgba(var(--accent-rgb), 0.10) 22px,
-        rgba(var(--accent-rgb), 0) 30px);
+        rgba(var(--accent-rgb), 0.55) calc(25/100*var(--edge-size)),
+        rgba(var(--accent-rgb), 0.28) calc(55/100*var(--edge-size)),
+        rgba(var(--accent-rgb), 0.10) calc(80/100*var(--edge-size)),
+        rgba(var(--accent-rgb), 0) var(--edge-size));
 }
 
 /* Drop Indicators (Lines) */
