@@ -93,6 +93,8 @@
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
     --cols: 6;
     --radius: 16px;
+
+    --bg-fade-ms: 700ms;
 }
 
 /* ============================================
@@ -930,12 +932,12 @@ body::after {
     opacity: 0;
 
     transform: scale(1.02);
-    filter: blur(2px);
+    filter: blur(1px);
 
     transition:
-        opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-        transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-        filter 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        opacity var(--bg-fade-ms) cubic-bezier(0.22, 1, 0.36, 1),
+        transform var(--bg-fade-ms) cubic-bezier(0.22, 1, 0.36, 1),
+        filter var(--bg-fade-ms) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Background layer 1 */

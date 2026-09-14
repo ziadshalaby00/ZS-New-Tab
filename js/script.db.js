@@ -87,16 +87,42 @@
         });
     }
 
-    const FADE_MS = 750;
+    /**
+     * Reads the fade duration from the CSS variable --bg-fade-ms so the
+     * JS-side revoke timing can never drift from the CSS transition.
+     * Falls back to 700ms if the stylesheet hasn't loaded yet.
+     */
+    let _fadeMsCache = null;
+    function getFadeMs() {
+        if (_fadeMsCache !== null) return _fadeMsCache;
+        const raw = getComputedStyle(document.documentElement)
+            .getPropertyValue("--bg-fade-ms")
+            .trim();
+        const parsed = parseFloat(raw);
+        _fadeMsCache = Number.isFinite(parsed) && parsed > 0 ? parsed : 700;
+        return _fadeMsCache;
+    }
+
     let _currentBgUrl = null;
     let _activeLayer = 1;
 
+    /**
+     * Waits for the browser to fully decode the image off-main-thread
+     * using img.decode(). This is significantly faster than onload for
+     * large images and guarantees the bitmap is ready for paint.
+     */
     function waitForImage(url) {
         return new Promise((resolve, reject) => {
             const img = new Image();
-            img.onload = resolve;
             img.onerror = () => reject(new Error("Image decode failed"));
             img.src = url;
+            // decode() resolves once the image is decoded and ready to paint.
+            if (typeof img.decode === "function") {
+                img.decode().then(resolve, reject);
+            } else {
+                // Fallback for very old browsers (unlikely in MV3).
+                img.onload = resolve;
+            }
         });
     }
 
@@ -115,7 +141,10 @@
 
             /*
             * Initial background:
-            * apply instantly without animation.
+            * apply instantly on layer 1.
+            * `no-fade` disables the CSS transition for this first paint
+            * so the stored image shows up immediately on new tab load,
+            * with no 700ms fade-in from a black screen.
             */
             if (!_currentBgUrl) {
                 const nextLayer = 1;
@@ -148,8 +177,12 @@
 
             /*
             * Switch to the other layer.
-            * This creates a real crossfade between
-            * the old and new background images.
+            * This creates a real crossfade between the old and new
+            * background images when `animate` is true.
+            *
+            * When `animate` is false (e.g. rollback after a failed save),
+            * we still swap layers, but suppress the CSS transition so the
+            * previous image reappears instantly instead of fading.
             */
             const nextLayer = _activeLayer === 1 ? 2 : 1;
             const variableName =
@@ -159,6 +192,10 @@
                 variableName,
                 `url("${url}")`
             );
+
+            if (!animate) {
+                body.classList.add("no-fade");
+            }
 
             /*
             * Force style calculation so the browser
@@ -174,20 +211,29 @@
                 body.classList.add("bg-layer-2");
             }
 
+            void body.offsetHeight;
+
+            if (!animate) {
+                body.classList.remove("no-fade");
+            }
+
             const oldUrl = _currentBgUrl;
 
             _currentBgUrl = url;
             _activeLayer = nextLayer;
 
             /*
-            * The old object URL is no longer needed after
-            * the crossfade has completed.
+            * The old object URL is no longer needed.
+            * If a crossfade is playing, wait until it finishes before
+            * revoking. If the swap was instant, revoke right away.
             */
+            const revokeDelay = animate ? getFadeMs() : 0;
+
             setTimeout(() => {
                 if (oldUrl && oldUrl !== _currentBgUrl) {
                     URL.revokeObjectURL(oldUrl);
                 }
-            }, FADE_MS);
+            }, revokeDelay);
 
         } catch (error) {
             URL.revokeObjectURL(url);
@@ -215,7 +261,7 @@
             if (oldUrl) {
                 URL.revokeObjectURL(oldUrl);
             }
-        }, FADE_MS);
+        }, getFadeMs());
     }
 
     // =============================================
@@ -248,7 +294,7 @@
             try {
                 if (oldBlob) {
                     await dbPut(STORE_META, { blob: oldBlob, createdAt: Date.now() }, BG_KEY);
-                    await applyBlob(oldBlob);
+                    await applyBlob(oldBlob, { animate: false });
                 } else {
                     await dbDelete(STORE_META, BG_KEY);
                     clearApplied();
@@ -275,7 +321,7 @@
         const blob = await getBackground();
         if (blob) {
             try {
-                await applyBlob(blob, { animate: true });
+                await applyBlob(blob, { animate: false });
             } catch (err) {
                 console.warn("Stored background failed to apply", err);
                 clearApplied();

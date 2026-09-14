@@ -586,22 +586,35 @@
 
     const bgImageInput = document.getElementById("bgImageInput");
     const removeBgBtn = document.getElementById("removeBgBtn");
+
+    let bgBusy = false;
+    function setBgBusy(busy) {
+        bgBusy = true && busy;              // normalize
+        bgImageInput.disabled = busy;
+        removeBgBtn.disabled   = busy;
+        document.getElementById("panel").classList.toggle("bg-busy", busy);
+    }
+
     bgImageInput.addEventListener("change", async e => {
+        if (bgBusy) { e.target.value = ""; return; }   // guard
+
         const file = e.target.files[0];
         if (!file || !file.type.startsWith("image/")) return;
-        
+
+        setBgBusy(true);
         try {
-            const resizedBlob = await ZSCore.resizeImage(file, 'bg');
+            const resizedBlob = await ZSCore.resizeImage(file, "bg");
             await ZSDB.setBackground(resizedBlob);
         } catch (err) {
             alert("Could not save background image.");
         } finally {
+            setBgBusy(false);
             e.target.value = "";
         }
     });
 
     removeBgBtn.addEventListener("click", async () => {
-        if (removeBgBtn.disabled) return;
+        if (bgBusy) return;
 
         const ok = await ZSCore.showConfirm(
             "This will delete the saved background. You can't undo this.",
@@ -613,14 +626,14 @@
         );
         if (!ok) return;
 
-        removeBgBtn.disabled = true;
+        setBgBusy(true);
         try {
             await ZSDB.removeBackground();
             bgImageInput.value = "";
         } catch (err) {
             console.error("Failed to remove background", err);
         } finally {
-            removeBgBtn.disabled = false;
+            setBgBusy(false);
         }
     });
 
