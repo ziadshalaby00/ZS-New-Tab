@@ -739,8 +739,10 @@ window.ZSCore = (function () {
 
             const clickedInsidePanel = path.includes(panel) || panel.contains(e.target);
             const clickedToggle = (toggle && path.includes(toggle)) || toggle?.contains(e.target);
+            const clickedOverlay = path.some(el => el.classList?.contains?.("overlay"))
+                || !!e.target.closest?.(".overlay");
 
-            if (!clickedInsidePanel && !clickedToggle) {
+            if (!clickedInsidePanel && !clickedToggle && !clickedOverlay) {
                 panel.classList.remove("open");
             }
         });
