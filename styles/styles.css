@@ -1,5 +1,5 @@
 /* ============================================
-   0. FONTS
+   1. FONTS
    ============================================ */
 @font-face {
     font-family: "Inter";
@@ -59,7 +59,7 @@
 }
 
 /* ============================================
-   1. ROOT VARIABLES & GLOBAL COLORS
+   2. ROOT VARIABLES & GLOBAL COLORS
    ============================================ */
 :root {
     /* Background & Surface Colors */
@@ -96,7 +96,7 @@
 }
 
 /* ============================================
-   2. BASE RESET & GLOBAL STYLES
+   3. BASE RESET & GLOBAL STYLES
    ============================================ */
 * {
     box-sizing: border-box;
@@ -127,14 +127,6 @@ button, input, select {
 a {
     color: inherit;
     text-decoration: none;
-}
-
-/* ============================================
-   3. BACKGROUND IMAGE OVERLAY
-   ============================================ */
-body.has-bg-image .app {
-    position: relative;
-    z-index: 1;
 }
 
 /* ============================================
@@ -291,7 +283,7 @@ form.search button svg {
     gap: 6px;
     width: fit-content;
     justify-content: center;
-    --edge-size: 45px
+    --edge-size: 45px;
 }
 
 .grid {
