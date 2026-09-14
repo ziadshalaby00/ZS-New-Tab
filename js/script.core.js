@@ -159,7 +159,7 @@ window.ZSCore = (function () {
 
         return new Promise((resolve) => {
             const overlay = document.createElement("div");
-            overlay.className = "overlay open";
+            overlay.className = "overlay"; // no "open" yet — let the transition play in
 
             const modal = document.createElement("div");
             modal.className = "modal";
@@ -174,6 +174,12 @@ window.ZSCore = (function () {
             overlay.appendChild(modal);
             document.body.appendChild(overlay);
 
+            // Force the initial (closed) state to be committed before adding
+            // "open", so the enter transition actually plays.
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => overlay.classList.add("open"));
+            });
+
             let settled = false;
 
             function onKey(e) {
@@ -187,8 +193,26 @@ window.ZSCore = (function () {
                 if (settled) return;
                 settled = true;
                 document.removeEventListener("keydown", onKey);
-                overlay.remove();
-                resolve(result);
+
+                // Play the close transition, then remove from the DOM.
+                overlay.classList.remove("open");
+
+                let removed = false;
+                const remove = () => {
+                    if (removed) return;
+                    removed = true;
+                    overlay.removeEventListener("transitionend", onTransitionEnd);
+                    overlay.remove();
+                    resolve(result);
+                };
+
+                const onTransitionEnd = (e) => {
+                    if (e.target === overlay && e.propertyName === "opacity") remove();
+                };
+
+                overlay.addEventListener("transitionend", onTransitionEnd);
+                // Safety net in case transitionend never fires (e.g. reduced motion).
+                setTimeout(remove, 260);
             }
 
             modal.querySelector(".cancel").addEventListener("click", () => cleanup(false));
@@ -745,7 +769,7 @@ window.ZSCore = (function () {
                 scrollTimeout = true;
                 setTimeout(() => { scrollTimeout = false; }, 250);
             }
-        });
+        }, { passive: false });
     }
 
     /**

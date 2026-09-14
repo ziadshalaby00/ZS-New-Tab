@@ -6,7 +6,7 @@ Thanks for wanting to contribute! This is a small vanilla HTML/CSS/JS project â€
 
 1. Fork the repository and clone your fork.
 2. Go to `chrome://extensions`, enable **Developer mode**, and click **Load unpacked** on the project folder to test your changes live.
-3. Make your changes in `index.html`, `styles/styles.css`, or `js/script.js`.
+3. Make your changes in `index.html`, `styles/`, or `js/`.
 4. Reload the extension (or just open a new tab) to see your changes.
 
 ## Guidelines

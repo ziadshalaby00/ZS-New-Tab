@@ -376,7 +376,11 @@
             }
         }
         overlay.classList.add("open");
-        setTimeout(() => document.getElementById("siteName").focus(), 50);
+        requestAnimationFrame(() => {
+            if (overlay.classList.contains("open")) {
+                document.getElementById("siteName").focus();
+            }
+        });
     }
 
     /**
@@ -495,7 +499,16 @@
         const wrap = document.getElementById("swatches");
         if (!wrap) return;
 
-        const current = String(state.settings.accent || "").toLowerCase();
+        const normalize = (hex) => {
+            let h = String(hex || "").trim().replace(/^#/, "").toLowerCase();
+            if (h.length === 3) h = h.split("").map(c => c + c).join("");
+            return /^[0-9a-f]{6}$/.test(h) ? "#" + h : "";
+        };
+
+        const current = normalize(state.settings.accent);
+
+        const picker = document.getElementById("customAccent");
+        if (picker && current) picker.value = current;
 
         if (!wrap.dataset.built) {
             wrap.innerHTML = "";
@@ -506,7 +519,7 @@
                 btn.style.background = theme.accent;
                 btn.title = theme.name;
                 btn.setAttribute("aria-label", theme.name);
-                btn.dataset.accent = theme.accent.toLowerCase();
+                btn.dataset.accent = normalize(theme.accent);
                 btn.addEventListener("click", () => setAccent(theme.accent));
                 wrap.appendChild(btn);
             });
@@ -523,13 +536,8 @@
      */
     function setAccent(hex) {
         if (!ZSCore.applyAccent(hex)) return;
-
         state.settings.accent = hex;
         saveState();
-
-        const picker = document.getElementById("customAccent");
-        if (picker) picker.value = hex;
-
         renderSwatches();
     }
 

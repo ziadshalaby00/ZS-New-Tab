@@ -5,6 +5,45 @@
     <title>New Tab</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <!-- Preload script — runs before the stylesheet to prevent accent-color flash.
+     Keep inline and synchronous to avoid delaying first paint.
+     Must stay in sync with ZSCore.applyAccent() in script.core.js.
+     ES5/no dependencies intentionally keeps it tiny. -->
+    <script>
+        (function () {
+            try {
+                var raw = localStorage.getItem('ZSNewTab.settings');
+                if (!raw) return;
+
+                var settings = JSON.parse(raw).settings;
+                if (!settings || !settings.accent) return;
+
+                var hex = String(settings.accent).trim().replace(/^#/, '');
+                if (hex.length === 3) {
+                    hex = hex.split('').map(function (c) { return c + c; }).join('');
+                }
+                if (!/^[0-9a-f]{6}$/i.test(hex)) return;
+
+                var r = parseInt(hex.slice(0, 2), 16);
+                var g = parseInt(hex.slice(2, 4), 16);
+                var b = parseInt(hex.slice(4, 6), 16);
+
+                var root = document.documentElement;
+                root.style.setProperty('--accent', '#' + hex);
+                root.style.setProperty('--accent-rgb', r + ', ' + g + ', ' + b);
+
+                // Perceived brightness → pick readable text on top of the accent.
+                var brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+                root.style.setProperty(
+                    '--accent-contrast',
+                    brightness > 150 ? '#1a1408' : '#ffffff'
+                );
+            } catch (e) {
+                /* Fail silently — the CSS defaults in :root will take effect. */
+            }
+        })();
+    </script>
+
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="./styles/styles.css">
 </head>
