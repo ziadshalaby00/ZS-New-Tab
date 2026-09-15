@@ -138,7 +138,3 @@ Everything lives in your browser. The only external request is favicon lookups v
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md). Bug reports and feature requests — check [ISSUES.md](./ISSUES.md) first.
-
-## License
-
-Developed by [Ziad Shalaby](https://github.com/ziadshalaby00). MIT — do whatever you'd like with it.
