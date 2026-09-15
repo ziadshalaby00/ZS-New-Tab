@@ -213,11 +213,30 @@
         </div>
     </div>
 
-    <!-- ============================================
-         5. JAVASCRIPT
-         ============================================ -->
-    <script src="./js/script.core.js"></script>
-    <script src="./js/script.db.js"></script>
-    <script src="./js/script.js"></script>
+    
+
+    <!-- JavaScript (split files, loaded in order) -->
+    <script src="./js/00-init.js"></script>
+
+    <script src="./js/10-core-state.js"></script>
+    <script src="./js/20-core-theme.js"></script>
+    <script src="./js/30-core-utils.js"></script>
+    <script src="./js/40-core-dialog.js"></script>
+    <script src="./js/50-core-tiles.js"></script>
+    <script src="./js/60-core-renderer.js"></script>
+    <script src="./js/70-core-pagination.js"></script>
+    <script src="./js/80-core-events.js"></script>
+    <script src="./js/90-core-debug.js"></script>
+
+    <script src="./js/100-db.js"></script>
+
+    <script src="./js/110-app-state.js"></script>
+    <script src="./js/120-app-render.js"></script>
+    <script src="./js/130-app-modal.js"></script>
+    <script src="./js/140-app-accent.js"></script>
+    <script src="./js/150-app-settings.js"></script>
+    <script src="./js/160-app-backup.js"></script>
+    <script src="./js/170-app-navigation.js"></script>
+    <script src="./js/180-app-init.js"></script>
 </body>
 </html>

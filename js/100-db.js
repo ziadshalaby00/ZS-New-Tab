@@ -2,7 +2,7 @@
  * ZS New Tab – IndexedDB storage layer (single background)
  * Stores ONE background blob in the meta store.
  */
-window.ZSDB = (function () {
+window.registerModule('ZSDB', (function () {
     "use strict";
 
     // =============================================
@@ -341,4 +341,4 @@ window.ZSDB = (function () {
         removeBackground,
         applyBackground,
     };
-})();
+})());
