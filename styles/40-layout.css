@@ -1,0 +1,12 @@
+/* ============================================
+   APP CONTAINER & LAYOUT
+   ============================================ */
+.app {
+    position: relative;
+    z-index: 1;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 7vh 5vw 4vh;
+}

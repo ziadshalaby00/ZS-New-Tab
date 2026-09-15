@@ -1,0 +1,49 @@
+/* ============================================
+   COLOR PALETTE
+   ============================================ */
+.swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7.5px;
+}
+
+.swatch {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.swatch:hover {
+    transform: scale(1.1);
+}
+
+.swatch.active {
+    border-color: var(--text);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.panel input[type="color"] {
+    width: 100%;
+    height: 38px;
+    padding: 3px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.panel input[type="color"]:hover {
+    border-color: var(--accent-dim);
+}
+
+.panel input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.panel input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 6px;
+}

@@ -1,0 +1,36 @@
+/* ============================================
+   TOP BAR & ICON BUTTONS
+   ============================================ */
+.top-bar {
+    position: fixed;
+    top: 18px;
+    right: 22px;
+    z-index: 20;
+    display: flex;
+    gap: 8px;
+}
+
+.icon-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.icon-btn:hover {
+    color: var(--text);
+    border-color: var(--accent-dim);
+    background: var(--surface-2);
+}
+
+.icon-btn svg {
+    width: 17px;
+    height: 17px;
+}

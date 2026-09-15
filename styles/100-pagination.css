@@ -1,0 +1,23 @@
+/* ============================================
+   PAGINATION DOTS
+   ============================================ */
+.dots {
+    display: flex;
+    gap: 7px;
+    margin-top: 26px;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.dot.active {
+    background: var(--accent);
+    width: 18px;
+    border-radius: 4px;
+}

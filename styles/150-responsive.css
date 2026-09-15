@@ -1,0 +1,14 @@
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+@media (max-width: 600px) {
+    .grid {
+        grid-template-columns: repeat(var(--cols), 72px);
+        grid-auto-rows: 86px;
+    }
+
+    .tile .icon {
+        width: 46px;
+        height: 46px;
+    }
+}

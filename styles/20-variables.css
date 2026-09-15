@@ -1,0 +1,39 @@
+/* ============================================
+   ROOT VARIABLES & GLOBAL COLORS
+   ============================================ */
+:root {
+    /* Background & Surface Colors */
+    --bg-0: #10141a;
+    --bg-1: #151a22;
+    --surface: #1a212b;
+    --surface-2: #222a36;
+    --border: #2b3442;
+
+    /* Text Colors */
+    --text: #e7eaf0;
+    --text-dim: #8892a0;
+
+    /* Accent & Brand Colors */
+    --accent: #e8a33d;
+    --accent-rgb: 232, 163, 61;               /* R, G, B */
+    --accent-dim: rgba(var(--accent-rgb), 0.33);
+    --accent-soft: rgba(var(--accent-rgb), 0.10);
+    --accent-glow: rgba(var(--accent-rgb), 0.50);
+    --accent-contrast: #1a1408;
+
+    --cyan: #5fd3c4;
+
+    /* Status Colors (Danger) */
+    --danger: #e2685f;
+    --danger-strong: #d92d20;
+    --danger-strong-hover: #b8241a;
+
+    /* Typography & Layout */
+    --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --cols: 6;
+    --radius: 16px;
+
+    --bg-fade-ms: 700ms;
+}
+

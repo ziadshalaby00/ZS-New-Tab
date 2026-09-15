@@ -1,0 +1,45 @@
+/* ============================================
+   BASE RESET & GLOBAL STYLES
+   ============================================ */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    height: 100%;
+    font-family: var(--font-ui);
+    color: var(--text);
+    background: 
+        radial-gradient(1200px 600px at 50% -10%, #1c2430 0%, transparent 60%), 
+        var(--bg-0);
+    background-attachment: fixed;
+    overflow: auto;
+    -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+    background: var(--accent-dim);
+}
+
+/* Form Elements & Links Reset */
+button, input, select {
+    font-family: inherit;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* ============================================
+   CUSTOM SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--surface-2);
+    border-radius: 8px;
+}

@@ -1,0 +1,169 @@
+
+/* ============================================
+   MODAL OVERLAY & DIALOG
+   ============================================ */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: #0a0d12b0;
+    backdrop-filter: blur(2px);
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+    z-index: 40;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transition:
+        opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+        visibility 0s linear 0.22s;
+}
+
+.overlay.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+
+    transition:
+        opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+        visibility 0s linear 0s;
+}
+
+/* Modal Container */
+.modal {
+    width: 320px;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+
+    transform: scale(0.94);
+    opacity: 0;
+
+    transition:
+        transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+        opacity 0.2s ease;
+}
+
+.overlay.open .modal {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.modal h2 {
+    font-size: 15px;
+    margin: 0 0 16px;
+}
+
+.modal .field {
+    margin-bottom: 13px;
+}
+
+.modal label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+}
+
+/* Modal Form Controls */
+.modal input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.modal input:focus {
+    border-color: var(--accent-dim);
+}
+
+/* Modal Actions (Buttons) */
+.modal .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.modal .actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.modal .actions .save {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-contrast);
+    font-weight: 600;
+}
+
+.modal .actions .save:hover {
+    filter: brightness(1.08);
+}
+
+.modal .actions .cancel:hover {
+    border-color: var(--text-dim);
+}
+
+.modal .actions .save.danger-fill {
+    background: var(--danger-strong);
+    border-color: var(--danger-strong);
+    color: #fff;
+}
+
+.modal .actions .save.danger-fill:hover {
+    background: var(--danger-strong-hover);
+    border-color: var(--danger-strong-hover);
+    filter: none;
+}
+
+/* Icon Preview inside Modal */
+#iconPreview {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+#iconPreviewImg {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface-2);
+}
+
+#removeIconBtn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+#removeIconBtn:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+}

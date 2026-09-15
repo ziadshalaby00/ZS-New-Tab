@@ -1,0 +1,71 @@
+/* ============================================
+   Background fade-in transitions
+   ============================================ */
+/* Background layers */
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+
+    background-color: rgba(10, 13, 17, 0.30);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    opacity: 0;
+
+    transform: scale(1.02);
+    filter: blur(1px);
+
+    transition:
+        opacity var(--bg-fade-ms) cubic-bezier(0.22, 1, 0.36, 1),
+        transform var(--bg-fade-ms) cubic-bezier(0.22, 1, 0.36, 1),
+        filter var(--bg-fade-ms) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Background layer 1 */
+body::before {
+    background-image: var(--bg-image-1, none);
+}
+
+/* Background layer 2 */
+body::after {
+    background-image: var(--bg-image-2, none);
+}
+
+/* Active layers */
+body.bg-layer-1::before,
+body.bg-layer-2::after {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+}
+
+/* During initial application */
+body.no-fade::before,
+body.no-fade::after {
+    transition: none;
+}
+
+/* Keep the app above the background */
+body.has-bg-image .app {
+    position: relative;
+    z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::before,
+    body::after {
+        transition: none;
+        transform: none;
+        filter: none;
+    }
+
+    body.bg-layer-1::before,
+    body.bg-layer-2::after {
+        opacity: 1;
+    }
+}

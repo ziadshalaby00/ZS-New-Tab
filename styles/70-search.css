@@ -1,0 +1,85 @@
+/* ============================================
+   SEARCH BAR
+   ============================================ */
+form.search {
+    display: flex;
+    align-items: center;
+    width: min(560px, 90vw);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 8px 6px 18px;
+    margin-bottom: 46px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+form.search:focus-within {
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+/* Search Engine Selector */
+form.search select {
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 13px;
+    padding-right: 10px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+form.search select:focus {
+    outline: none;
+}
+
+/* Search Input */
+form.search input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 15px;
+    padding: 10px 0;
+    outline: none;
+}
+
+form.search input::placeholder {
+    color: #5b6472;
+}
+
+/* Search Submit Button */
+form.search button {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: filter 0.15s ease;
+}
+
+form.search button:hover {
+    filter: brightness(1.08);
+}
+
+form.search button svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* ============================================
+   Smooth theme transition
+   ============================================ */
+form.search button {
+    transition:
+        filter 0.15s ease,
+        color 0.25s ease,
+        background-color 0.25s ease;
+}

@@ -1,0 +1,99 @@
+/* ============================================
+   GRID SYSTEM & NAVIGATION ARROWS
+   ============================================ */
+.grid-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    justify-content: center;
+    --edge-size: 45px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), 95px);
+    grid-auto-rows: 95px;
+    gap: 14px 10px;
+    justify-content: center;
+}
+
+/* Page Navigation Arrows */
+.page-nav {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.grid-wrap:hover .page-nav.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.page-nav:hover {
+    color: var(--text);
+    border-color: var(--accent-dim);
+}
+
+.page-nav svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Drag & Drop Edge Gradients */
+.grid-wrap.drag-edge-left::before,
+.grid-wrap.drag-edge-right::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.2s ease;
+}
+
+.grid-wrap.drag-edge-left::before {
+    background: linear-gradient(to right,
+        rgba(var(--accent-rgb), 0.85) 0px,
+        rgba(var(--accent-rgb), 0.55) calc(25/100*var(--edge-size)),
+        rgba(var(--accent-rgb), 0.28) calc(55/100*var(--edge-size)),
+        rgba(var(--accent-rgb), 0.10) calc(80/100*var(--edge-size)),
+        rgba(var(--accent-rgb), 0) var(--edge-size));
+}
+
+.grid-wrap.drag-edge-right::before {
+    background: linear-gradient(to left,
+        rgba(var(--accent-rgb), 0.85) 0px,
+        rgba(var(--accent-rgb), 0.55) calc(25/100*var(--edge-size)),
+        rgba(var(--accent-rgb), 0.28) calc(55/100*var(--edge-size)),
+        rgba(var(--accent-rgb), 0.10) calc(80/100*var(--edge-size)),
+        rgba(var(--accent-rgb), 0) var(--edge-size));
+}
+
+/* Drop Indicators (Lines) */
+.tile.drop-before::before,
+.tile.drop-after::after {
+    content: "";
+    position: absolute;
+    top: var(--drop-line-top, 0);
+    height: var(--drop-line-h, 100%);
+    width: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+}
+
+.tile.drop-before::before { left: -6px; }
+.tile.drop-after::after  { right: -6px; }
+
+
