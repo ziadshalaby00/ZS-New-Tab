@@ -55,6 +55,10 @@ function Write-Text {
     [System.IO.File]::WriteAllText($Path, $Content, $Utf8NoBom)
 }
 
+# Warnings collector — printed at the very end of the script so the
+# user actually notices them.
+$Warnings = [System.Collections.Generic.List[string]]::new()
+
 # ---------------------------------------------------------------
 # 2. Clean / create dist/
 # ---------------------------------------------------------------
@@ -92,6 +96,99 @@ if ($jsMatches.Count -eq 0) {
 
 $cssFiles = @($cssMatches | ForEach-Object { $_.Groups[1].Value })
 $jsFiles  = @($jsMatches  | ForEach-Object { $_.Groups[1].Value })
+
+# ---------------------------------------------------------------
+# 3.1 Validate source files against index.html
+#     Warnings only — never stops the build.
+# ---------------------------------------------------------------
+
+function Get-NumericPrefix {
+    param([string]$FileName)
+
+    if ($FileName -match '^(\d+)') {
+        return [int]$Matches[1]
+    }
+
+    return $null
+}
+
+# Returns the list of files that participate in an out-of-order
+# sequence. Only the offending files are returned — not the whole
+# list.
+function Get-OutOfOrderFiles {
+    param([string[]]$Files)
+
+    $problems = [System.Collections.Generic.List[string]]::new()
+
+    for ($i = 1; $i -lt $Files.Count; $i++) {
+        $prevNum = Get-NumericPrefix $Files[$i - 1]
+        $currNum = Get-NumericPrefix $Files[$i]
+
+        # Files without a numeric prefix are ignored for ordering.
+        if ($null -eq $prevNum -or $null -eq $currNum) { continue }
+
+        if ($currNum -lt $prevNum) {
+            if (-not $problems.Contains($Files[$i - 1])) { $problems.Add($Files[$i - 1]) }
+            if (-not $problems.Contains($Files[$i]))     { $problems.Add($Files[$i])     }
+        }
+    }
+
+    return $problems
+}
+
+# --- Find source files that are not referenced by index.html ---
+
+$sourceCssFiles = @(
+    Get-ChildItem -Path (Join-Path $Root "styles") -Filter "*.css" -File -ErrorAction SilentlyContinue |
+    ForEach-Object { $_.Name }
+)
+
+$sourceJsFiles = @(
+    Get-ChildItem -Path (Join-Path $Root "js") -Filter "*.js" -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -ne "script.preload.js" } |
+    ForEach-Object { $_.Name }
+)
+
+$unreferencedCss = @(
+    $sourceCssFiles | Where-Object { $_ -notin $cssFiles }
+)
+
+$unreferencedJs = @(
+    $sourceJsFiles | Where-Object { $_ -notin $jsFiles }
+)
+
+if ($unreferencedCss.Count -gt 0) {
+    $Warnings.Add("Warning: CSS files found in styles/ but not referenced in index.html:")
+    $unreferencedCss | ForEach-Object {
+        $Warnings.Add("    styles\$_")
+    }
+}
+
+if ($unreferencedJs.Count -gt 0) {
+    $Warnings.Add("Warning: JS files found in js/ but not referenced in index.html:")
+    $unreferencedJs | ForEach-Object {
+        $Warnings.Add("    js\$_")
+    }
+}
+
+# --- Check numeric ordering (only report the offending files) ---
+
+foreach ($entry in @(
+    @{ Type = "CSS"; Files = $cssFiles },
+    @{ Type = "JS";  Files = $jsFiles  }
+)) {
+    $problems = Get-OutOfOrderFiles -Files $entry.Files
+
+    if ($problems.Count -gt 0) {
+        $Warnings.Add("Warning: $($entry.Type) files in index.html are not in numeric order.")
+        $Warnings.Add("  Out-of-order files:")
+        foreach ($f in $problems) {
+            $Warnings.Add("    $f")
+        }
+    }
+}
+
+# --- Info: file lists being bundled ---
 
 Write-Host ""
 Write-Host "Found $($cssFiles.Count) CSS files:" -ForegroundColor Cyan
@@ -168,7 +265,7 @@ foreach ($item in @("fonts", "icons")) {
     if (Test-Path $src) {
         Copy-Item $src (Join-Path $DistFolder $item) -Recurse
     } else {
-        Write-Host "Warning: $item/ not found in source, skipping." -ForegroundColor Yellow
+        $Warnings.Add("Warning: $item/ not found in source, skipping.")
     }
 }
 
@@ -254,3 +351,17 @@ Write-Host ("  js/script.js        {0}" -f (Format-Size $jsSize))
 Write-Host ("  dist/               {0}" -f $DistFolder)
 Write-Host ""
 Write-Host "Next: run .\package-extension.ps1 to produce the .zip / .xpi" -ForegroundColor Cyan
+
+# ---------------------------------------------------------------
+# 10. Warnings (printed last so they're impossible to miss)
+# ---------------------------------------------------------------
+if ($Warnings.Count -gt 0) {
+    Write-Host ""
+    Write-Host "============================================================" -ForegroundColor Yellow
+    Write-Host " WARNINGS" -ForegroundColor Yellow
+    Write-Host "============================================================" -ForegroundColor Yellow
+    foreach ($w in $Warnings) {
+        Write-Host $w -ForegroundColor Yellow
+    }
+    Write-Host ""
+}
