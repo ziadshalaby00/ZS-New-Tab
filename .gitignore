@@ -1,0 +1,6 @@
+dist/
+
+*.xpi
+*.zip
+
+commit-message.md
