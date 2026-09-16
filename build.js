@@ -48,6 +48,20 @@ function formatSize(bytes) {
     return bytes + " B";
 }
 
+function getDirectorySize(dir) {
+    let total = 0;
+    const stack = [dir];
+    while (stack.length) {
+        const current = stack.pop();
+        for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+            const full = path.join(current, entry.name);
+            if (entry.isDirectory()) stack.push(full);
+            else if (entry.isFile()) total += fs.statSync(full).size;
+        }
+    }
+    return total;
+}
+
 function getNumericPrefix(fileName) {
     const m = fileName.match(/^(\d+)/);
     return m ? parseInt(m[1], 10) : null;
@@ -286,9 +300,10 @@ function runBuild({ minify = true, clean = true } = {}) {
 
         fs.writeFileSync(path.join(distFolder, "index.html"), newHtml, "utf8");
 
-        // --- Summary ---
+                // --- Summary ---
         const cssSizeAfter = fs.statSync(cssOut).size;
         const jsSizeAfter = fs.statSync(jsOut).size;
+        const distSize = getDirectorySize(distFolder);
         const didMinify = minify && !!esbuild;
 
         console.log(c.green("Build complete."));
@@ -299,7 +314,8 @@ function runBuild({ minify = true, clean = true } = {}) {
             console.log(`  styles/styles.css   ${formatSize(cssSizeAfter)}`);
             console.log(`  js/script.js        ${formatSize(jsSizeAfter)}`);
         }
-        console.log(`  dist/               ${distFolder}`);
+        console.log(c.cyan(`  dist/               ${formatSize(distSize)}`));
+        console.log(`                      ${distFolder}`);
 
         if (warnings.length > 0) {
             console.log("");
