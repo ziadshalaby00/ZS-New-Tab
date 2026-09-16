@@ -1,7 +1,7 @@
 {
   "name": "zs-new-tab",
   "version": "1.0.0",
-  "description": "A minimal, fast, offline-first **New Tab** replacement for Chrome — a personal bookmark dashboard with a search bar, customizable grid, and settings panel. No accounts, no tracking, no backend. Everything is stored locally.",
+  "description": "A clean and customizable new tab page with bookmarks, quick search, drag-and-drop organization, custom backgrounds, themes, flexible layouts, and local backup and restore — with no accounts or tracking.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

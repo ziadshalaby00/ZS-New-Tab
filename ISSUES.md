@@ -13,11 +13,23 @@ Open a [GitHub Issue](https://github.com/ziadshalaby00/ZS-New-Tab/issues) with:
 
 ## Known issues
 
-- [ ] Favicons depend on Google's public favicon service — if a site's favicon isn't indexed there, the colored-letter fallback is used.
-- [ ] Large backgrounds stored in IndexedDB may take a moment on first paint after a fresh browser start.
-- [ ] Import only accepts backups exported by this extension — hand-edited JSON triggers an "invalid backup" alert.
-- [ ] `build.js` copies the entire `icons/` and `fonts/` folders into `dist/`, even if some files aren't referenced anywhere — dead assets end up in the packaged `.zip` / `.xpi`.
-- [ ] The dev server preview does **not** emulate `chrome.*` APIs — test extension behavior by loading `dist/` as an unpacked extension.
+- [ ] Favicons depend on Google's public favicon service — if a site's 
+  favicon isn't indexed there, the colored-letter fallback is used.
+- [ ] Large backgrounds stored in IndexedDB may take a moment on first 
+  paint after a fresh browser start.
+- [ ] Import only accepts backups exported by this extension — 
+  hand-edited JSON triggers an "invalid backup" alert.
+- [ ] The dev server preview does **not** emulate `chrome.*` APIs — test 
+  extension behavior by loading `dist/` as an unpacked extension.
+
+## Known limitations
+
+- [ ] `build.js` copies the entire `icons/` and `fonts/` folders into 
+  `dist/` regardless of whether each file is referenced from 
+  `manifest.json` or `10-fonts.css`. All current assets are used, but 
+  adding an unreferenced file will silently increase the size of the 
+  packaged `.zip` / `.xpi`. Fixing this would require `build.js` to parse 
+  those files and copy only referenced assets.
 
 ## Build & tooling issues
 
