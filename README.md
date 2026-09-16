@@ -214,7 +214,7 @@ The main namespaces exposed on `window`:
 
 ## Privacy
 
-Everything lives in your browser. The only external request is favicon lookups via Google's public favicon service (`https://www.google.com/s2/favicons`). Fonts are bundled locally. No accounts, analytics, or backend.
+Everything lives in your browser. The only external request is favicon lookups via Google's public favicon service. Fonts are bundled locally. No accounts, analytics, or backend.
 
 ## Backup
 

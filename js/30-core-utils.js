@@ -21,10 +21,14 @@ window.registerModule('ZSCore', (function () {
 
     /**
      * Returns the Google favicon URL for a given website URL.
+     * Uses faviconV2 directly (s2/favicons just redirects here anyway)
+     * so we control the requested size and know that a 16x16 response
+     * means "no real favicon — Google returned its default globe".
      */
     function getFaviconUrl(url) {
         const host = getHostname(url);
-        return host ? `https://www.google.com/s2/favicons?sz=128&domain=${host}` : "";
+        if (!host) return "";
+        return `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${host}&size=128`;
     }
 
     /**

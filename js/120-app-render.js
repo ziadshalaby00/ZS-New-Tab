@@ -83,12 +83,7 @@ window.registerModule("ZSApp", (function () {
         icon.className = "icon";
         icon.style.background = "transparent";
 
-        const img = document.createElement("img");
-        const iconData = window.ZSApp.loadSiteIcon(site.id);
-        img.src = (typeof iconData === "string" && iconData.startsWith("data:image"))
-            ? iconData : ZSCore.getFaviconUrl(site.url);
-        img.alt = "";
-        img.onerror = () => {
+        const useLetterFallback = () => {
             icon.innerHTML = "";
             icon.style.background = ZSCore.getColorForName(site.name);
             const span = document.createElement("span");
@@ -96,6 +91,31 @@ window.registerModule("ZSApp", (function () {
             span.textContent = ZSCore.getFirstLetter(site.name);
             icon.appendChild(span);
         };
+
+        const img = document.createElement("img");
+        img.alt = "";
+        img.decoding = "async";
+
+        const iconData = window.ZSApp.loadSiteIcon(site.id);
+        const isCustomIcon = typeof iconData === "string" && iconData.startsWith("data:image");
+
+        const src = isCustomIcon ? iconData : ZSCore.getFaviconUrl(site.url);
+        
+        // Attach handlers BEFORE setting src so a cached/immediate
+        // error can't fire before the handler exists.
+        img.onerror = useLetterFallback;
+        img.onload = () => {
+            // Google's faviconV2 returns a 16x16 globe when it has no
+            // real favicon, even though we asked for size=128.
+            if (!isCustomIcon && img.naturalWidth <= 16) useLetterFallback();
+        };
+
+        if (!src) {
+            useLetterFallback();
+        } else {
+            img.src = src;
+        }
+
         icon.appendChild(img);
 
         icon.addEventListener("contextmenu", e => {
