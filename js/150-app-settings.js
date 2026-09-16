@@ -30,12 +30,14 @@ window.registerModule("ZSApp", (function () {
         applySetting("name", e.target.value, true)
     );
     document.getElementById("rowsInput").addEventListener("change", e => {
-        e.target.value = Math.max(1, Math.min(20, parseInt(e.target.value) || 4));
-        applySetting("rows", e.target.value);
+        const rows = Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 4));
+        e.target.value = rows;
+        applySetting("rows", rows);
     });
     document.getElementById("colsInput").addEventListener("change", e => {
-        e.target.value = Math.max(1, Math.min(20, parseInt(e.target.value) || 6));
-        applySetting("cols", e.target.value);
+        const cols = Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 6));
+        e.target.value = cols;
+        applySetting("cols", cols);
     });
     document.getElementById("engineSelect").addEventListener("change", e => {
         window.ZSApp.state.settings.engine = e.target.value;
@@ -50,7 +52,7 @@ window.registerModule("ZSApp", (function () {
     let bgBusy = false;
 
     function setBgBusy(busy) {
-        bgBusy = true && busy;
+        bgBusy = busy;
         bgImageInput.disabled = busy;
         removeBgBtn.disabled = busy;
         document.getElementById("panel").classList.toggle("bg-busy", busy);

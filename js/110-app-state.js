@@ -26,6 +26,10 @@ window.registerModule("ZSApp", (function () {
             if (!raw) return JSON.parse(JSON.stringify(ZSCore.defaultState));
             const parsed = JSON.parse(raw);
             parsed.settings = { ...ZSCore.defaultState.settings, ...(parsed.settings || {}) };
+
+            parsed.settings.rows = Math.max(1, Math.min(20, parseInt(parsed.settings.rows, 10) || 4));
+            parsed.settings.cols = Math.max(1, Math.min(20, parseInt(parsed.settings.cols, 10) || 6));
+
             if (!Array.isArray(parsed.sites)) parsed.sites = [];
             return parsed;
         } catch (_) {

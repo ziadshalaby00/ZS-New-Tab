@@ -62,8 +62,8 @@ window.registerModule("ZSApp", (function () {
                 const { bg, ...settingsOnly } = parsed.settings;
                 const importedSettings = {
                     name:   settingsOnly.name   ?? "",
-                    rows:   settingsOnly.rows   ?? 4,
-                    cols:   settingsOnly.cols   ?? 6,
+                    rows:   Math.max(1, Math.min(20, parseInt(settingsOnly.rows, 10) || 4)),
+                    cols:   Math.max(1, Math.min(20, parseInt(settingsOnly.cols, 10) || 6)),
                     engine: settingsOnly.engine ?? "https://www.google.com/search?q=",
                     accent: /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(settingsOnly.accent || "")
                                 ? settingsOnly.accent : ZSCore.defaultState.settings.accent,
