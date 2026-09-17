@@ -71,11 +71,14 @@ window.registerModule("ZSApp", (function () {
         tile.dataset.id = site.id;
         tile.tabIndex = 0;
 
+        const c = ZSCore.classifyInput(site.url);
+
         tile.addEventListener("keydown", e => {
             if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                if (e.ctrlKey || e.metaKey) window.open(site.url, "_blank");
-                else window.location.href = site.url;
+                if (c.kind !== "navigable") { window.ZSApp.openModal(site); return; }
+                else if (e.ctrlKey || e.metaKey) window.open(c.url, "_blank");
+                else window.location.href = c.url;
             }
         });
 
@@ -124,6 +127,15 @@ window.registerModule("ZSApp", (function () {
             window.ZSApp.openModal(site);
         });
 
+        // Warning badge for disabled/invalid URLs
+        if (c.kind !== "navigable") {
+            tile.classList.add("tile-invalid");
+            const warn = document.createElement("div");
+            warn.className = "tile-warning";
+            warn.textContent = "!";
+            icon.appendChild(warn);
+        }
+
         const label = document.createElement("div");
         label.className = "label";
         label.textContent = site.name;
@@ -160,12 +172,18 @@ window.registerModule("ZSApp", (function () {
         tile.appendChild(label);
         tile.appendChild(actions);
 
-        tile.addEventListener("click", () => { window.location.href = site.url; });
+        tile.addEventListener("click", () => {
+            if (c.kind === "navigable") window.location.href = c.url;
+            else window.ZSApp.openModal(site);
+        });
         tile.addEventListener("mousedown", e => { if (e.button === 1) e.preventDefault(); });
         tile.addEventListener("auxclick", e => {
-            if (e.button === 1) { e.preventDefault(); window.open(site.url, "_blank"); }
+            if (e.button === 1) {
+                e.preventDefault();
+                if (c.kind === "navigable") window.open(c.url, "_blank");
+                else window.ZSApp.openModal(site);
+            }
         });
-
         tile.addEventListener("dragstart", e => {
             window.ZSApp.dragSourceId = site.id;
             tile.classList.add("dragging");

@@ -168,3 +168,25 @@
     border-color: var(--danger);
     color: var(--danger);
 }
+
+/* URL validation error state */
+.modal input.error {
+    border-color: var(--danger);
+}
+
+.modal input.error:focus {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(226, 104, 95, 0.15);
+}
+
+.field-error {
+    display: none;
+    font-size: 11.5px;
+    color: var(--danger);
+    margin-top: 6px;
+    line-height: 1.45;
+}
+
+.field-error.show {
+    display: block;
+}

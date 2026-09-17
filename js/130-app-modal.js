@@ -14,13 +14,44 @@ window.registerModule("ZSApp", (function () {
     const removeIconBtn = document.getElementById("removeIconBtn");
 
     /**
+     * Shows a red error message under the URL field and highlights the input.
+     */
+    function showUrlError(message) {
+        const input = document.getElementById("siteUrl");
+        const error = document.getElementById("siteUrlError");
+        input.classList.add("error");
+        error.textContent = message;
+        error.classList.add("show");
+    }
+
+    function clearUrlError() {
+        const input = document.getElementById("siteUrl");
+        const error = document.getElementById("siteUrlError");
+        input.classList.remove("error");
+        error.textContent = "";
+        error.classList.remove("show");
+    }
+
+    /**
      * Opens and populates the add/edit site modal with existing data or defaults.
      */
     function openModal(site) {
         window.ZSApp.editingId = site ? site.id : null;
         document.getElementById("modalTitle").textContent = site ? "Edit site" : "Add site";
         document.getElementById("siteName").value = site ? site.name : "";
-        document.getElementById("siteUrl").value = site ? site.url : "";
+
+        const urlInput = document.getElementById("siteUrl");
+
+        // Broken site (imported with invalid URL) → show the original in the field
+        const c = ZSCore.classifyInput(site ? site.url : '');
+        if (site && c.kind !== 'navigable') {
+            urlInput.value = site.url;
+            showUrlError("This URL is invalid or not allowed. Please enter a valid one.");
+        } else {
+            urlInput.value = site ? site.url : "";
+            clearUrlError();
+        }
+
         window.ZSApp.tempIconData = null;
         siteIconInput.value = "";
         iconPreview.style.display = "none";
@@ -33,6 +64,7 @@ window.registerModule("ZSApp", (function () {
                 iconPreview.style.display = "flex";
             }
         }
+
         overlay.classList.add("open");
         requestAnimationFrame(() => {
             if (overlay.classList.contains("open")) document.getElementById("siteName").focus();
@@ -77,10 +109,25 @@ window.registerModule("ZSApp", (function () {
      */
     function saveSite() {
         const name = document.getElementById("siteName").value.trim();
-        let url = document.getElementById("siteUrl").value.trim();
-        if (!name || !url) return;
-        if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+        const rawUrl = document.getElementById("siteUrl").value.trim();
 
+        if (!name) {
+            document.getElementById("siteName").focus();
+            return;
+        }
+        if (!rawUrl) {
+            showUrlError("URL is required.");
+            document.getElementById("siteUrl").focus();
+            return;
+        }
+
+        const c = ZSCore.classifyInput(rawUrl);
+        if (c.kind !== "navigable") {
+            showUrlError("Please enter a valid URL.");
+            return;
+        }
+
+        const url = c.url;
         const state = window.ZSApp.state;
         const editingId = window.ZSApp.editingId;
         const stateSnapshot = JSON.parse(JSON.stringify(state));
@@ -108,7 +155,7 @@ window.registerModule("ZSApp", (function () {
             const wasEditing = !!editingId;
             window.ZSApp.saveState();
             closeModal();
-            window.ZSApp.renderWithTransition({ type: wasEditing ? 'edit' : 'add', tileId: targetId });
+            window.ZSApp.renderWithTransition({ type: wasEditing ? "edit" : "add", tileId: targetId });
         } catch (err) {
             window.ZSApp.state = stateSnapshot;
             if (iconSnapshot === null) localStorage.removeItem(iconKey);
@@ -124,6 +171,20 @@ window.registerModule("ZSApp", (function () {
         document.getElementById(id).addEventListener("keydown", e => {
             if (e.key === "Enter") { e.preventDefault(); saveSite(); }
         });
+    });
+
+    document.getElementById("siteUrl").addEventListener("input", (e) => {
+        const val = e.target.value.trim();
+        if (!val) { clearUrlError(); return; }
+
+        const c = ZSCore.classifyInput(val);
+        if (c.kind === "navigable") {
+            clearUrlError();
+        } else if (c.kind === "search") {
+            showUrlError("This looks like a search. Try adding a domain (e.g. .com).");
+        } else if (c.kind === "invalid") {
+            showUrlError(c.reason || "This URL is invalid or not allowed. Please enter a valid one.");
+        }
     });
 
     return { 

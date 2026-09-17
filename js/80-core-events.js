@@ -22,21 +22,22 @@ window.registerModule('ZSCore', (function () {
     function setupSearchForm(formId, inputId, getEngineFn) {
         const form = document.getElementById(formId);
         if (!form) return;
+
         form.addEventListener("submit", (e) => {
             e.preventDefault();
-            const query = document.getElementById(inputId).value.trim();
-            if (!query) return;
+            const raw = document.getElementById(inputId).value.trim();
+            if (!raw) return;
 
-            const hasScheme = /^https?:\/\//i.test(query);
+            const c = window.ZSCore.classifyInput(raw);
 
-            const looksLikeIp = /^(\d{1,3}\.){3}\d{1,3}(:\d+)?(\/.*)?$/.test(query);
-
-            const looksLikeDomain = /^[\w-]+(\.[\w-]+)+(\/.*)?$/.test(query)
-                && !query.includes(" ")
-                && /^[a-z]{2,}(\/.*)?$/i.test(query.split("/")[0].split(".").pop());
-
-            const looksLikeUrl = hasScheme || looksLikeIp || looksLikeDomain;
-            window.location.href = looksLikeUrl ? (hasScheme ? query : `https://${query}`) : getEngineFn() + encodeURIComponent(query);
+            if (c.kind === "navigable") {
+                window.location.href = c.url;
+            } else if (c.kind === "search") {
+                window.location.href = getEngineFn() + encodeURIComponent(c.query);
+            } else if (c.kind === "invalid") {
+                // Treat as search to keep the UX smooth
+                window.location.href = getEngineFn() + encodeURIComponent(raw);
+            }
         });
     }
 

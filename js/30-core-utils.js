@@ -1,6 +1,15 @@
 window.registerModule('ZSCore', (function () {
     "use strict";
 
+    const INVALID_SCHEMES = new Set([
+        "javascript",   "data", 
+        "vbscript",     "about", 
+        "chrome",       "edge", 
+        "brave",        "opera", 
+        "vivaldi",      "file", 
+        "ftp", "mailto", "tel"
+    ]);
+
     /**
      * Generates a unique alphanumeric ID based on the current timestamp and a random string.
      */
@@ -147,6 +156,73 @@ window.registerModule('ZSCore', (function () {
         });
     }
 
+    /**
+     * Classifies a raw string into one of four kinds:
+     *   - navigable : safe URL that can be opened
+     *   - search    : not a URL, treat as search query
+     *   - invalid   : has a scheme we refuse to navigate to
+     *   - empty     : nothing usable
+     *
+     * Pure function. Never throws.
+     */
+    function classifyInput(raw) {
+        const input = String(raw || "").trim();
+        if (!input) {
+            return { kind: "empty", url: null, query: null, scheme: null, reason: null };
+        }
+
+        const schemeMatch = input.match(/^([a-z][a-z0-9+\-]*):/i);
+        const scheme = schemeMatch ? schemeMatch[1].toLowerCase() : null;
+
+        // 1) Invalid schemes — checked first for security
+        if (scheme && INVALID_SCHEMES.has(scheme)) {
+            return {
+                kind: "invalid", url: null, query: null, scheme,
+                reason: `"${scheme}:" links are not allowed.`
+            };
+        }
+
+        // 2) http / https
+        if (scheme === "http" || scheme === "https") {
+            try {
+                const u = new URL(input);
+                if (!u.hostname) throw new Error("no host");
+                return { kind: "navigable", url: u.href, query: null, scheme, reason: null };
+            } catch {
+                return {
+                    kind: "invalid", url: null, query: null, scheme,
+                    reason: `"${input}" is not a valid ${scheme} URL.`
+                };
+            }
+        }
+
+        // 3) Pattern-based checks — run BEFORE generic scheme handling,
+        //    because "localhost:" and "example.com:" look like schemes
+        //    to a naive regex but are actually host + port.
+
+        // 3a) localhost (optional port + path)
+        if (/^localhost(:\d+)?(\/.*)?$/i.test(input)) {
+            return { kind: "navigable", url: "http://" + input, query: null, scheme: "http", reason: null };
+        }
+
+        // 3b) IPv4 (optional port + path)
+        if (/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(:\d+)?(\/.*)?$/.test(input)) {
+            const octets = input.split(/[.:/]/).slice(0, 4).map(Number);
+            if (octets.every(n => n >= 0 && n <= 255)) {
+                return { kind: "navigable", url: "http://" + input, query: null, scheme: "http", reason: null };
+            }
+        }
+
+        // 3c) Bare domain (with optional port + path)
+        if (!input.includes(" ") &&
+            /^([a-z0-9](?:[a-z0-9\-]*[a-z0-9])?\.)+[a-z]{2,}(:\d+)?(\/.*)?$/i.test(input)) {
+            return { kind: "navigable", url: "https://" + input, query: null, scheme: "https", reason: null };
+        }
+
+        // 5) Fallback → search
+        return { kind: "search", url: null, query: input, scheme: null, reason: null };
+    }
+
     return {
         generateId,
         getHostname,
@@ -156,6 +232,7 @@ window.registerModule('ZSCore', (function () {
         blobToDataURL,
         dataURLToBlob,
         escapeHtml,
-        resizeImage
+        resizeImage,
+        classifyInput,
     }
 })());
