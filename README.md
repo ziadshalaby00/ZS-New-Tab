@@ -1,6 +1,6 @@
 # ZS New Tab
 
-A minimal, fast, offline-first New Tab replacement for Chromium-based browsers and Firefox — a personal bookmark dashboard with a search bar, customizable grid, and settings panel. No accounts, no tracking, no backend. Everything is stored locally.
+A minimal, fast, and offline-first New Tab replacement for Chromium-based browsers and Firefox. Enjoy a clean and customizable bookmark dashboard with quick search, drag-and-drop organization, customizable grids and layouts, custom backgrounds, themes, and a settings panel. Built with privacy in mind — no accounts, no tracking, no backend. Everything is stored locally, with built-in backup and restore.
 
 ![Version](https://img.shields.io/github/v/release/ziadshalaby00/ZS-New-Tab)
 ![Stars](https://img.shields.io/github/stars/ziadshalaby00/ZS-New-Tab)
