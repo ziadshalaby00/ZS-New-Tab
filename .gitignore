@@ -5,3 +5,4 @@ dist/
 *.zip
 
 commit-message.md
+.code-mergeignore

@@ -50,7 +50,10 @@ window.registerModule("ZSApp", (function () {
             return true;
         } catch (err) {
             console.error("saveState failed:", err);
-            alert("Couldn't save changes — local storage may be full.");
+            window.ZSCore.showAlert(
+                "Couldn't save changes — local storage may be full.",
+                { title: "Storage full" }
+            );
             return false;
         }
     }

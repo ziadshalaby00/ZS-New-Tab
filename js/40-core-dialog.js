@@ -91,7 +91,87 @@ window.registerModule('ZSCore', (function () {
         });
     }
 
+    /**
+     * Custom alert popup (window.alert).
+     *
+     * @param {string} message
+     * @param {object|string} [opts]              // string = title (backward compat)
+     * @param {string} [opts.title="Notice"]
+     * @param {string} [opts.okLabel="OK"]
+     * @returns {Promise<void>}
+     */
+    function showAlert(message, opts = {}) {
+        if (typeof opts === "string") opts = { title: opts };
+
+        const {
+            title = "Notice",
+            okLabel = "OK",
+        } = opts;
+
+        return new Promise((resolve) => {
+            const overlay = document.createElement("div");
+            overlay.className = "overlay";
+
+            const modal = document.createElement("div");
+            modal.className = "modal";
+            modal.innerHTML = `
+                <h2>${window.ZSCore.escapeHtml(title)}</h2>
+                <p class="hint" style="margin-bottom:18px; font-size:13px; color:var(--text);">${window.ZSCore.escapeHtml(message)}</p>
+                <div class="actions">
+                    <button class="save">${window.ZSCore.escapeHtml(okLabel)}</button>
+                </div>
+            `;
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => overlay.classList.add("open"));
+            });
+
+            let settled = false;
+
+            function onKey(e) {
+                if (e.key === "Escape" || e.key === "Enter") {
+                    e.preventDefault();
+                    cleanup();
+                }
+            }
+
+            function cleanup() {
+                if (settled) return;
+                settled = true;
+                document.removeEventListener("keydown", onKey);
+
+                overlay.classList.remove("open");
+
+                let removed = false;
+                const remove = () => {
+                    if (removed) return;
+                    removed = true;
+                    overlay.removeEventListener("transitionend", onTransitionEnd);
+                    overlay.remove();
+                    resolve();
+                };
+
+                const onTransitionEnd = (e) => {
+                    if (e.target === overlay && e.propertyName === "opacity") remove();
+                };
+
+                overlay.addEventListener("transitionend", onTransitionEnd);
+                setTimeout(remove, 260);
+            }
+
+            modal.querySelector(".save").addEventListener("click", cleanup);
+            overlay.addEventListener("click", (e) => {
+                if (e.target === overlay) cleanup();
+            });
+
+            document.addEventListener("keydown", onKey);
+        });
+    }
+
     return {
-        showConfirm
+        showConfirm,
+        showAlert
     }
 })());

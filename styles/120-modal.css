@@ -169,6 +169,11 @@
     color: var(--danger);
 }
 
+#removeIconBtn svg {
+    display: block;
+    pointer-events: none;
+}
+
 /* URL validation error state */
 .modal input.error {
     border-color: var(--danger);

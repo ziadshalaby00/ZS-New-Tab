@@ -144,7 +144,13 @@ window.registerModule("ZSApp", (function () {
         actions.className = "tile-actions";
 
         const editBtn = document.createElement("button");
-        editBtn.textContent = "✎";
+        editBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+        `;
         editBtn.addEventListener("click", e => {
             e.stopPropagation();
             window.ZSApp.openModal(site);
@@ -152,7 +158,13 @@ window.registerModule("ZSApp", (function () {
 
         const delBtn = document.createElement("button");
         delBtn.className = "del";
-        delBtn.textContent = "✕";
+        delBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18"/>
+                <path d="m6 6 12 12"/>
+            </svg>
+        `;
         delBtn.addEventListener("click", async e => {
             e.stopPropagation();
             if (await ZSCore.showConfirm(

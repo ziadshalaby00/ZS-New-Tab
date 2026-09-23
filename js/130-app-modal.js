@@ -87,14 +87,14 @@ window.registerModule("ZSApp", (function () {
     siteIconInput.addEventListener("change", async e => {
         const file = e.target.files[0];
         if (!file) return;
-        if (!file.type.startsWith("image/")) return alert("Please select an image file.");
+        if (!file.type.startsWith("image/")) return await ZSCore.showAlert("Please select an image file.", { title: "Invalid file" });
         try {
             const resizedBlob = await ZSCore.resizeImage(file, "icon");
             window.ZSApp.tempIconData = await ZSCore.blobToDataURL(resizedBlob);
             iconPreviewImg.src = window.ZSApp.tempIconData;
             iconPreview.style.display = "flex";
         } catch (err) {
-            alert("Failed to read image.");
+            await ZSCore.showAlert("Failed to read image.", { title: "Read error" });
         }
     });
 
@@ -162,7 +162,10 @@ window.registerModule("ZSApp", (function () {
             else localStorage.setItem(iconKey, iconSnapshot);
             if (hadCacheEntry) window.ZSApp.iconCache.set(targetId, cacheSnapshot);
             else window.ZSApp.iconCache.delete(targetId);
-            alert("Could not save site — local storage may be full.");
+            ZSCore.showAlert(
+                "Could not save site — local storage may be full.",
+                { title: "Save failed" }
+            );
         }
     }
 

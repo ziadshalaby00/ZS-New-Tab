@@ -67,7 +67,7 @@ window.registerModule("ZSApp", (function () {
             const resizedBlob = await ZSCore.resizeImage(file, "bg");
             await ZSDB.setBackground(resizedBlob);
         } catch (err) {
-            alert("Could not save background image.");
+            ZSCore.showAlert("Could not save background image.", { title: "Background error" });
         } finally {
             setBgBusy(false);
             e.target.value = "";

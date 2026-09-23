@@ -99,6 +99,13 @@
     border-color: var(--danger);
 }
 
+.tile-actions button svg {
+    width: 11px;
+    height: 11px;
+    display: block;
+    pointer-events: none;
+}
+
 /* Add Tile Button */
 .tile.add .icon {
     background: transparent;
@@ -113,6 +120,13 @@
     border-color: var(--accent);
     color: var(--accent);
     transform: none;
+}
+
+.tile.add .icon svg {
+    width: 26px;
+    height: 26px;
+    display: block;
+    pointer-events: none;
 }
 
 /* Dragging & Empty States */

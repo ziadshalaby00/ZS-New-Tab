@@ -31,7 +31,7 @@ window.registerModule("ZSApp", (function () {
             setTimeout(() => URL.revokeObjectURL(url), 1000);
         } catch (err) {
             console.error("Export failed", err);
-            alert("Could not create backup.");
+            ZSCore.showAlert("Could not create backup.", { title: "Export failed" });
         } finally {
             document.getElementById("exportBtn").disabled = false;
         }
@@ -96,7 +96,10 @@ window.registerModule("ZSApp", (function () {
                     if (previousBgBlob) await ZSDB.setBackground(previousBgBlob);
                     else await ZSDB.removeBackground();
                 } catch (_) {}
-                alert("This file doesn't look like a valid backup, or it's too large.");
+                ZSCore.showAlert(
+                    "This file doesn't look like a valid backup, or it's too large.",
+                    { title: "Import failed" }
+                );
             }
         };
 
@@ -118,7 +121,7 @@ window.registerModule("ZSApp", (function () {
                 window.ZSApp.renderWithTransition({ type: 'fade' });
                 window.ZSApp.panel.classList.remove("open");
             } catch (err) {
-                alert("Could not reset the application.");
+                ZSCore.showAlert("Could not reset the application.", { title: "Reset failed" });
             }
         }
     });
