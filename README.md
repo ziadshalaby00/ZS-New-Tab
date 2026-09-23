@@ -5,6 +5,7 @@ A minimal, fast, and offline-first New Tab replacement for Chromium-based browse
 ![Version](https://img.shields.io/github/v/release/ziadshalaby00/ZS-New-Tab)
 ![Stars](https://img.shields.io/github/stars/ziadshalaby00/ZS-New-Tab)
 ![Issues](https://img.shields.io/github/issues/ziadshalaby00/ZS-New-Tab)
+[![Firefox Add-ons](https://img.shields.io/badge/Firefox-Available-FF7139?logo=firefox&logoColor=white)](https://addons.mozilla.org/firefox/addon/zs-new-tab/)
 
 <p align="center">
   <img src="./images/s1.png" width="32%">
@@ -60,6 +61,7 @@ The background has its own module (`js/100-db.js`) with a **snapshot-and-rollbac
 
 **Firefox:**
 - Tested on Firefox Developer Edition
+- **Published on Firefox Add-ons:** [ZS New Tab](https://addons.mozilla.org/firefox/addon/zs-new-tab/)
 
 ## Project structure
 
