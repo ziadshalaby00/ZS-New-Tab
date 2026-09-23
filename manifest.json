@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ZS New Tab",
   "short_name": "New Tab",
-  "version": "8.1.0",
+  "version": "8.2.0",
   "description": "A clean and customizable new tab page with bookmarks, quick search, drag-and-drop organization, custom backgrounds, themes, flexible layouts, and local backup and restore — with no accounts or tracking.",
   "author": "Ziad Shalaby",
   "minimum_chrome_version": "88",
@@ -14,10 +14,23 @@
     "48": "./icons/favicon-48x48.png",
     "128": "./icons/favicon-128x128.png"
   },
+  "permissions": [
+    "identity"
+  ],
+  "host_permissions": [
+    "https://www.googleapis.com/"
+  ],
+  "oauth2": {
+    "client_id": "148197040207-5alid3ljh2lk9u83f497u4jkv914uvdp.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.file"
+    ]
+  },
   "incognito": "split",
   "browser_specific_settings": {
     "gecko": {
       "id": "newtab@ziadshalaby.dev",
+      "strict_min_version": "109.0",
       "data_collection_permissions": {
         "required": ["none"]
       }

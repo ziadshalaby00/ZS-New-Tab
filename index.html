@@ -15,15 +15,19 @@
     <link rel="stylesheet" href="./styles/10-fonts.css">
     <link rel="stylesheet" href="./styles/20-variables.css">
     <link rel="stylesheet" href="./styles/30-base.css">
+
     <link rel="stylesheet" href="./styles/40-layout.css">
     <link rel="stylesheet" href="./styles/50-topbar.css">
     <link rel="stylesheet" href="./styles/60-hero.css">
+
     <link rel="stylesheet" href="./styles/70-search.css">
     <link rel="stylesheet" href="./styles/80-grid.css">
     <link rel="stylesheet" href="./styles/90-tiles.css">
+
     <link rel="stylesheet" href="./styles/100-pagination.css">
     <link rel="stylesheet" href="./styles/110-panel.css">
     <link rel="stylesheet" href="./styles/120-modal.css">
+
     <link rel="stylesheet" href="./styles/130-background.css">
     <link rel="stylesheet" href="./styles/140-palette.css">
     <link rel="stylesheet" href="./styles/150-responsive.css">
@@ -175,6 +179,21 @@
     </aside>
 
     <!-- ============================================
+         3b. PROGRESS BAR (bottom of side panel)
+         ============================================ -->
+    <div class="panel-progress" id="panelProgress" role="region" aria-live="polite">
+        <div class="panel-progress-bar" role="progressbar"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+             id="panelProgressBarEl">
+            <div class="panel-progress-fill" id="panelProgressFill"></div>
+        </div>
+        <div class="panel-progress-label">
+            <span id="panelProgressText">Working…</span>
+            <span class="percent" id="panelProgressPercent">0%</span>
+        </div>
+    </div>
+
+    <!-- ============================================
          4. MODAL OVERLAY (ADD / EDIT SITE)
          ============================================ -->
     <div class="overlay" id="overlay">
@@ -220,6 +239,98 @@
         </div>
     </div>
 
+    <!-- ============================================
+        5. EXPORT OPTIONS MODAL
+        ============================================ -->
+    <div class="overlay" id="exportOverlay">
+        <div class="modal">
+            <h2>Export backup</h2>
+            <p class="hint io-hint">Choose where to save your backup file.</p>
+
+            <div class="io-options">
+                <button class="io-option" data-target="device">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7" />
+                        <path d="M12 21H8" />
+                        <path d="M10 17v4" />
+                        <rect x="11" y="7" width="10" height="14" rx="2" />
+                        <line x1="16" y1="18" x2="16.01" y2="18" />
+                    </svg>
+                    <div class="io-text">
+                        <span>Save to device</span>
+                        <small>Download a .json file</small>
+                    </div>
+                </button>
+
+                <button class="io-option" data-target="drive">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="m21.423 13.888-6.09-10.55H8.668l6.09 10.55ZM8.09 4.338 2 14.888l3.334 5.774 6.089-10.55Zm1.733 10.55L6.49 20.662h12.178L22 14.887Z"/>
+                    </svg>
+                    <div class="io-text">
+                        <span>Upload to Google Drive</span>
+                        <small>Save to your Drive</small>
+                    </div>
+                </button>
+
+                <button class="io-option" data-target="both">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3"/>
+                        <path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/>
+                        <path d="M12 3v18"/>
+                    </svg>
+                    <div class="io-text">
+                        <span>Both</span>
+                        <small>Download and upload</small>
+                    </div>
+                </button>
+            </div>
+
+            <div class="actions">
+                <button class="cancel" id="exportCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         6. IMPORT OPTIONS MODAL
+         ============================================ -->
+    <div class="overlay" id="importOverlay">
+        <div class="modal">
+            <h2>Import backup</h2>
+            <p class="hint io-hint">Choose where to restore your backup from.</p>
+
+            <div class="io-options">
+                <button class="io-option" data-source="device">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7" />
+                        <path d="M12 21H8" />
+                        <path d="M10 17v4" />
+                        <rect x="11" y="7" width="10" height="14" rx="2" />
+                        <line x1="16" y1="18" x2="16.01" y2="18" />
+                    </svg>
+                    <div class="io-text">
+                        <span>From device</span>
+                        <small>Pick a .json file</small>
+                    </div>
+                </button>
+
+                <button class="io-option" data-source="drive">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="m21.423 13.888-6.09-10.55H8.668l6.09 10.55ZM8.09 4.338 2 14.888l3.334 5.774 6.089-10.55Zm1.733 10.55L6.49 20.662h12.178L22 14.887Z"/>
+                    </svg>
+                    <div class="io-text">
+                        <span>From Google Drive</span>
+                        <small>Restore from your Drive</small>
+                    </div>
+                </button>
+            </div>
+
+            <div class="actions">
+                <button class="cancel" id="importCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
     
 
     <!-- JavaScript (split files, loaded in order) -->
@@ -228,21 +339,30 @@
     <script src="./js/10-core-state.js"></script>
     <script src="./js/20-core-theme.js"></script>
     <script src="./js/30-core-utils.js"></script>
+
     <script src="./js/40-core-dialog.js"></script>
     <script src="./js/50-core-tiles.js"></script>
     <script src="./js/60-core-renderer.js"></script>
+
     <script src="./js/70-core-pagination.js"></script>
     <script src="./js/80-core-events.js"></script>
     <script src="./js/90-core-debug.js"></script>
 
     <script src="./js/100-db.js"></script>
 
+    <script src="./js/105-app-drive-auth.js"></script>
+    <script src="./js/107-app-drive-sync.js"></script>
     <script src="./js/110-app-state.js"></script>
+
     <script src="./js/120-app-render.js"></script>
     <script src="./js/130-app-modal.js"></script>
     <script src="./js/140-app-accent.js"></script>
+
     <script src="./js/150-app-settings.js"></script>
     <script src="./js/160-app-backup.js"></script>
+    <script src="./js/165-app-io.js"></script>
+
+    <script src="./js/166-app-progress.js"></script>
     <script src="./js/170-app-navigation.js"></script>
     <script src="./js/180-app-init.js"></script>
 </body>

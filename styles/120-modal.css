@@ -195,3 +195,70 @@
 .field-error.show {
     display: block;
 }
+
+/* ============================================
+   EXPORT / IMPORT OPTION BUTTONS
+   ============================================ */
+.io-hint {
+    margin: -8px 0 14px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-dim);
+}
+
+.io-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.io-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 11px 13px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease,
+        transform 0.1s ease;
+}
+
+.io-option:hover {
+    border-color: var(--accent-dim);
+    background: var(--surface-2);
+}
+
+.io-option:active {
+    transform: scale(0.985);
+}
+
+.io-option svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--accent);
+}
+
+.io-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.io-text span {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.io-text small {
+    font-size: 11px;
+    color: var(--text-dim);
+}

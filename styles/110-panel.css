@@ -178,3 +178,81 @@
 .panel input[type="file"]::file-selector-button:hover {
     border-color: var(--accent-dim);
 }
+
+/* ============================================
+   PROGRESS BAR (bottom of side panel)
+   ============================================ */
+.panel-progress {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 340px;
+    max-width: 88vw;
+    z-index: 35;                 /* above panel (30), below modals (40) */
+
+    padding: 14px 20px 18px;
+    background: var(--bg-1);
+    border-top: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+
+    opacity: 0;
+    transform: translateY(100%);
+    pointer-events: none;
+
+    transition:
+        opacity 0.22s ease,
+        transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.panel-progress.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* Track */
+.panel-progress-bar {
+    height: 4px;
+    background: var(--surface-2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+/* Fill */
+.panel-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.2s ease, background-color 0.2s ease;
+}
+
+/* Error state */
+.panel-progress.error .panel-progress-fill {
+    background: var(--danger);
+}
+
+/* Label row */
+.panel-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+}
+
+.panel-progress-label .percent {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text);
+    flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .panel-progress,
+    .panel-progress-fill {
+        transition: none;
+    }
+}

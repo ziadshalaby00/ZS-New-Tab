@@ -11,13 +11,15 @@ npm install          # installs esbuild (only dependency)
 node dev-server.js   # watch + live-reload at http://localhost:5500
 ```
 
-For testing **extension behavior** (chrome.* APIs, new-tab override, incognito):
+For testing **extension behavior** (chrome.* APIs, new-tab override, incognito, **Google Drive sync**):
 
 ```bash
 node build.js
 ```
 
 Then load the `dist/` folder via `chrome://extensions` → **Load unpacked**. Edit files in `js/` or `styles/` — never `dist/` (it's generated and wiped on each build).
+
+> ⚠️ The dev server previews `dist/index.html` as a normal web page — it does **not** emulate `chrome.*` extension APIs. Google Drive sync in particular requires loading `dist/` as an unpacked extension.
 
 ## File layout
 
@@ -47,9 +49,22 @@ window.registerModule('ZSCore', (function () {
 |---|---|---|
 | `ZSCore` | Pure helpers, no state | `10-*` … `90-*` |
 | `ZSDB`   | IndexedDB for backgrounds | `100-db.js` |
+| `ZSDrive` | Google Drive auth + sync (optional) | `105-*`, `107-*` |
 | `ZSApp`  | State + controllers | `110-*` … `180-*` |
+| `ZSProgress` | Progress bar UI for long-running operations | `166-app-progress.js` |
 
 Never redefine an existing function — extend it.
+
+## Google Drive feature
+
+If you touch anything under `105-app-drive-auth.js` or `107-app-drive-sync.js`, keep in mind:
+
+- **The client ID is duplicated** in `js/105-app-drive-auth.js` and `manifest.json` → `oauth2.client_id`. Chrome reads the manifest; Firefox reads the JS. If you change one, change both.
+- **Only use the `drive.file` scope.** It's the least-privileged Drive scope that still allows creating and managing the extension's own files — the extension never sees the rest of the user's Drive.
+- **Never trust the cached `fileId`.** `findExistingBackupFile()` always searches first, then falls back to the cached ID only if the search itself failed. This prevents duplicate files across devices — see the comment at the top of `107-app-drive-sync.js`.
+- **Firefox requires a registered redirect URI.** The OAuth flow silently breaks on temporary extensions because the extension hash changes on every load. Test on a signed build or on Chromium.
+
+Full setup steps (Google Cloud Console, client ID, redirect URIs) live in the [README](./README.md#setup-for-developers-running-from-source).
 
 ## CSS
 
