@@ -27,7 +27,21 @@ window.registerModule("ZSDrive", (function () {
     // =============================================
     const DRIVE_FILE_NAME   = "zs-new-tab-backup.json";
     const DRIVE_FILE_ID_KEY = "ZSNewTab.drive.fileId";
-    const FETCH_TIMEOUT_MS  = 20000;
+
+    // Default timeout for auth, search, and download — small responses.
+    const FETCH_TIMEOUT_MS = 20000;
+
+    // Upload timeout scales with the payload. A 20s fixed timeout fails on
+    // slow connections as soon as the backup contains a real background
+    // image (150 KB – 5 MB), which is the common case.
+    const UPLOAD_TIMEOUT_BASE_MS = 20000;
+    const UPLOAD_TIMEOUT_PER_500KB_MS = 5000;
+    const UPLOAD_TIMEOUT_MAX_MS = 90000;
+
+    function getUploadTimeoutMs(payloadBytes) {
+        const extra = Math.floor(payloadBytes / (500 * 1024)) * UPLOAD_TIMEOUT_PER_500KB_MS;
+        return Math.min(UPLOAD_TIMEOUT_BASE_MS + extra, UPLOAD_TIMEOUT_MAX_MS);
+    }
 
     // =============================================
     //  2. RUNTIME STATE
@@ -102,6 +116,11 @@ window.registerModule("ZSDrive", (function () {
             JSON.stringify(jsonData, null, 2) +
             `\r\n--${boundary}--`;
 
+        // Scale the timeout to the actual upload size. Blob().size gives the
+        // UTF-8 byte length, which matches what the network sees.
+        const payloadBytes = new Blob([body]).size;
+        const timeoutMs = getUploadTimeoutMs(payloadBytes);
+
         const fields = "fields=id,name,trashed,modifiedTime";
         const url = fileId
             ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart&${fields}`
@@ -114,7 +133,7 @@ window.registerModule("ZSDrive", (function () {
                 "Content-Type": `multipart/related; boundary=${boundary}`,
             },
             body,
-        });
+        }, timeoutMs);
 
         if (!res.ok) {
             const errorBody = await res.json().catch(() => null);
