@@ -14,11 +14,18 @@
     z-index: 30;
     overflow-y: auto;
     transform: translateX(100%);
-    transition: transform 0.22s ease;
+    visibility: hidden;
+    transition:
+        transform 0.22s ease,
+        visibility 0s linear 0.22s;
 }
 
 .panel.open {
     transform: translateX(0);
+    visibility: visible;
+    transition:
+        transform 0.22s ease,
+        visibility 0s linear 0s;
 }
 
 /* Panel Typography & Layout */

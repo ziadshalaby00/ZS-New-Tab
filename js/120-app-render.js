@@ -263,11 +263,16 @@ window.registerModule("ZSApp", (function () {
 
         tile.addEventListener("dragend", () => {
             tile.classList.remove("dragging");
+            window.ZSApp.dragSourceId = null;
             clearDropIndicator();
         });
 
         tile.addEventListener("dragover", e => {
             e.preventDefault();
+            // Only respond to internal tile drags — ignore OS file drags
+            // (which have no text/plain payload and would otherwise try to
+            // reorder using a stale dragSourceId).
+            if (!e.dataTransfer?.types.includes("text/plain")) return;
             const dragSourceId = window.ZSApp.dragSourceId;
             if (!dragSourceId || dragSourceId === site.id) return;
 
@@ -293,9 +298,10 @@ window.registerModule("ZSApp", (function () {
         tile.addEventListener("drop", e => {
             e.preventDefault();
             const side = currentDropSide;
+            const dragSourceId = window.ZSApp.dragSourceId;
+            window.ZSApp.dragSourceId = null;
             clearDropIndicator();
 
-            const dragSourceId = window.ZSApp.dragSourceId;
             if (!dragSourceId || dragSourceId === site.id) return;
 
             const state = window.ZSApp.state;

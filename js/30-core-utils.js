@@ -132,11 +132,13 @@ window.registerModule('ZSCore', (function () {
                 const ctx = canvas.getContext("2d");
                 ctx.drawImage(img, 0, 0, width, height);
 
-                const outputType = isIcon
-                    ? "image/webp"
-                    : file.type === "image/png"
-                        ? "image/png"
-                        : "image/jpeg";
+                // WebP for both icons and backgrounds:
+                //   - Icons: already WebP; nothing changes.
+                //   - Backgrounds: the old PNG branch ignored the `quality` parameter
+                //     (PNG is lossless), so large PNG uploads were never actually
+                //     compressed. WebP handles both photographic and graphic content
+                //     well, supports alpha, and actually respects `quality`.
+                const outputType = "image/webp";
 
                 canvas.toBlob(
                     (blob) => blob
