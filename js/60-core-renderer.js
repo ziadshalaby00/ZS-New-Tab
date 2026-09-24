@@ -31,6 +31,16 @@ window.registerModule('ZSCore', (function () {
             return new Promise(resolve => {
                 if (!el || typeof el.animate !== 'function') return resolve();
 
+                // Respect the OS-level reduced-motion preference. Skipping the
+                // animation entirely (rather than running a shorter one) matches
+                // what the CSS side already does — see the @media block in
+                // styles/130-background.css and styles/110-panel.css.
+                // Read the media query each time instead of caching it, so a
+                // mid-session change (rare but possible) takes effect.
+                if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+                    return resolve();
+                }
+
                 const anim = el.animate(keyframes, options);
                 let settled = false;
 

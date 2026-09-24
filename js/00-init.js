@@ -22,5 +22,18 @@
 window.registerModule = function (name, obj) {
     obj = obj || {};
     window[name] = window[name] || {};
+
+    // Warn on key collisions before merging. A silent overwrite means two
+    // files export the same name and one of them loses — which is exactly
+    // the kind of bug that only surfaces much later, as a missing function
+    // or a wrong value. Cheap to check: only runs at script load time.
+    for (const key of Object.keys(obj)) {
+        if (key in window[name]) {
+            console.warn(
+                `registerModule("${name}"): overwriting existing key "${key}"`
+            );
+        }
+    }
+
     Object.assign(window[name], obj);
 };
