@@ -33,11 +33,11 @@ A minimal, fast, and offline-first New Tab replacement for Chromium-based browse
 | Input | Action |
 |---|---|
 | `/` | Focus search |
-| `P` | Toggle settings panel |
+| `Ctrl`+`S` / `Cmd`+`S` | Toggle settings panel |
 | `Esc` | Close any open panel / modal / dialog |
 | `Enter` / `Ctrl`+`Enter` | Open focused tile (current / new tab) |
+| `Ctrl`+Click / `Cmd`+Click / Middle-click | Open tile in new tab |
 | Arrow keys | Move focus between tiles; flips page at edges |
-| Middle-click | Open tile in new tab |
 | Right-click tile icon | Edit site |
 | Scroll over grid | Previous / next page |
 

@@ -184,9 +184,18 @@ window.registerModule("ZSApp", (function () {
         tile.appendChild(label);
         tile.appendChild(actions);
 
-        tile.addEventListener("click", () => {
-            if (c.kind === "navigable") window.location.href = c.url;
-            else window.ZSApp.openModal(site);
+        tile.addEventListener("click", (e) => {
+            if (c.kind !== "navigable") {
+                window.ZSApp.openModal(site);
+                return;
+            }
+            // Ctrl+Click (Windows/Linux) or Cmd+Click (Mac) → open in new tab,
+            // matching the middle-click behavior handled by the auxclick listener.
+            if (e.ctrlKey || e.metaKey) {
+                window.open(c.url, "_blank");
+            } else {
+                window.location.href = c.url;
+            }
         });
         tile.addEventListener("mousedown", e => { if (e.button === 1) e.preventDefault(); });
         tile.addEventListener("auxclick", e => {

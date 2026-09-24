@@ -56,7 +56,19 @@ window.registerModule('ZSCore', (function () {
                 document.getElementById(searchInputId)?.focus();
             }
 
-            if (e.key.toLowerCase() === "p" && !isTyping && !isModalOpen && onToggleSettingsFn) {
+            // Ctrl+S / Cmd+S → toggle settings panel.
+            // Deliberately NOT gated on isTyping so it works even while the
+            // user is focused in the search box. Also blocks the browser's
+            // default Save Page dialog.
+            const isCmdOrCtrl = e.ctrlKey || e.metaKey;
+            if (
+                isCmdOrCtrl &&
+                !e.shiftKey &&
+                !e.altKey &&
+                e.key.toLowerCase() === "s" &&
+                !isModalOpen &&
+                onToggleSettingsFn
+            ) {
                 e.preventDefault();
                 onToggleSettingsFn();
             }
