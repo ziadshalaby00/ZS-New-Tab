@@ -20,12 +20,6 @@
   "host_permissions": [
     "https://www.googleapis.com/"
   ],
-  "oauth2": {
-    "client_id": "148197040207-5alid3ljh2lk9u83f497u4jkv914uvdp.apps.googleusercontent.com",
-    "scopes": [
-      "https://www.googleapis.com/auth/drive.file"
-    ]
-  },
   "incognito": "split",
   "browser_specific_settings": {
     "gecko": {

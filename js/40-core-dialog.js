@@ -51,6 +51,7 @@ window.registerModule('ZSCore', (function () {
             function onKey(e) {
                 if (e.key === "Escape") {
                     e.preventDefault();
+                    e.stopImmediatePropagation();
                     cleanup(false);
                 }
             }
@@ -58,7 +59,7 @@ window.registerModule('ZSCore', (function () {
             function cleanup(result) {
                 if (settled) return;
                 settled = true;
-                document.removeEventListener("keydown", onKey);
+                document.removeEventListener("keydown", onKey, true);
 
                 // Play the close transition, then remove from the DOM.
                 overlay.classList.remove("open");
@@ -87,7 +88,7 @@ window.registerModule('ZSCore', (function () {
                 if (e.target === overlay) cleanup(false);
             });
 
-            document.addEventListener("keydown", onKey);
+            document.addEventListener("keydown", onKey, true);
         });
     }
 
@@ -133,6 +134,7 @@ window.registerModule('ZSCore', (function () {
             function onKey(e) {
                 if (e.key === "Escape" || e.key === "Enter") {
                     e.preventDefault();
+                    e.stopImmediatePropagation();
                     cleanup();
                 }
             }
@@ -140,7 +142,7 @@ window.registerModule('ZSCore', (function () {
             function cleanup() {
                 if (settled) return;
                 settled = true;
-                document.removeEventListener("keydown", onKey);
+                document.removeEventListener("keydown", onKey, true);
 
                 overlay.classList.remove("open");
 
@@ -166,7 +168,7 @@ window.registerModule('ZSCore', (function () {
                 if (e.target === overlay) cleanup();
             });
 
-            document.addEventListener("keydown", onKey);
+            document.addEventListener("keydown", onKey, true);
         });
     }
 

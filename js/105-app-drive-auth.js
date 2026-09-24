@@ -8,17 +8,6 @@ window.registerModule("ZSDrive", (function () {
     // =============================================
     //  1. CONFIG
     // =============================================
-    // ⚠️  DUPLICATED VALUE — keep in sync with manifest.json's
-    //     "oauth2.client_id" block.
-    //
-    // Why it's duplicated:
-    //   - Chrome (and Chromium-based browsers) read the client ID
-    //     from manifest.json → oauth2.client_id.
-    //   - Firefox ignores manifest.oauth2 entirely and reads it
-    //     from here instead.
-    //
-    // If you change one, change BOTH, or OAuth will break on one
-    // family of browsers while working on the other.
     const CLIENT_ID = "148197040207-5alid3ljh2lk9u83f497u4jkv914uvdp.apps.googleusercontent.com";
 
     const SCOPES = ["https://www.googleapis.com/auth/drive.file"];

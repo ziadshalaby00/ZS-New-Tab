@@ -69,8 +69,6 @@ The OAuth client ID is hardcoded in `js/105-app-drive-auth.js` and `manifest.jso
 
 **Firefox:** the redirect URI is `https://<extension-hash>.extensions.mozilla.org/`. It's only stable after the extension is **signed** — a temporary extension loaded via `about:debugging` gets a random UUID on every load, so OAuth **will not work in temporary mode**. Test Drive features on a signed build, or on a Chromium-based browser.
 
-> **Note:** The `oauth2` block in `manifest.json` is Chrome-specific. Firefox ignores it and uses the same `launchWebAuthFlow` code path — the client ID there is duplicated from `js/105-app-drive-auth.js` because both are needed.
-
 ## Storage
 
 | Data | Storage | Why |

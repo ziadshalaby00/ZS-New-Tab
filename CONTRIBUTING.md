@@ -59,7 +59,6 @@ Never redefine an existing function — extend it.
 
 If you touch anything under `105-app-drive-auth.js` or `107-app-drive-sync.js`, keep in mind:
 
-- **The client ID is duplicated** in `js/105-app-drive-auth.js` and `manifest.json` → `oauth2.client_id`. Chrome reads the manifest; Firefox reads the JS. If you change one, change both.
 - **Only use the `drive.file` scope.** It's the least-privileged Drive scope that still allows creating and managing the extension's own files — the extension never sees the rest of the user's Drive.
 - **Never trust the cached `fileId`.** `findExistingBackupFile()` always searches first, then falls back to the cached ID only if the search itself failed. This prevents duplicate files across devices — see the comment at the top of `107-app-drive-sync.js`.
 - **Firefox requires a registered redirect URI.** The OAuth flow silently breaks on temporary extensions because the extension hash changes on every load. Test on a signed build or on Chromium.
