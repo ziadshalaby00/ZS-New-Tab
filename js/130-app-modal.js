@@ -83,6 +83,12 @@ window.registerModule("ZSApp", (function () {
 
     document.getElementById("modalCancel").addEventListener("click", closeModal);
     overlay.addEventListener("click", e => { if (e.target === overlay) closeModal(); });
+    document.addEventListener("keydown", e => {
+        if (e.key !== "Escape") return;
+        if (!overlay.classList.contains("open")) return;
+        e.stopImmediatePropagation();
+        closeModal();
+    });
 
     siteIconInput.addEventListener("change", async e => {
         const file = e.target.files[0];

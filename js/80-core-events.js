@@ -74,7 +74,9 @@ window.registerModule('ZSCore', (function () {
             }
 
             if (e.key === "Escape" && onEscapeFn) {
-                onEscapeFn();
+                if (!document.querySelector(".overlay.open")) {
+                    onEscapeFn();
+                }
             }
         });
     }
@@ -96,7 +98,9 @@ window.registerModule('ZSCore', (function () {
                 || !!e.target.closest?.(".overlay");
 
             if (!clickedInsidePanel && !clickedToggle && !clickedOverlay) {
-                panel.classList.remove("open");
+                if (!document.querySelector(".overlay.open")) {
+                    panel.classList.remove("open");
+                }
             }
         });
     }

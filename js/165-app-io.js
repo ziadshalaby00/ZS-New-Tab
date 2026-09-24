@@ -69,8 +69,17 @@ window.registerModule("ZSApp", (function () {
     // ---------- Escape to close ----------
     document.addEventListener("keydown", e => {
         if (e.key !== "Escape") return;
-        if (exportOverlay.classList.contains("open")) closeExportModal();
-        if (importOverlay.classList.contains("open")) closeImportModal();
+        
+        if (exportOverlay.classList.contains("open")) {
+            e.stopImmediatePropagation();
+            closeExportModal();
+            return;
+        }
+        if (importOverlay.classList.contains("open")) {
+            e.stopImmediatePropagation();
+            closeImportModal();
+            return;
+        }
     });
 
     return {
