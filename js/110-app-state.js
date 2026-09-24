@@ -18,6 +18,47 @@ window.registerModule("ZSApp", (function () {
     const iconCache = new Map();
 
     /**
+     * Validates a raw sites array and returns a clean one.
+     *
+     * - Non-object entries, or sites missing a usable name or url, are dropped.
+     * - Missing or duplicate ids are replaced with a freshly generated one
+     *   (the site itself is fine — only the id is unusable).
+     * - Every repair or drop is logged so a bad backup / stale schema doesn't
+     *   fail silently.
+     */
+    function sanitizeSites(sites) {
+        if (!Array.isArray(sites)) return [];
+
+        const seenIds = new Set();
+        const clean = [];
+        let dropped = 0;
+        let repaired = 0;
+
+        for (const raw of sites) {
+            if (!raw || typeof raw !== "object") { dropped++; continue; }
+
+            const name = typeof raw.name === "string" ? raw.name.trim() : "";
+            const url  = typeof raw.url  === "string" ? raw.url.trim()  : "";
+
+            if (!name || !url) { dropped++; continue; }
+
+            let id = typeof raw.id === "string" ? raw.id.trim() : "";
+            if (!id || seenIds.has(id)) {
+                id = ZSCore.generateId();
+                repaired++;
+            }
+            seenIds.add(id);
+
+            clean.push({ id, name, url });
+        }
+
+        if (dropped)  console.warn(`loadState: dropped ${dropped} invalid site(s)`);
+        if (repaired) console.warn(`loadState: regenerated ${repaired} missing/duplicate id(s)`);
+
+        return clean;
+    }
+
+    /**
      * Loads the application state from localStorage, falling back to the default state if empty or invalid.
      */
     function loadState() {
@@ -30,7 +71,18 @@ window.registerModule("ZSApp", (function () {
             parsed.settings.rows = Math.max(1, Math.min(20, parseInt(parsed.settings.rows, 10) || 4));
             parsed.settings.cols = Math.max(1, Math.min(20, parseInt(parsed.settings.cols, 10) || 6));
 
-            if (!Array.isArray(parsed.sites)) parsed.sites = [];
+            if (typeof parsed.settings.name !== "string") {
+                parsed.settings.name = "";
+            }
+            if (typeof parsed.settings.engine !== "string" || !parsed.settings.engine) {
+                parsed.settings.engine = ZSCore.defaultState.settings.engine;
+            }
+            if (typeof parsed.settings.accent !== "string" ||
+                !/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(parsed.settings.accent)) {
+                parsed.settings.accent = ZSCore.defaultState.settings.accent;
+            }
+
+            parsed.sites = sanitizeSites(parsed.sites);
             return parsed;
         } catch (_) {
             return JSON.parse(JSON.stringify(ZSCore.defaultState));
