@@ -173,7 +173,14 @@ function startServer() {
             return;
         }
 
-        let urlPath = decodeURIComponent(req.url.split("?")[0]);
+        let urlPath;
+        try {
+            urlPath = decodeURIComponent(req.url.split("?")[0]);
+        } catch {
+            res.writeHead(400, { "Content-Type": "text/plain" });
+            res.end("400 Bad Request: malformed URL encoding");
+            return;
+        }
         if (urlPath === "/") urlPath = "/index.html";
 
         const filePath = path.join(DIST, urlPath);
@@ -188,7 +195,7 @@ function startServer() {
         serveFile(res, filePath);
     });
 
-    server.listen(PORT, () => {
+    server.listen(PORT, "127.0.0.1", () => {
         console.log(`[dev] serving dist/ at http://localhost:${PORT}`);
         openBrowser(`http://localhost:${PORT}/`);
     });

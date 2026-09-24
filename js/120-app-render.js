@@ -53,6 +53,9 @@ window.registerModule("ZSApp", (function () {
         select.value = has ? currentValue : (select.options[0]?.value || "");
 
         if (!has && select.value) {
+            // Intentional: don't persist this — it's a display-only fallback
+            // when the stored engine isn't in the current list. The user's own
+            // selection from the dropdown goes through 150-app-settings.js.
             window.ZSApp.state.settings.engine = select.value;
         }
     }

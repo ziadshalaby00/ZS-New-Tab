@@ -17,7 +17,7 @@ A minimal, fast, and offline-first New Tab replacement for Chromium-based browse
 
 - **Bookmark grid** — add, edit, delete, and reorder sites with drag & drop
 - **Custom icons** — auto-fetched favicons, optional per-site upload, colored-letter fallback
-- **Quick search** — switchable engines (Google, DuckDuckGo, Brave, Bing); typing a URL, IP, or bare domain (e.g. `github.com`) navigates directly
+- **Quick search** — ~50 switchable engines across 10 groups (General, AI, Google Tools, Developer, Reference, Quran & Islamic, Media, Social, Shopping); typing a URL, IP, or bare domain (e.g. `github.com`) navigates directly
 - **Pagination** — dot navigation, arrow buttons, mouse-wheel scrolling, and drag-to-edge paging (hold a dragged tile near the left/right edge to flip pages)
 - **Accent colors** — 18 presets + custom color picker; the whole UI re-themes instantly
 - **Settings panel** — display name, grid rows/columns, background image, accent color
@@ -61,11 +61,11 @@ Only the backup `.json` file — the same content as the local export. No teleme
 The OAuth client ID is hardcoded in `js/105-app-drive-auth.js` and `manifest.json`. To use your own:
 
 1. Open the [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Credentials**.
-2. Create an **OAuth 2.0 Client ID** of type **Chrome Extension**.
+2. Create an **OAuth 2.0 Client ID** of type **Web application**.
 3. Enable the **Google Drive API** for your project.
-4. After loading `dist/` unpacked, note the **extension ID** — it goes in the client config.
+4. After loading `dist/` unpacked, note the **extension ID** — you'll need it for the redirect URI.
 
-**Chrome / Edge / Brave / Opera / Vivaldi:** the redirect URI is `https://<extension-id>.chromiumapp.org/`. Add it to **Authorized redirect URIs**.
+**Chrome / Edge / Brave / Opera / Vivaldi:** add `https://<extension-id>.chromiumapp.org/` to **Authorized redirect URIs**.
 
 **Firefox:** the redirect URI is `https://<extension-hash>.extensions.mozilla.org/`. It's only stable after the extension is **signed** — a temporary extension loaded via `about:debugging` gets a random UUID on every load, so OAuth **will not work in temporary mode**. Test Drive features on a signed build, or on a Chromium-based browser.
 
