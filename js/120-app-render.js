@@ -14,6 +14,50 @@ window.registerModule("ZSApp", (function () {
     }
 
     /**
+     * Builds the search engine <select> from ZSCore.SEARCH_ENGINES the
+     * first time it runs, then only updates the selected value on
+     * subsequent renders. Guards against the `render()` function being
+     * called many times per second (every edit / delete / reorder).
+     */
+    function renderEngineSelect(currentValue) {
+        const select = document.getElementById("engineSelect");
+        if (!select) return;
+
+        if (!select.dataset.built) {
+            const groups = new Map();
+            for (const eng of ZSCore.SEARCH_ENGINES) {
+                const key = eng.group || "Other";
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(eng);
+            }
+
+            const frag = document.createDocumentFragment();
+            for (const [groupName, engines] of groups) {
+                const optgroup = document.createElement("optgroup");
+                optgroup.label = groupName;
+
+                for (const eng of engines) {
+                    const opt = document.createElement("option");
+                    opt.value = eng.url;
+                    opt.textContent = eng.name;
+                    optgroup.appendChild(opt);
+                }
+                frag.appendChild(optgroup);
+            }
+
+            select.replaceChildren(frag);
+            select.dataset.built = "1";
+        }
+
+        const has = Array.from(select.options).some(o => o.value === currentValue);
+        select.value = has ? currentValue : (select.options[0]?.value || "");
+
+        if (!has && select.value) {
+            window.ZSApp.state.settings.engine = select.value;
+        }
+    }
+
+    /**
      * Main render function that updates the grid, pagination, and settings UI based on the current state.
      */
     function render() {
@@ -21,7 +65,7 @@ window.registerModule("ZSApp", (function () {
         ZSCore.applyAccent(state.settings.accent);
         document.documentElement.style.setProperty("--cols", state.settings.cols);
         renderName();
-        document.getElementById("engineSelect").value = state.settings.engine;
+        renderEngineSelect(state.settings.engine);
 
         const total = ZSCore.getTotalPages(state.sites.length, state.settings.rows, state.settings.cols);
         if (window.ZSApp.currentPage >= total) window.ZSApp.currentPage = total - 1;

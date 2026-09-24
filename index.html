@@ -7,7 +7,7 @@
 
     <!-- Preload script — runs synchronously before the stylesheet
      to prevent accent-color flash.
-     Must stay in sync with ZSCore.applyAccent() in script.core.js. -->
+     Must stay in sync with ZSCore.applyAccent() in js/20-core-theme.js. -->
     <script src="./js/script.preload.js"></script>
 
 
@@ -61,12 +61,8 @@
 
         <!-- Search Form -->
         <form class="search" id="searchForm" autocomplete="off">
-            <select id="engineSelect">
-                <option value="https://www.google.com/search?q=">Google</option>
-                <option value="https://duckduckgo.com/?q=">DuckDuckGo</option>
-                <option value="https://search.brave.com/search?q=">Brave</option>
-                <option value="https://www.bing.com/search?q=">Bing</option>
-            </select>
+            <select id="engineSelect"></select>
+            
             <input id="searchInput" type="text" placeholder="Search or type a URL" autofocus>
             <button type="submit" title="Search">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">

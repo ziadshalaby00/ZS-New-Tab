@@ -24,14 +24,29 @@ form.search select {
     border: none;
     border-right: 1px solid var(--border);
     color: var(--text-dim);
+    color-scheme: dark;
     font-size: 13px;
     padding-right: 10px;
     margin-right: 10px;
+    max-width: 120px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     cursor: pointer;
 }
 
 form.search select:focus {
     outline: none;
+}
+
+form.search select option {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+form.search select optgroup {
+    background: var(--surface-2);
+    color: var(--text-dim);
 }
 
 /* Search Input */
@@ -62,7 +77,6 @@ form.search button {
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: filter 0.15s ease;
 }
 
 form.search button:hover {

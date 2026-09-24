@@ -66,8 +66,84 @@ window.registerModule('ZSCore', (function () {
         { name: "Graphite", accent: "#727A86" },
     ];
 
+    /**
+     * Search engines shown in the search bar dropdown.
+     * Grouped with <optgroup> for readability — a flat list this long would be a wall.
+     * `url` is the prefix; the query is appended (encodeURIComponent) at submit time.
+     */
+    const SEARCH_ENGINES = [
+        // ── General ─────────────────────────────────────────
+        { group: "General",         name: "Google",           url: "https://www.google.com/search?q=" },
+        { group: "General",         name: "DuckDuckGo",       url: "https://duckduckgo.com/?q=" },
+        { group: "General",         name: "Bing",             url: "https://www.bing.com/search?q=" },
+        { group: "General",         name: "Brave",            url: "https://search.brave.com/search?q=" },
+        { group: "General",         name: "Yahoo",            url: "https://search.yahoo.com/search?p=" },
+        { group: "General",         name: "Ecosia",           url: "https://www.ecosia.org/search?q=" },
+        { group: "General",         name: "Startpage",        url: "https://www.startpage.com/sp/search?query=" },
+        { group: "General",         name: "Qwant",            url: "https://www.qwant.com/?q=" },
+        { group: "General",         name: "Mojeek",           url: "https://www.mojeek.com/search?q=" },
+        { group: "General",         name: "Yandex",           url: "https://yandex.com/search/?text=" },
+
+        // ── AI ──────────────────────────────────────────────
+        { group: "AI",              name: "ChatGPT",          url: "https://chatgpt.com/?q=" },
+        { group: "AI",              name: "Claude",           url: "https://claude.ai/new?q=" },
+        { group: "AI",              name: "Perplexity",       url: "https://www.perplexity.ai/search?q=" },
+        { group: "AI",              name: "Gemini",           url: "https://gemini.google.com/app?q=" },
+        { group: "AI",              name: "Copilot",          url: "https://copilot.microsoft.com/?q=" },
+
+        // ── Google Tools ────────────────────────────────────
+        { group: "Google Tools", name: "Google Images",  url: "https://www.google.com/search?tbm=isch&q=" },
+        { group: "Google Tools", name: "Google Maps",    url: "https://www.google.com/maps/search/" },
+        { group: "Google Tools", name: "Google News",    url: "https://news.google.com/search?q=" },
+        { group: "Google Tools", name: "Google Scholar", url: "https://scholar.google.com/scholar?q=" },
+        { group: "Google Tools", name: "Google Videos",  url: "https://www.google.com/search?tbm=vid&q=" },
+
+        // ── Developer ───────────────────────────────────────
+        { group: "Developer",       name: "GitHub",           url: "https://github.com/search?q=" },
+        { group: "Developer",       name: "GitLab",           url: "https://gitlab.com/search?search=" },
+        { group: "Developer",       name: "Stack Overflow",   url: "https://stackoverflow.com/search?q=" },
+        { group: "Developer",       name: "MDN",              url: "https://developer.mozilla.org/en-US/search?q=" },
+        { group: "Developer",       name: "DevDocs",          url: "https://devdocs.io/#q=" },
+        { group: "Developer",       name: "Can I use",        url: "https://caniuse.com/?search=" },
+        { group: "Developer",       name: "npm",              url: "https://www.npmjs.com/search?q=" },
+        { group: "Developer",       name: "PyPI",             url: "https://pypi.org/search/?q=" },
+        { group: "Developer",       name: "crates.io",        url: "https://crates.io/search?q=" },
+        { group: "Developer",       name: "Packagist",        url: "https://packagist.org/search/?q=" },
+        { group: "Developer",       name: "Docker Hub",       url: "https://hub.docker.com/search?q=" },
+
+        // ── Reference ───────────────────────────────────────
+        { group: "Reference",       name: "Wikipedia",        url: "https://en.wikipedia.org/w/index.php?search=" },
+        { group: "Reference",       name: "Wiktionary",       url: "https://en.wiktionary.org/w/index.php?search=" },
+        { group: "Reference",       name: "Wolfram Alpha",    url: "https://www.wolframalpha.com/input?i=" },
+        { group: "Reference",       name: "Internet Archive", url: "https://archive.org/search?query=" },
+        { group: "Reference",       name: "arXiv",            url: "https://arxiv.org/search/?query=" },
+
+        // ── Quran & Islamic ─────────────────────────────────
+        { group: "Quran & Islamic", name: "Quran.com",        url: "https://quran.com/search?query=" },
+        { group: "Quran & Islamic", name: "Tafsir.app",       url: "https://tafsir.app/search?q=" },
+        { group: "Quran & Islamic", name: "Sunnah.com",       url: "https://sunnah.com/search?q=" },
+
+        // ── Media ───────────────────────────────────────────
+        { group: "Media",           name: "YouTube",          url: "https://www.youtube.com/results?search_query=" },
+        { group: "Media",           name: "Vimeo",            url: "https://vimeo.com/search?q=" },
+
+        // ── Social ──────────────────────────────────────────
+        { group: "Social",          name: "Reddit",           url: "https://www.reddit.com/search/?q=" },
+        { group: "Social",          name: "Hacker News",      url: "https://hn.algolia.com/?q=" },
+        { group: "Social",          name: "X (Twitter)",      url: "https://x.com/search?q=" },
+        { group: "Social",          name: "LinkedIn",         url: "https://www.linkedin.com/search/results/all/?keywords=" },
+        { group: "Social",          name: "Pinterest",        url: "https://www.pinterest.com/search/pins/?q=" },
+
+        // ── Shopping ────────────────────────────────────────
+        { group: "Shopping",        name: "Amazon",           url: "https://www.amazon.com/s?k=" },
+        { group: "Shopping",        name: "eBay",             url: "https://www.ebay.com/sch/i.html?_nkw=" },
+        { group: "Shopping",        name: "AliExpress",       url: "https://www.aliexpress.com/wholesale?SearchText=" },
+        { group: "Shopping",        name: "Etsy",             url: "https://www.etsy.com/search?q=" },
+    ];
+
     return {
         defaultState,
-        THEMES
+        THEMES,
+        SEARCH_ENGINES
     }
 })());

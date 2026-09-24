@@ -8,7 +8,11 @@
 
     ZSApp.setupGridKeyboardNav();
 
-    ZSCore.setupSearchForm("searchForm", "searchInput", () => ZSApp.state.settings.engine);
+    ZSCore.setupSearchForm(
+        "searchForm",
+        "searchInput",
+        () => document.getElementById("engineSelect").value
+    );
     ZSCore.setupKeyboardShortcuts("searchInput", () => {
         ZSApp.closeModal();
         ZSApp.panel.classList.remove("open");

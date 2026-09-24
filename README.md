@@ -228,7 +228,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 | What | Where |
 |---|---|
-| Search engines | `<select id="engineSelect">` in `index.html` |
+| Search engines | `SEARCH_ENGINES` in `js/10-core-state.js` |
 | Accent presets | `THEMES` in `js/10-core-state.js` |
 | Default bookmarks | `defaultState.sites` in `js/10-core-state.js` |
 | Theme colors (CSS) | CSS variables at the top of `styles/20-variables.css` |
