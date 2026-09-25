@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ZS New Tab",
   "short_name": "New Tab",
-  "version": "8.2.0",
+  "version": "8.3.0",
   "description": "A clean and customizable new tab page with bookmarks, quick search, drag-and-drop organization, custom backgrounds, themes, flexible layouts, and local backup and restore — with no accounts or tracking.",
   "author": "Ziad Shalaby",
   "minimum_chrome_version": "88",
