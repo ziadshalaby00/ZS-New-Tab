@@ -219,9 +219,29 @@ window.registerModule("ZSApp", (function () {
                 `Delete "${site.name}"? This can't be undone.`,
                 { title: "Delete site", confirmLabel: "Delete", cancelLabel: "Cancel" }
             )) {
-                window.ZSApp.state.sites = window.ZSApp.state.sites.filter(s => s.id !== site.id);
+                const state = window.ZSApp.state;
+                const sitesSnapshot = state.sites.slice();
+                const iconKey = window.ZSApp.getIconKey(site.id);
+                const iconSnapshot = localStorage.getItem(iconKey);
+                const hadCacheEntry = window.ZSApp.iconCache.has(site.id);
+                const cacheSnapshot = window.ZSApp.iconCache.get(site.id);
+
+                state.sites = state.sites.filter(s => s.id !== site.id);
                 window.ZSApp.deleteSiteIcon(site.id);
-                window.ZSApp.saveState();
+
+                if (!window.ZSApp.saveState()) {
+                    // saveState() already showed its own "storage full" alert.
+                    // Restore the sites list, the icon, and the cache — otherwise
+                    // the tile disappears from the UI but comes back on reload,
+                    // and the icon is already gone by then.
+                    state.sites = sitesSnapshot;
+                    if (iconSnapshot === null) localStorage.removeItem(iconKey);
+                    else localStorage.setItem(iconKey, iconSnapshot);
+                    if (hadCacheEntry) window.ZSApp.iconCache.set(site.id, cacheSnapshot);
+                    else window.ZSApp.iconCache.delete(site.id);
+                    return;
+                }
+
                 renderWithTransition({ type: 'delete', tileId: site.id });
             }
         });
@@ -306,6 +326,10 @@ window.registerModule("ZSApp", (function () {
             if (!dragSourceId || dragSourceId === site.id) return;
 
             const state = window.ZSApp.state;
+            // Shallow copy is enough — we only reorder array slots, never mutate
+            // the site objects themselves.
+            const sitesSnapshot = state.sites.slice();
+
             const fromIndex = state.sites.findIndex(s => s.id === dragSourceId);
             if (fromIndex === -1) return;
 
@@ -316,7 +340,14 @@ window.registerModule("ZSApp", (function () {
             const insertIndex = side === "after" ? toIndex + 1 : toIndex;
             state.sites.splice(insertIndex, 0, moved);
 
-            window.ZSApp.saveState();
+            if (!window.ZSApp.saveState()) {
+                // saveState() already showed its own "storage full" alert.
+                // Restore the original order so a failed drag doesn't leave the
+                // in-memory list out of sync with what's on disk.
+                state.sites = sitesSnapshot;
+                return;
+            }
+
             renderWithTransition({ type: 'reorder', tileId: dragSourceId });
         });
 

@@ -143,6 +143,19 @@ window.registerModule("ZSApp", (function () {
         const hadCacheEntry = window.ZSApp.iconCache.has(targetId);
         const cacheSnapshot = window.ZSApp.iconCache.get(targetId);
 
+        // Undo every mutation made below (in-memory state, icon in
+        // localStorage, icon cache) if any step fails.
+        const rollback = () => {
+            window.ZSApp.state = stateSnapshot;
+            if (iconSnapshot === null) localStorage.removeItem(iconKey);
+            else localStorage.setItem(iconKey, iconSnapshot);
+            if (hadCacheEntry) window.ZSApp.iconCache.set(targetId, cacheSnapshot);
+            else window.ZSApp.iconCache.delete(targetId);
+        };
+
+        // 1. Mutate the in-memory state and the icon.
+        //    saveSiteIcon() calls localStorage.setItem, which CAN throw on
+        //    quota — that's what this try/catch is for.
         try {
             if (editingId) {
                 const existing = state.sites.find(s => s.id === editingId);
@@ -157,22 +170,29 @@ window.registerModule("ZSApp", (function () {
             } else if (tempIconData === null) {
                 window.ZSApp.deleteSiteIcon(targetId);
             }
-
-            const wasEditing = !!editingId;
-            window.ZSApp.saveState();
-            closeModal();
-            window.ZSApp.renderWithTransition({ type: wasEditing ? "edit" : "add", tileId: targetId });
         } catch (err) {
-            window.ZSApp.state = stateSnapshot;
-            if (iconSnapshot === null) localStorage.removeItem(iconKey);
-            else localStorage.setItem(iconKey, iconSnapshot);
-            if (hadCacheEntry) window.ZSApp.iconCache.set(targetId, cacheSnapshot);
-            else window.ZSApp.iconCache.delete(targetId);
+            // The icon write threw (quota). Nothing for the sites list has
+            // been persisted yet, so roll back everything and tell the user.
+            rollback();
             ZSCore.showAlert(
                 "Could not save site — local storage may be full.",
                 { title: "Save failed" }
             );
+            return;
         }
+
+        // 2. Persist. saveState() catches its own quota error and shows an
+        //    alert, so on failure we just roll back and return — no second
+        //    alert, no phantom success, no state/disk divergence.
+        if (!window.ZSApp.saveState()) {
+            rollback();
+            return;
+        }
+
+        // 3. Success.
+        const wasEditing = !!editingId;
+        closeModal();
+        window.ZSApp.renderWithTransition({ type: wasEditing ? "edit" : "add", tileId: targetId });
     }
 
     document.getElementById("modalSave").addEventListener("click", saveSite);

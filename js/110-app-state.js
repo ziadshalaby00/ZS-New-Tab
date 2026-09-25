@@ -90,9 +90,19 @@ window.registerModule("ZSApp", (function () {
     }
 
     /**
-     * Saves the current settings and sites array to localStorage.
-     * Returns true on success, false if the write failed (e.g. quota exceeded).
+     * True while a "storage full" alert is on screen. saveState() is called
+     * from `input` handlers (displayName, customAccent) that fire on every
+     * keystroke / drag tick, so without this guard a full localStorage
+     * stacks an identical alert per event.
+     *
+     * The flag is bound to the alert's lifetime, not to the next successful
+     * save: once the user dismisses the alert, the next failure is allowed
+     * to surface a new one. If we reset only on success, a user who missed
+     * or dismissed the first alert would get silent failures forever while
+     * the storage stays full.
      */
+    let storageAlertActive = false;
+
     function saveState() {
         try {
             localStorage.setItem(SETTINGS_KEY, JSON.stringify({
@@ -102,10 +112,15 @@ window.registerModule("ZSApp", (function () {
             return true;
         } catch (err) {
             console.error("saveState failed:", err);
-            window.ZSCore.showAlert(
-                "Couldn't save changes — local storage may be full.",
-                { title: "Storage full" }
-            );
+            if (!storageAlertActive) {
+                storageAlertActive = true;
+                window.ZSCore.showAlert(
+                    "Couldn't save changes — local storage may be full.",
+                    { title: "Storage full" }
+                ).finally(() => {
+                    storageAlertActive = false;
+                });
+            }
             return false;
         }
     }

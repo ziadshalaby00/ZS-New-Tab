@@ -37,30 +37,53 @@ window.registerModule("ZSApp", (function () {
 
     /**
      * Updates a specific setting in the state, saves it, and triggers a UI update.
+     * On save failure (quota), restores the previous value in both memory and
+     * (when provided) the source input, so the panel never shows a setting
+     * that isn't actually persisted.
+     *
+     * @param {string} field
+     * @param {*} value
+     * @param {boolean} [isName=false]
+     * @param {HTMLElement} [inputEl=null]  The input that triggered this change.
      */
-    function applySetting(field, value, isName = false) {
+    function applySetting(field, value, isName = false, inputEl = null) {
+        const previous = window.ZSApp.state.settings[field];
         window.ZSApp.state.settings[field] = value;
-        window.ZSApp.saveState();
+
+        if (!window.ZSApp.saveState()) {
+            // saveState() already showed its own "storage full" alert.
+            window.ZSApp.state.settings[field] = previous;
+            if (inputEl) inputEl.value = previous;
+            return;
+        }
+
         if (isName) window.ZSApp.renderName();
         else window.ZSApp.renderWithTransition({ type: 'layout' });
     }
 
-    document.getElementById("displayName").addEventListener("input", e => 
-        applySetting("name", e.target.value, true)
+    document.getElementById("displayName").addEventListener("input", e =>
+        applySetting("name", e.target.value, true, e.target)
     );
     document.getElementById("rowsInput").addEventListener("change", e => {
         const rows = ZSCore.clampGridDim(e.target.value, ZSCore.GRID_LIMITS.defaultRows);
         e.target.value = rows;
-        applySetting("rows", rows);
+        applySetting("rows", rows, false, e.target);
     });
     document.getElementById("colsInput").addEventListener("change", e => {
         const cols = ZSCore.clampGridDim(e.target.value, ZSCore.GRID_LIMITS.defaultCols);
         e.target.value = cols;
-        applySetting("cols", cols);
+        applySetting("cols", cols, false, e.target);
     });
+    // Engine change doesn't re-render the grid — it's just a stored URL.
+    // Handle it inline instead of through applySetting so we don't trigger
+    // a layout animation on every engine switch.
     document.getElementById("engineSelect").addEventListener("change", e => {
+        const previous = window.ZSApp.state.settings.engine;
         window.ZSApp.state.settings.engine = e.target.value;
-        window.ZSApp.saveState();
+        if (!window.ZSApp.saveState()) {
+            window.ZSApp.state.settings.engine = previous;
+            e.target.value = previous;
+        }
     });
     document.getElementById("customAccent").addEventListener("input", e => 
         window.ZSApp.setAccent(e.target.value)

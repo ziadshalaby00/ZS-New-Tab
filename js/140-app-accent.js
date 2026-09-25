@@ -47,8 +47,20 @@ window.registerModule("ZSApp", (function () {
      */
     function setAccent(hex) {
         if (!ZSCore.applyAccent(hex)) return;
+
+        const previous = window.ZSApp.state.settings.accent;
         window.ZSApp.state.settings.accent = hex;
-        window.ZSApp.saveState();
+
+        if (!window.ZSApp.saveState()) {
+            // saveState() already showed its own "storage full" alert.
+            // Undo the visual change too — otherwise the UI keeps showing
+            // an accent that will disappear on the next reload.
+            window.ZSApp.state.settings.accent = previous;
+            ZSCore.applyAccent(previous);
+            renderSwatches();
+            return;
+        }
+
         renderSwatches();
     }
 
