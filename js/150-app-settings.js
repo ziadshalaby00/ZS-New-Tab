@@ -17,6 +17,25 @@ window.registerModule("ZSApp", (function () {
     document.getElementById("panelClose").addEventListener("click", () => panel.classList.remove("open"));
 
     /**
+     * Push GRID_LIMITS into the rows/cols inputs so the HTML doesn't have to
+     * hardcode min/max. Keeps the JS constants as the single source of truth.
+     */
+    (function applyGridLimitsToInputs() {
+        const { min, max, defaultRows, defaultCols } = ZSCore.GRID_LIMITS;
+
+        const rowsInput = document.getElementById("rowsInput");
+        const colsInput = document.getElementById("colsInput");
+
+        rowsInput.min = min;
+        rowsInput.max = max;
+        rowsInput.placeholder = defaultRows;
+
+        colsInput.min = min;
+        colsInput.max = max;
+        colsInput.placeholder = defaultCols;
+    })();
+
+    /**
      * Updates a specific setting in the state, saves it, and triggers a UI update.
      */
     function applySetting(field, value, isName = false) {
@@ -30,12 +49,12 @@ window.registerModule("ZSApp", (function () {
         applySetting("name", e.target.value, true)
     );
     document.getElementById("rowsInput").addEventListener("change", e => {
-        const rows = Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 4));
+        const rows = ZSCore.clampGridDim(e.target.value, ZSCore.GRID_LIMITS.defaultRows);
         e.target.value = rows;
         applySetting("rows", rows);
     });
     document.getElementById("colsInput").addEventListener("change", e => {
-        const cols = Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 6));
+        const cols = ZSCore.clampGridDim(e.target.value, ZSCore.GRID_LIMITS.defaultCols);
         e.target.value = cols;
         applySetting("cols", cols);
     });

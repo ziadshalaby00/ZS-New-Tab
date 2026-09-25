@@ -68,8 +68,8 @@ window.registerModule("ZSApp", (function () {
             const parsed = JSON.parse(raw);
             parsed.settings = { ...ZSCore.defaultState.settings, ...(parsed.settings || {}) };
 
-            parsed.settings.rows = Math.max(1, Math.min(20, parseInt(parsed.settings.rows, 10) || 4));
-            parsed.settings.cols = Math.max(1, Math.min(20, parseInt(parsed.settings.cols, 10) || 6));
+            parsed.settings.rows = ZSCore.clampGridDim(parsed.settings.rows, ZSCore.GRID_LIMITS.defaultRows);
+            parsed.settings.cols = ZSCore.clampGridDim(parsed.settings.cols, ZSCore.GRID_LIMITS.defaultCols);
 
             if (typeof parsed.settings.name !== "string") {
                 parsed.settings.name = "";

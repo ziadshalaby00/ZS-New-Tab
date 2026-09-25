@@ -32,6 +32,8 @@
     --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
     --cols: 6;
+    --rows: 4;
+    
     --radius: 16px;
 
     --bg-fade-ms: 700ms;

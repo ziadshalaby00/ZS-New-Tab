@@ -14,7 +14,7 @@
 .grid {
     display: grid;
     grid-template-columns: repeat(var(--cols), 95px);
-    grid-auto-rows: 95px;
+    grid-template-rows: repeat(var(--rows), 95px);
     gap: 14px 10px;
     justify-content: center;
 }

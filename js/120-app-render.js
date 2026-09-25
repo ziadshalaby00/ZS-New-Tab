@@ -67,6 +67,8 @@ window.registerModule("ZSApp", (function () {
         const state = window.ZSApp.state;
         ZSCore.applyAccent(state.settings.accent);
         document.documentElement.style.setProperty("--cols", state.settings.cols);
+        document.documentElement.style.setProperty("--rows", state.settings.rows);
+
         renderName();
         renderEngineSelect(state.settings.engine);
 
@@ -83,7 +85,6 @@ window.registerModule("ZSApp", (function () {
 
         pageSites.forEach(site => grid.appendChild(buildTile(site)));
         if (pageSites.length < pageSize) grid.appendChild(ZSCore.buildAddTile(() => window.ZSApp.openModal(null)));
-        for (let i = pageSites.length + 1; i < pageSize; i++) grid.appendChild(ZSCore.buildEmptyTile());
 
         ZSCore.updatePaginationUI(total, window.ZSApp.currentPage, (idx) => {
             const dir = idx > window.ZSApp.currentPage ? 1 : -1;

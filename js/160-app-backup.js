@@ -188,9 +188,9 @@ window.registerModule("ZSApp", (function () {
             const { bg, ...settingsOnly } = parsed.settings;
 
             const importedSettings = {
-                name:   settingsOnly.name   ?? "",
-                rows:   Math.max(1, Math.min(20, parseInt(settingsOnly.rows, 10) || 4)),
-                cols:   Math.max(1, Math.min(20, parseInt(settingsOnly.cols, 10) || 6)),
+                name:   settingsOnly.name ?? "",
+                rows:   ZSCore.clampGridDim(settingsOnly.rows, ZSCore.GRID_LIMITS.defaultRows),
+                cols:   ZSCore.clampGridDim(settingsOnly.cols, ZSCore.GRID_LIMITS.defaultCols),
                 engine: settingsOnly.engine ?? "https://www.google.com/search?q=",
                 accent: /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(settingsOnly.accent || "")
                             ? settingsOnly.accent

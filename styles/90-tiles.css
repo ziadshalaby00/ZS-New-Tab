@@ -129,27 +129,9 @@
     pointer-events: none;
 }
 
-/* Dragging & Empty States */
+/* Dragging */
 .tile[draggable="true"].dragging {
     opacity: 0.35;
-}
-
-.tile.empty {
-    pointer-events: none;
-    cursor: default;
-    opacity: 0;
-}
-
-.tile.empty .icon {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    opacity: 0 !important;
-    transform: none !important;
-}
-
-.tile.empty .label {
-    opacity: 0;
 }
 
 /* Warning badge for invalid / disabled URLs */

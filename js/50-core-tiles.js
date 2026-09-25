@@ -2,29 +2,6 @@ window.registerModule('ZSCore', (function () {
     "use strict";
 
     /**
-     * Creates and returns an empty, non-interactive DOM element to represent an empty grid tile.
-     */
-    function buildEmptyTile() {
-        const tile = document.createElement("div");
-        tile.className = "tile empty";
-        tile.draggable = false;
-        tile.style.cssText = "cursor: default; pointer-events: none; opacity: 0;";
-        
-        const icon = document.createElement("div");
-        icon.className = "icon";
-        icon.style.cssText = "background: transparent !important; border: none !important; box-shadow: none !important; opacity: 0 !important; transform: none !important; pointer-events: none;";
-        
-        const label = document.createElement("div");
-        label.className = "label";
-        label.textContent = "";
-        label.style.opacity = "0";
-        
-        tile.appendChild(icon);
-        tile.appendChild(label);
-        return tile;
-    }
-
-    /**
      * Creates and returns a DOM element for an "Add site" tile with an attached click event listener.
      */
     function buildAddTile(onClickFn) {
@@ -59,7 +36,6 @@ window.registerModule('ZSCore', (function () {
     }
 
     return {
-        buildEmptyTile,
         buildAddTile
     }
 })());

@@ -6,7 +6,7 @@ window.registerModule("ZSApp", (function () {
 
     function focusTileAtEdge(fromEnd) {
         const grid = document.getElementById("grid");
-        const tiles = Array.from(grid.querySelectorAll(".tile:not(.empty)"));
+        const tiles = Array.from(grid.querySelectorAll(".tile"));
         if (!tiles.length) return;
         (fromEnd ? tiles[tiles.length - 1] : tiles[0]).focus();
     }
@@ -16,7 +16,7 @@ window.registerModule("ZSApp", (function () {
         grid.addEventListener("keydown", e => {
             if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) return;
 
-            const tiles = Array.from(grid.querySelectorAll(".tile:not(.empty)"));
+            const tiles = Array.from(grid.querySelectorAll(".tile"));
             const currentIndex = tiles.indexOf(document.activeElement);
             if (currentIndex === -1) return;
 

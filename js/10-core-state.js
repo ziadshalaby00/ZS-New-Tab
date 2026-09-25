@@ -2,6 +2,28 @@ window.registerModule('ZSCore', (function () {
     "use strict";
 
     /**
+     * Grid dimension limits and defaults.
+     * Single source of truth — used by loadState(), applyBackup(), and the
+     * rows/cols input handlers in 150-app-settings.js.
+     */
+    const GRID_LIMITS = {
+        min: 1,
+        max: 20,
+        defaultRows: 4,
+        defaultCols: 6,
+    };
+
+    /**
+     * Parses and clamps a grid dimension value.
+     * Returns `fallback` if the input can't be parsed as a number.
+     */
+    function clampGridDim(value, fallback) {
+        const n = parseInt(value, 10);
+        if (!Number.isFinite(n)) return fallback;
+        return Math.max(GRID_LIMITS.min, Math.min(GRID_LIMITS.max, n));
+    }
+
+    /**
      * Default state
      */
     const defaultState = {
@@ -144,6 +166,8 @@ window.registerModule('ZSCore', (function () {
     return {
         defaultState,
         THEMES,
-        SEARCH_ENGINES
+        SEARCH_ENGINES,
+        GRID_LIMITS,
+        clampGridDim,
     }
 })());
