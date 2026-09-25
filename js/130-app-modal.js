@@ -171,12 +171,9 @@ window.registerModule("ZSApp", (function () {
                 window.ZSApp.deleteSiteIcon(targetId);
             }
         } catch (err) {
-            // The icon write threw (quota). Nothing for the sites list has
-            // been persisted yet, so roll back everything and tell the user.
             rollback();
-            ZSCore.showAlert(
-                "Could not save site — local storage may be full.",
-                { title: "Save failed" }
+            window.ZSApp.notifyStorageFull(
+                "Could not save site — local storage may be full."
             );
             return;
         }

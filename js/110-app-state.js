@@ -90,18 +90,32 @@ window.registerModule("ZSApp", (function () {
     }
 
     /**
-     * True while a "storage full" alert is on screen. saveState() is called
-     * from `input` handlers (displayName, customAccent) that fire on every
-     * keystroke / drag tick, so without this guard a full localStorage
-     * stacks an identical alert per event.
-     *
-     * The flag is bound to the alert's lifetime, not to the next successful
-     * save: once the user dismisses the alert, the next failure is allowed
-     * to surface a new one. If we reset only on success, a user who missed
-     * or dismissed the first alert would get silent failures forever while
-     * the storage stays full.
+     * True while a "storage full" alert is on screen. See the module comment
+     * in saveState() below for why this exists.
      */
     let storageAlertActive = false;
+
+    /**
+     * Shows a "storage full" alert unless one is already on screen. Every
+     * quota-related failure — saveState, saveSite's icon write, applyBackup's
+     * import — funnels through here so the user never sees the same message
+     * stacked twice.
+     *
+     * Reset in the alert's .finally() so a fresh alert appears after the user
+     * dismisses the previous one, even if the storage stays full.
+     *
+     * @param {string} [message]  Defaults to the generic settings-save wording.
+     */
+    function notifyStorageFull(message) {
+        if (storageAlertActive) return;
+        storageAlertActive = true;
+        window.ZSCore.showAlert(
+            message || "Couldn't save changes — local storage may be full.",
+            { title: "Storage full" }
+        ).finally(() => {
+            storageAlertActive = false;
+        });
+    }
 
     function saveState() {
         try {
@@ -112,15 +126,7 @@ window.registerModule("ZSApp", (function () {
             return true;
         } catch (err) {
             console.error("saveState failed:", err);
-            if (!storageAlertActive) {
-                storageAlertActive = true;
-                window.ZSCore.showAlert(
-                    "Couldn't save changes — local storage may be full.",
-                    { title: "Storage full" }
-                ).finally(() => {
-                    storageAlertActive = false;
-                });
-            }
+            notifyStorageFull();
             return false;
         }
     }
@@ -174,6 +180,7 @@ window.registerModule("ZSApp", (function () {
         tempIconData: null,
         iconCache,
         loadState, 
+        notifyStorageFull,
         saveState, 
         getIconKey,
         saveSiteIcon, 

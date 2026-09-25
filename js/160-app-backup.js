@@ -169,22 +169,81 @@ window.registerModule("ZSApp", (function () {
 
     /**
      * Applies a parsed backup object to state (shared by device + drive import).
+     *
+     * Flow:
+     *   1. Validate the payload shape.  No mutation, no snapshot.
+     *   2. Confirm with the user.      No mutation, no snapshot.
+     *   3. Snapshot state + storage    Only now, because we're about to mutate.
+     *   4. Mutate.                     Wrapped in try/catch.
+     *   5. Roll back on any failure.   Restores state, localStorage, background.
      */
     async function applyBackup(parsed) {
+        // ── 1. Validate ──────────────────────────────────────────
+        // Nothing has been read or mutated yet, so there's nothing to roll
+        // back — the user just gets the alert and we return. No snapshot, no
+        // background read, no restore.
+        if (!parsed || !parsed.sites || !parsed.settings || !Array.isArray(parsed.sites)) {
+            ZSCore.showAlert(
+                "This file doesn't look like a valid backup, or it's too large.",
+                { title: "Import failed" }
+            );
+            return false;
+        }
+
+        // ── 2. Confirm ───────────────────────────────────────────
+        // Still no state touched. A cancel here also needs no rollback.
+        const confirmed = await ZSCore.showConfirm(
+            "Current data will be lost when you import this file.",
+            { title: "Import backup", confirmLabel: "Import", cancelLabel: "Cancel" }
+        );
+        if (!confirmed) return false;
+
+        // ── 3. Snapshot ──────────────────────────────────────────
+        // Only now — when we're actually about to mutate — is the snapshot
+        // work worth doing.
         const previousState = window.ZSApp.state;
         const previousBgBlob = await ZSDB.getBackground();
 
-        try {
-            if (!parsed || !parsed.sites || !parsed.settings || !Array.isArray(parsed.sites)) {
-                throw new Error("Invalid backup format");
+        // Snapshot every ZSNewTab.* key before clearLocalStorageData() wipes
+        // them. Without this, a failure later in the flow restores in-memory
+        // state and the background, but leaves the storage empty — so the next
+        // reload silently resets everything to the defaults, with no way for
+        // the user to recover (the alert they saw said "Import failed", not
+        // "your data is gone").
+        const storageSnapshot = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith("ZSNewTab.")) {
+                storageSnapshot[key] = localStorage.getItem(key);
             }
+        }
 
-            const confirmed = await ZSCore.showConfirm(
-                "Current data will be lost when you import this file.",
-                { title: "Import backup", confirmLabel: "Import", cancelLabel: "Cancel" }
-            );
-            if (!confirmed) return false;
+        const restoreLocalStorage = () => {
+            // The icon cache is a read-through cache, and saveSiteIcon() populated
+            // it for the icons that were written before the failure. Those entries
+            // now describe localStorage keys we're about to delete — clear the
+            // cache so the next loadSiteIcon() falls through to the restored keys
+            // instead of returning an imported icon for a site that was rolled back.
+            window.ZSApp.iconCache.clear();
 
+            // Drop every ZSNewTab.* key that exists now (a partial import may
+            // have written some before failing), then write the snapshot back.
+            // Removing all of them first guarantees we have at least as much
+            // room as the snapshot needed when it was captured, so the restore
+            // itself can't hit the quota.
+            const toRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith("ZSNewTab.")) toRemove.push(key);
+            }
+            toRemove.forEach(k => localStorage.removeItem(k));
+            for (const [k, v] of Object.entries(storageSnapshot)) {
+                localStorage.setItem(k, v);
+            }
+        };
+
+        // ── 4. Mutate ────────────────────────────────────────────
+        try {
             const { bg, ...settingsOnly } = parsed.settings;
 
             const importedSettings = {
@@ -216,32 +275,57 @@ window.registerModule("ZSApp", (function () {
                 }
             }
 
-            window.ZSApp.saveState();
+            // saveState() returns false (doesn't throw) on quota. Throw a
+            // sentinel so the catch block can tell this apart from the
+            // validation errors that still need their own alert.
+            if (!window.ZSApp.saveState()) {
+                throw new Error("STORAGE_FULL");
+            }
+
             window.ZSApp.currentPage = 0;
             window.ZSApp.renderWithTransition({ type: "fade" });
             window.ZSApp.panel.classList.remove("open");
 
             return true;
+
+        // ── 5. Roll back ─────────────────────────────────────────
+        // The catch is now only reachable from actual mutations — no "did we
+        // touch anything?" ambiguity.
         } catch (err) {
             console.error("Import failed", err);
             window.ZSApp.state = previousState;
+
+            // Restore localStorage first — before the background rollback —
+            // so a slow or failing IndexedDB write can't leave the user with
+            // the previous background but no sites/settings.
+            try {
+                restoreLocalStorage();
+            } catch (e) {
+                console.error("Failed to restore localStorage during import rollback", e);
+            }
 
             try {
                 if (previousBgBlob) await ZSDB.setBackground(previousBgBlob);
                 else await ZSDB.removeBackground();
             } catch (_) {}
 
-            ZSCore.showAlert(
-                "This file doesn't look like a valid backup, or it's too large.",
-                { title: "Import failed" }
-            );
+            // Route the alert based on failure kind:
+            //   - Quota (thrown by saveSiteIcon, or our STORAGE_FULL sentinel):
+            //     notifyStorageFull() — suppressed by the flag if saveState()
+            //     already showed an alert, so the user sees exactly one.
+            //   - Anything else (IndexedDB, dataURLToBlob, etc.): the usual
+            //     "invalid backup" wording.
+            if (err.name === "QuotaExceededError" || err.message === "STORAGE_FULL") {
+                window.ZSApp.notifyStorageFull(
+                    "Import failed — local storage is full."
+                );
+            } else {
+                ZSCore.showAlert(
+                    "This file doesn't look like a valid backup, or it's too large.",
+                    { title: "Import failed" }
+                );
+            }
 
-            // NOTE: we deliberately do NOT re-throw here.
-            // Callers already have a user-visible error message (the alert
-            // above). Re-throwing made importFromDrive() catch it and show
-            // a SECOND alert on top of the first — see issue #2.
-            // Every failure path now returns false; every cancel also
-            // returns false; callers only need to check `if (!applied)`.
             return false;
         }
     }
