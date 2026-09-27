@@ -2,11 +2,6 @@
 
 A minimal, fast, and offline-first New Tab replacement for Chromium-based browsers and Firefox. Enjoy a clean and customizable bookmark dashboard with quick search, drag-and-drop organization, customizable grids and layouts, custom backgrounds, themes, and a settings panel. Built with privacy in mind — your data stays in your browser by default, with an optional one-click backup to your own Google Drive.
 
-![Version](https://img.shields.io/github/v/release/ziadshalaby00/ZS-New-Tab)
-![Stars](https://img.shields.io/github/stars/ziadshalaby00/ZS-New-Tab)
-![Issues](https://img.shields.io/github/issues/ziadshalaby00/ZS-New-Tab)
-[![Firefox Add-ons](https://img.shields.io/badge/Firefox-Available-FF7139?logo=firefox&logoColor=white)](https://addons.mozilla.org/firefox/addon/zs-new-tab/)
-
 <p align="center">
   <img src="./images/s1.png" width="32%">
   <img src="./images/s2.png" width="32%">
