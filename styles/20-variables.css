@@ -13,9 +13,13 @@
     --text: #e7eaf0;
     --text-dim: #8892a0;
 
-    /* Accent & Brand Colors */
-    --accent: #e8a33d;
-    --accent-rgb: 232, 163, 61;               /* R, G, B */
+    /* Accent & Brand Colors
+       --accent-rgb MUST match DEFAULT_ACCENT in js/10-core-state.js.
+       This is the CSS-side fallback for the cold-start case (before
+       script.preload.js runs). It cannot reference the JS constant,
+       so keep them in sync by hand. */
+    --accent-rgb: 232, 163, 61;
+    --accent: rgb(var(--accent-rgb));
     --accent-dim: rgba(var(--accent-rgb), 0.33);
     --accent-soft: rgba(var(--accent-rgb), 0.10);
     --accent-glow: rgba(var(--accent-rgb), 0.50);

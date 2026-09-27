@@ -2,6 +2,17 @@ window.registerModule('ZSCore', (function () {
     "use strict";
 
     /**
+     * Default accent color. Single source of truth — used by defaultState
+     * and the "Sunset" theme entry.
+     *
+     * styles/20-variables.css has a matching fallback for the cold-start
+     * case (before any JS runs) that CANNOT reference this constant —
+     * keep them in sync manually. If you change this, also change
+     * `--accent-rgb` in that file.
+     */
+    const DEFAULT_ACCENT = "#e8a33d";
+
+    /**
      * Grid dimension limits and defaults.
      * Single source of truth — used by loadState(), applyBackup(), and the
      * rows/cols input handlers in 150-app-settings.js.
@@ -32,7 +43,7 @@ window.registerModule('ZSCore', (function () {
             rows: 4,
             cols: 6,
             engine: "https://www.google.com/search?q=",
-            accent: "#e8a33d",
+            accent: DEFAULT_ACCENT,
         },
         sites: [
             { id: "1", name: "Google", url: "https://google.com" },
@@ -67,25 +78,43 @@ window.registerModule('ZSCore', (function () {
     /**
      * Preset accent colors shown in the settings panel.
      */
-    const THEMES = [
-        { name: "Amber",  accent: "#E8A33D" },
-        { name: "Orange", accent: "#E58A4E" },
-        { name: "Coral",  accent: "#E4776A" },
-        { name: "Rose",   accent: "#D96B91" },
-        { name: "Pink",   accent: "#D477B5" },
-        { name: "Violet", accent: "#B47BD6" },
-        { name: "Indigo", accent: "#7E86D8" },
-        { name: "Blue",   accent: "#6F9FE3" },
-        { name: "Azure",  accent: "#5FBAE8" },
-        { name: "Cyan",   accent: "#5CCBCB" },
-        { name: "Teal",   accent: "#55BFA8" },
-        { name: "Mint",   accent: "#72C69A" },
-        { name: "Green",  accent: "#79B86B" },
-        { name: "Lime",   accent: "#A8C45A" },
-        { name: "Olive",  accent: "#B0A84F" },
-        { name: "Slate",  accent: "#8995A5" },
-        { name: "Silver", accent: "#A8ADB7" },
-        { name: "Graphite", accent: "#727A86" },
+        const THEMES = [
+        { name: "Red",      accent: "#e5484d" },
+        { name: "Tomato",   accent: "#e54d2e" },
+        { name: "Orange",   accent: "#f76b15" },
+        { name: "Amber",    accent: "#ffc53d" },
+        { name: "Yellow",   accent: "#ffe629" },
+        { name: "Lime",     accent: "#bde56c" },
+        { name: "Grass",    accent: "#46a758" },
+        { name: "Green",    accent: "#30a46c" },
+        { name: "Jade",     accent: "#29a383" },
+        { name: "Teal",     accent: "#12a594" },
+        { name: "Cyan",     accent: "#00a2c7" },
+        { name: "Sky",      accent: "#7ce2fe" },
+        { name: "Blue",     accent: "#0090ff" },
+        { name: "Indigo",   accent: "#3e63dd" },
+        { name: "Iris",     accent: "#5b5bd6" },
+        { name: "Violet",   accent: "#6e56cf" },
+        { name: "Purple",   accent: "#8e4ec6" },
+        { name: "Plum",     accent: "#ab4aba" },
+        { name: "Pink",     accent: "#d6409f" },
+        { name: "Crimson",  accent: "#e93d82" },
+        { name: "Ruby",     accent: "#e54666" },
+        { name: "Mint",     accent: "#86ead4" },
+        { name: "Brown",    accent: "#ad7f58" },
+        { name: "Gold",     accent: "#978365" },
+        { name: "Sunset",   accent: DEFAULT_ACCENT },
+        { name: "Mauve",    accent: "#8e8c99" },
+        { name: "Slate",    accent: "#8b8d98" },
+        { name: "Charcoal", accent: "#646464" },
+        { name: "Graphite", accent: "#838383" },
+        { name: "Pewter",   accent: "#8d8d8d" },
+        { name: "Ash",      accent: "#bbbbbb" },
+        { name: "Steel",    accent: "#cecece" },
+        { name: "Silver",   accent: "#d9d9d9" },
+        { name: "Smoke",    accent: "#e0e0e0" },
+        { name: "Pearl",    accent: "#e8e8e8" },
+        { name: "Snow",     accent: "#f0f0f0" },
     ];
 
     /**
@@ -169,5 +198,6 @@ window.registerModule('ZSCore', (function () {
         SEARCH_ENGINES,
         GRID_LIMITS,
         clampGridDim,
+        DEFAULT_ACCENT
     }
 })());
