@@ -64,8 +64,48 @@ window.registerModule("ZSApp", (function () {
         renderSwatches();
     }
 
+    // ---- Collapsible accent section ----
+    const accentSection = document.getElementById("accentSection");
+    const accentToggle  = document.getElementById("accentToggle");
+    const accentBody    = document.getElementById("accentBody");
+
+    const COLLAPSED_HEIGHT_PX = 34;   // one swatch row
+
+    function expandAccentSection() {
+        if (!accentSection || !accentToggle || !accentBody) return;
+
+        // Measure the natural content height and animate to EXACTLY that.
+        // (scrollHeight returns the full content height even while the
+        //  element is clipped, so this works from the collapsed state.)
+        const fullHeight = accentBody.scrollHeight;
+        accentBody.style.setProperty("--accent-body-h", fullHeight + "px");
+
+        accentSection.classList.add("expanded");
+        accentToggle.setAttribute("aria-expanded", "true");
+    }
+
+    function collapseAccentSection() {
+        if (!accentSection || !accentToggle || !accentBody) return;
+
+        accentBody.style.setProperty("--accent-body-h", COLLAPSED_HEIGHT_PX + "px");
+        accentSection.classList.remove("expanded");
+        accentToggle.setAttribute("aria-expanded", "false");
+    }
+
+    if (accentToggle && accentSection) {
+        accentToggle.addEventListener("click", () => {
+            if (accentSection.classList.contains("expanded")) {
+                collapseAccentSection();
+            } else {
+                expandAccentSection();
+            }
+        });
+    }
+
     return {
-        renderSwatches, 
-        setAccent 
+        renderSwatches,
+        setAccent,
+        expandAccentSection,
+        collapseAccentSection
     };
 })());

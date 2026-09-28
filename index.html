@@ -125,15 +125,25 @@
             </div>
         </div>
 
-        <!-- Accent color palette -->
-        <div class="field">
-            <label>Accent color</label>
-            <div class="swatches" id="swatches"></div>
-        </div>
+        <!-- Accent color palette (collapsible) -->
+        <div class="accent-section" id="accentSection">
+            <button type="button" class="accent-toggle" id="accentToggle"
+                    aria-expanded="false" aria-controls="accentBody">
+                <span>Accent color</span>
+                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </button>
 
-        <div class="field">
-            <label for="customAccent">Custom color</label>
-            <input type="color" id="customAccent">
+            <div class="accent-body" id="accentBody">
+                <div class="swatches" id="swatches"></div>
+
+                <div class="custom-accent">
+                    <label for="customAccent">Custom color</label>
+                    <input type="color" id="customAccent">
+                </div>
+            </div>
         </div>
 
         <!-- Background Image Upload -->

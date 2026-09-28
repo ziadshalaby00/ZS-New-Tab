@@ -6,6 +6,16 @@ window.registerModule("ZSApp", (function () {
 
     const panel = document.getElementById("panel");
 
+    // When the panel finishes sliding out, silently reset the accent
+    // section. Doing it on the next OPEN would collapse it in front of
+    // the user; doing it here means they always open the panel to find
+    // it already collapsed, with no visible movement.
+    panel.addEventListener("transitionend", (e) => {
+        if (e.target !== panel || e.propertyName !== "transform") return;
+        if (panel.classList.contains("open")) return;
+        window.ZSApp.collapseAccentSection?.();
+    });
+
     function openSettingsPanel() {
         document.getElementById("displayName").value = window.ZSApp.state.settings.name;
         document.getElementById("rowsInput").value = window.ZSApp.state.settings.rows;
