@@ -8,15 +8,17 @@ A minimal, fast, and offline-first New Tab replacement for Chromium-based browse
 [![Firefox Add-ons](https://img.shields.io/badge/Firefox-Available-FF7139?logo=firefox&logoColor=white)](https://addons.mozilla.org/firefox/addon/zs-new-tab/)
 
 <p align="center">
-  <img src="./images/s1.png" width="24%">
-  <img src="./images/s2.png" width="24%">
-  <img src="./images/s3.png" width="24%">
-  <img src="./images/s4.png" width="24%">
+  <img src="./images/s1.png" width="18%">
+  <img src="./images/s2.png" width="18%">
+  <img src="./images/s3.png" width="18%">
+  <img src="./images/s4.png" width="18%">
+  <img src="./images/s5.png" width="18%">
 </p>
 
 ## Features
 
 - **Bookmark grid** — add, edit, delete, and reorder sites with drag & drop
+- **Bookmark search** — live filtering across all bookmarks by name and hostname, with Arabic-aware normalization. `Ctrl`+`F` opens a command-palette-style modal; the main grid never changes.
 - **Custom icons** — auto-fetched favicons, optional per-site upload, colored-letter fallback
 - **Quick search** — ~50 switchable engines across 10 groups (General, AI, Google Tools, Developer, Reference, Quran & Islamic, Media, Social, Shopping); typing a URL, IP, or bare domain (e.g. `github.com`) navigates directly
 - **Pagination** — dot navigation, arrow buttons, mouse-wheel scrolling, and drag-to-edge paging (hold a dragged tile near the left/right edge to flip pages)
@@ -34,6 +36,7 @@ A minimal, fast, and offline-first New Tab replacement for Chromium-based browse
 
 | Input | Action |
 |---|---|
+| `Ctrl`+`F` / `Cmd`+`F` | Search within bookmarks |
 | `/` | Focus search |
 | `Ctrl`+`S` / `Cmd`+`S` | Toggle settings panel |
 | `Esc` | Close any open panel / modal / dialog |

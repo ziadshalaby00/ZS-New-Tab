@@ -31,6 +31,7 @@
     <link rel="stylesheet" href="./styles/130-background.css">
     <link rel="stylesheet" href="./styles/140-palette.css">
     <link rel="stylesheet" href="./styles/145-gradient.css">
+    <link rel="stylesheet" href="./styles/148-bookmark-search.css">
     <link rel="stylesheet" href="./styles/150-responsive.css">
 
     
@@ -40,6 +41,13 @@
          1. TOP BAR (SETTINGS & CONTROLS)
          ============================================ -->
     <div class="top-bar">
+        <button class="icon-btn" id="bookmarkSearchToggle" title="Search bookmarks (Ctrl+F)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="11" cy="11" r="7"/>
+                <path d="m21 21-4.3-4.3"/>
+            </svg>
+        </button>
+
         <button class="icon-btn" id="settingsToggle" title="Settings">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <circle cx="12" cy="12" r="3"/>
@@ -342,6 +350,31 @@
         </div>
     </div>
 
+    <!-- ============================================
+        6b. BOOKMARK SEARCH MODAL
+        ============================================ -->
+    <div class="overlay overlay-search" id="bookmarkSearchOverlay">
+        <div class="modal modal-search">
+            <div class="bookmark-search-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="7"/>
+                    <path d="m21 21-4.3-4.3"/>
+                </svg>
+                <input type="text" id="bookmarkSearchInput"
+                    placeholder="Search bookmarks…" autocomplete="off" spellcheck="false">
+                <span class="bookmark-search-count" id="bookmarkSearchCount" aria-live="polite"></span>
+            </div>
+
+            <div class="bookmark-search-results" id="bookmarkSearchResults"></div>
+
+            <div class="bookmark-search-footer">
+                <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+                <span><kbd>Enter</kbd> open</span>
+                <span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> new tab</span>
+            </div>
+        </div>
+    </div>
 
     <!-- ============================================
         7. GRADIENT BACKGROUND MODAL
@@ -407,6 +440,7 @@
     <script src="./js/166-app-progress.js"></script>
     
     <script src="./js/167-app-gradient.js"></script> 
+    <script src="./js/168-app-bookmark-search.js"></script>
     <script src="./js/170-app-navigation.js"></script>
     <script src="./js/180-app-init.js"></script>
 </body>

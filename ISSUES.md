@@ -23,6 +23,7 @@ Open a [GitHub Issue](https://github.com/ziadshalaby00/ZS-New-Tab/issues) with:
   hand-edited JSON triggers an "invalid backup" alert.
 - [ ] The dev server preview does **not** emulate `chrome.*` APIs — test
   extension behavior by loading `dist/` as an unpacked extension.
+- [ ] Bookmark search matches against the site **name** and **hostname** only — not the full URL path or query string. A site saved as `https://github.com/user/repo` will match queries like `github` but not `repo`.
 
 ### Google Drive sync
 
