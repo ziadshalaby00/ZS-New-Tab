@@ -52,6 +52,7 @@ window.registerModule('ZSCore', (function () {
 | `ZSDrive` | Google Drive auth + sync (optional) | `105-*`, `107-*` |
 | `ZSApp`  | State + controllers | `110-*` … `180-*` |
 | `ZSProgress` | Progress bar UI for long-running operations | `166-app-progress.js` |
+| `ZSCore.modal` | Shared modal stack (open/close/Escape) | `35-core-modal.js` |
 
 Never redefine an existing function — extend it.
 

@@ -8,9 +8,10 @@ A minimal, fast, and offline-first New Tab replacement for Chromium-based browse
 [![Firefox Add-ons](https://img.shields.io/badge/Firefox-Available-FF7139?logo=firefox&logoColor=white)](https://addons.mozilla.org/firefox/addon/zs-new-tab/)
 
 <p align="center">
-  <img src="./images/s1.png" width="32%">
-  <img src="./images/s2.png" width="32%">
-  <img src="./images/s3.png" width="32%">
+  <img src="./images/s1.png" width="24%">
+  <img src="./images/s2.png" width="24%">
+  <img src="./images/s3.png" width="24%">
+  <img src="./images/s4.png" width="24%">
 </p>
 
 ## Features
@@ -19,9 +20,10 @@ A minimal, fast, and offline-first New Tab replacement for Chromium-based browse
 - **Custom icons** — auto-fetched favicons, optional per-site upload, colored-letter fallback
 - **Quick search** — ~50 switchable engines across 10 groups (General, AI, Google Tools, Developer, Reference, Quran & Islamic, Media, Social, Shopping); typing a URL, IP, or bare domain (e.g. `github.com`) navigates directly
 - **Pagination** — dot navigation, arrow buttons, mouse-wheel scrolling, and drag-to-edge paging (hold a dragged tile near the left/right edge to flip pages)
-- **Accent colors** — 18 presets + custom color picker; the whole UI re-themes instantly
-- **Settings panel** — display name, grid rows/columns, background image, accent color
+- **Accent colors** — 27 presets across warm/cool/neutral families + custom color picker; the whole UI re-themes instantly
+- **Settings panel** — display name, grid rows/columns, background image, gradient background, accent color
 - **Custom background** — upload any image, with a smooth crossfade on change
+- **Gradient backgrounds** — 16 preset gradients with live preview; picker opens in its own modal
 - **Smart compression** — icons (96×96 WebP) and backgrounds (1920×1080) are downscaled before saving
 - **Local backup & restore** — export/import your full setup (sites, settings, icons, background) as `.json`
 - **Optional cloud backup** — one-click sync of your backup to your own Google Drive
@@ -82,14 +84,14 @@ The background has its own module (`js/100-db.js`) with a **snapshot-and-rollbac
 
 ## Supported browsers
 
-**Chromium-based** (Manifest V3, minimum Chrome 88):
+**Chromium-based** (Manifest V3, minimum Chrome 102 — required for `inert`):
 - Chrome
 - Edge
 - Brave
 - Opera
 - Vivaldi
 
-**Firefox** (Manifest V3, minimum Firefox 109):
+**Firefox** (Manifest V3, minimum Firefox 112 — required for `inert`):
 - Tested on Firefox Developer Edition
 - **Published on Firefox Add-ons:** [ZS New Tab](https://addons.mozilla.org/firefox/addon/zs-new-tab/)
 - ⚠️ **Google Drive sync on Firefox** requires the redirect URI to be registered in Google Cloud Console. It works on signed builds and official releases, but **not** on temporary extensions loaded via `about:debugging`.
@@ -233,6 +235,8 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 | Resize limits | `resizeImage()` in `js/30-core-utils.js` |
 | Background fade duration | `--bg-fade-ms` in `styles/20-variables.css` |
 | Google OAuth client ID | `js/105-app-drive-auth.js` **and** `manifest.json` → `oauth2.client_id` |
+| Gradient presets | `GRADIENTS` in `js/10-core-state.js` |
+| Default gradient | `DEFAULT_GRADIENT` in `js/10-core-state.js` (must match `--bg-gradient` in `styles/20-variables.css`) |
 
 After editing anything in `js/` or `styles/`, run `node build.js` (or leave the dev server running) to regenerate `dist/`.
 
@@ -261,7 +265,7 @@ Everything lives in your browser. By default, ZS New Tab makes **no network requ
 
 Two complementary ways to back up your setup:
 
-- **Local export** — "Export backup (.json)" downloads a single file to your device. "Import backup" restores it. The importer is strict (only accepts files exported by this extension), sanitizes invalid fields, and snapshots current state + background before running — rolling back automatically if anything fails.
+- **Local export** — "Export backup (.json)" downloads a single file to your device. "Import backup" restores it. The importer is strict (only accepts files exported by this extension), sanitizes invalid fields, and snapshots current state + background + gradient before running — rolling back automatically if anything fails.
 - **Google Drive** — the same content, uploaded to your Drive. Requires a one-time Google sign-in. See [Google Drive Backup](#google-drive-backup-optional) above.
 
 Both options are offered side-by-side in a modal when you click **Export** or **Import** — pick Device, Drive, or Both.

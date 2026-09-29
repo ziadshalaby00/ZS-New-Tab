@@ -57,6 +57,10 @@ Open a [GitHub Issue](https://github.com/ziadshalaby00/ZS-New-Tab/issues) with:
   settings panel. The auth token is cached in memory only and is
   discarded when the tab is closed; a `ZSDrive.signOut()` helper exists
   in code but is not yet wired to the UI.
+- [ ] **`inert` requires Chrome 102+ / Firefox 112+.** On older
+  browsers, the background behind an open modal is not marked inert,
+  so Tab can still reach it. All current targets meet the requirement;
+  this note is here for when the minimums are revisited.
 
 ## Build & tooling issues
 
