@@ -47,35 +47,38 @@ window.registerModule('ZSCore', (function () {
     function setupKeyboardShortcuts(searchInputId, onEscapeFn, onToggleSettingsFn) {
         document.addEventListener("keydown", (e) => {
             const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(
-                document.activeElement.tagName
+                document.activeElement?.tagName
             );
             const isModalOpen = window.ZSCore.modal.isAnyOpen();
 
-            if (e.key === "/" && !isTyping) {
+            // e.key   = the character the current layout produces ("س" on Arabic).
+            // e.code  = the physical key position ("KeyS"), layout-independent.
+            // We fall back to e.code only when e.key isn't a Latin letter, so
+            // Arabic/Cyrillic layouts work without hijacking shortcuts on
+            // Dvorak/AZERTY, where the physical key maps to a different letter.
+            const key = (e.key || "").toLowerCase();
+            const isLatin = /^[a-z]$/.test(key);
+            const isSKey = key === "s" || (!isLatin && e.code === "KeyS");
+
+            const hasMod = e.ctrlKey || e.metaKey || e.altKey;
+            const isSlashKey = !hasMod &&
+                (e.key === "/" || (e.code === "Slash" && !e.shiftKey));
+
+            if (isSlashKey && !isTyping) {
                 e.preventDefault();
                 document.getElementById(searchInputId)?.focus();
             }
 
-            // Ctrl+S / Cmd+S → toggle settings panel.
-            // Deliberately NOT gated on isTyping so it works even while the
-            // user is focused in the search box. The browser's default Save Page
-            // dialog is always blocked, even while a modal is open, so it never
-            // pops up on top of our own UI.
-            const isCmdOrCtrl = e.ctrlKey || e.metaKey;
-            if (
-                isCmdOrCtrl &&
-                !e.shiftKey &&
-                !e.altKey &&
-                e.key.toLowerCase() === "s"
-            ) {
+            // Ctrl+S / Cmd+S → toggle settings panel. Not gated on isTyping.
+            // The browser's Save Page dialog is always blocked, even while a
+            // modal is open, so it never pops up on top of our own UI.
+            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && isSKey) {
                 e.preventDefault();
                 if (!isModalOpen && onToggleSettingsFn) onToggleSettingsFn();
             }
 
-            if (e.key === "Escape" && onEscapeFn) {
-                if (!window.ZSCore.modal.isAnyOpen()) {
-                    onEscapeFn();
-                }
+            if (e.key === "Escape" && onEscapeFn && !isModalOpen) {
+                onEscapeFn();
             }
         });
     }
