@@ -42,8 +42,28 @@ window.registerModule('ZSCore', (function () {
         return true;
     }
 
+    /**
+     * Applies a gradient preset to the page background by setting
+     * --bg-gradient on the root. Passing null (or an unknown id) reverts
+     * to DEFAULT_GRADIENT.
+     *
+     * Reads GRADIENTS/DEFAULT_GRADIENT off window.ZSCore at call time, not
+     * load time — 20-core-theme.js is loaded before 10-core-state.js in
+     * index.html, and this keeps that ordering irrelevant.
+     *
+     * @param {string|null} id  Preset id, or null to reset.
+     */
+    function applyGradient(id) {
+        const preset = id
+            ? (window.ZSCore.GRADIENTS || []).find(g => g.id === id)
+            : null;
+        const value = preset ? preset.value : window.ZSCore.DEFAULT_GRADIENT;
+        document.documentElement.style.setProperty("--bg-gradient", value);
+    }
+
     return {
         hexToRgb,
-        applyAccent
+        applyAccent,
+        applyGradient
     }
 })());

@@ -66,6 +66,7 @@ window.registerModule("ZSApp", (function () {
     function render() {
         const state = window.ZSApp.state;
         ZSCore.applyAccent(state.settings.accent);
+        ZSCore.applyGradient(state.settings.gradient);
         document.documentElement.style.setProperty("--cols", state.settings.cols);
         document.documentElement.style.setProperty("--rows", state.settings.rows);
 

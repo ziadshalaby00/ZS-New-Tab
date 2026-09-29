@@ -44,6 +44,7 @@ window.registerModule('ZSCore', (function () {
             cols: 6,
             engine: "https://www.google.com/search?q=",
             accent: DEFAULT_ACCENT,
+            gradient: null,
         },
         sites: [
             { id: "1", name: "Google", url: "https://google.com" },
@@ -109,6 +110,63 @@ window.registerModule('ZSCore', (function () {
         { name: "Slate",     accent: "#8b8d98" },
         { name: "Snow",      accent: "#f0f0f0" },
     ];
+
+    /**
+     * Every preset must end with a solid color layer. The browser paints the
+     * first frame from the root's background-COLOR only (gradients are images
+     * and don't count), so a bare linear-gradient leaves the root transparent
+     * and the default canvas color flashes before the gradient appears.
+     *
+     * If a preset already ends with ", #hex" we leave it alone; otherwise we
+     * append its first color stop as the base.
+     */
+    function withBaseColor(value) {
+        if (/,\s*#[0-9a-f]{3,8}\s*$/i.test(value)) return value;
+        const first = value.match(/#[0-9a-f]{3,8}/i);
+        return first ? `${value}, ${first[0]}` : value;
+    }
+
+    /**
+     * Page background gradient presets. The selected preset is stored as
+     * an id in settings.gradient; null means "use the CSS default".
+     *
+     * All values are intentionally medium-to-dark so hero/greeting text
+     * stays readable over them without an extra overlay. When a background
+     * image is set, it sits above this layer (body::before/::after) and the
+     * gradient is hidden behind it.
+     */
+    const GRADIENTS = [
+        { id: "midnight", name: "Midnight", value: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)" },
+        { id: "ocean",    name: "Ocean",    value: "linear-gradient(160deg, #0a2540 0%, #0d4d7a 100%)" },
+        { id: "aurora",   name: "Aurora",   value: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)" },
+        { id: "lagoon",   name: "Lagoon",   value: "radial-gradient(ellipse at bottom, #0f5a5a 0%, #071a1f 65%), #071a1f" },
+
+        { id: "forest",   name: "Forest",   value: "linear-gradient(135deg, #0f2a1a 0%, #1f5a34 100%)" },
+        { id: "moss",     name: "Moss",     value: "linear-gradient(200deg, #1c2a12 0%, #3f5a1f 100%)" },
+        { id: "gold",     name: "Gold",     value: "linear-gradient(135deg, #2e2208 0%, #6b4e12 100%)" },
+        { id: "ember",    name: "Ember",    value: "linear-gradient(160deg, #2a0f08 0%, #8a3210 100%)" },
+
+        { id: "crimson",  name: "Crimson",  value: "linear-gradient(135deg, #3d0a1c 0%, #7a1030 100%)" },
+        { id: "sunset",   name: "Sunset",   value: "linear-gradient(135deg, #2d1b3d 0%, #6b2447 55%, #a3452f 100%)" },
+        { id: "orchid",   name: "Orchid",   value: "linear-gradient(135deg, #3a1230 0%, #7a2a5c 100%)" },
+        { id: "nebula",   name: "Nebula",   value: "radial-gradient(ellipse at top, #3a2270 0%, #0f0819 65%), #0f0819" },
+
+        { id: "indigo",   name: "Indigo",   value: "linear-gradient(160deg, #1b1f4b 0%, #33308a 100%)" },
+        { id: "steel",    name: "Steel",    value: "linear-gradient(135deg, #1e2530 0%, #3b4a5c 100%)" },
+        { id: "cosmos",   name: "Cosmos",   value: "radial-gradient(circle at 20% 20%, #1e2a5a 0%, transparent 50%), radial-gradient(circle at 80% 80%, #4a1f5a 0%, transparent 50%), #0b0d1a" },
+        { id: "northern", name: "Northern", value: "radial-gradient(circle at 15% 25%, #0f6b5a 0%, transparent 45%), radial-gradient(circle at 85% 75%, #5a2a8a 0%, transparent 45%), #08111a" },
+    ].map(g => ({
+        ...g,
+        value: withBaseColor(g.value),
+    }));
+
+    /**
+     * Fallback gradient when settings.gradient is null or invalid.
+     * MUST match --bg-gradient in styles/20-variables.css — that CSS value
+     * is the cold-start fallback before any JS runs.
+     */
+    const DEFAULT_GRADIENT =
+        "radial-gradient(1200px 600px at 50% -10%, #1c2430 0%, transparent 60%), #10141a";
 
     /**
      * Search engines shown in the search bar dropdown.
@@ -188,6 +246,8 @@ window.registerModule('ZSCore', (function () {
     return {
         defaultState,
         THEMES,
+        GRADIENTS,
+        DEFAULT_GRADIENT,
         SEARCH_ENGINES,
         GRID_LIMITS,
         clampGridDim,

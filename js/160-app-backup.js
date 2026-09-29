@@ -254,6 +254,9 @@ window.registerModule("ZSApp", (function () {
                 accent: /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(settingsOnly.accent || "")
                             ? settingsOnly.accent
                             : ZSCore.defaultState.settings.accent,
+                gradient: ZSCore.GRADIENTS.some(g => g.id === settingsOnly.gradient)
+                            ? settingsOnly.gradient
+                            : null,
             };
 
             const importedSites = parsed.sites.map(site => ({

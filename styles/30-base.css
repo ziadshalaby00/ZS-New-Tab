@@ -10,9 +10,7 @@ html, body {
     height: 100%;
     font-family: var(--font-ui);
     color: var(--text);
-    background: 
-        radial-gradient(1200px 600px at 50% -10%, #1c2430 0%, transparent 60%), 
-        var(--bg-0);
+    background: var(--bg-gradient);
     background-attachment: fixed;
     overflow: auto;
     -webkit-font-smoothing: antialiased;

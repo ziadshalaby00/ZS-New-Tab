@@ -26,6 +26,10 @@ window.registerModule("ZSApp", (function () {
     document.getElementById("settingsToggle").addEventListener("click", openSettingsPanel);
     document.getElementById("panelClose").addEventListener("click", () => panel.classList.remove("open"));
 
+    document.getElementById("gradientBtn").addEventListener("click", () => {
+        window.ZSApp.openGradientModal();
+    });
+
     /**
      * Push GRID_LIMITS into the rows/cols inputs so the HTML doesn't have to
      * hardcode min/max. Keeps the JS constants as the single source of truth.

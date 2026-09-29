@@ -82,6 +82,17 @@ window.registerModule("ZSApp", (function () {
                 parsed.settings.accent = ZSCore.defaultState.settings.accent;
             }
 
+            // Gradient must be null or a known preset id. An unknown id
+            // (e.g. an old backup that references a preset we removed)
+            // silently falls back to the default rather than blanking the
+            // page background.
+            if (parsed.settings.gradient != null) {
+                const validGradient =
+                    typeof parsed.settings.gradient === "string" &&
+                    ZSCore.GRADIENTS.some(g => g.id === parsed.settings.gradient);
+                if (!validGradient) parsed.settings.gradient = null;
+            }
+
             parsed.sites = sanitizeSites(parsed.sites);
             return parsed;
         } catch (_) {

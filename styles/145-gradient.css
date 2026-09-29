@@ -1,0 +1,130 @@
+/* ============================================
+   GRADIENT BACKGROUND PICKER
+   ============================================ */
+
+/* Wider modal so a 4×4 grid of swatches has room to breathe */
+.modal.modal-wide {
+    width: 400px;
+    max-width: 92vw;
+}
+
+/* "Image is covering the gradient" notice */
+.gradient-notice {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 11px;
+    border-radius: 9px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    line-height: 1.4;
+}
+
+.gradient-notice[hidden] {
+    display: none;
+}
+
+.gradient-notice svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    color: var(--accent);
+}
+
+.gradient-notice span {
+    flex: 1;
+    min-width: 0;
+}
+
+.gradient-notice button {
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.gradient-notice button:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+/* 4×4 grid of gradient swatches */
+.gradient-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.gradient-swatch {
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+    position: relative;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    transition:
+        transform 0.12s ease,
+        border-color 0.12s ease,
+        box-shadow 0.12s ease;
+}
+
+.gradient-swatch:hover {
+    transform: scale(1.04);
+}
+
+.gradient-swatch:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.gradient-swatch.active {
+    border-color: var(--text);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* "None / Default" reset button */
+.gradient-none-btn {
+    width: 100%;
+    padding: 9px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: all 0.15s ease;
+}
+
+.gradient-none-btn:hover {
+    color: var(--text);
+    border-color: var(--text-dim);
+}
+
+.gradient-none-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gradient-swatch,
+    .gradient-none-btn {
+        transition: none;
+    }
+    .gradient-swatch:hover {
+        transform: none;
+    }
+}
