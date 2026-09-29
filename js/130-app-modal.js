@@ -65,7 +65,7 @@ window.registerModule("ZSApp", (function () {
             }
         }
 
-        overlay.classList.add("open");
+        ZSCore.modal.open(overlay, closeModal);
         requestAnimationFrame(() => {
             if (overlay.classList.contains("open")) document.getElementById("siteName").focus();
         });
@@ -75,7 +75,7 @@ window.registerModule("ZSApp", (function () {
      * Closes the modal and resets temporary icon data and input fields.
      */
     function closeModal() {
-        overlay.classList.remove("open");
+        ZSCore.modal.close(overlay);
         window.ZSApp.tempIconData = null;
         siteIconInput.value = "";
         iconPreview.style.display = "none";
@@ -83,12 +83,6 @@ window.registerModule("ZSApp", (function () {
 
     document.getElementById("modalCancel").addEventListener("click", closeModal);
     overlay.addEventListener("click", e => { if (e.target === overlay) closeModal(); });
-    document.addEventListener("keydown", e => {
-        if (e.key !== "Escape") return;
-        if (!overlay.classList.contains("open")) return;
-        e.stopImmediatePropagation();
-        closeModal();
-    });
 
     siteIconInput.addEventListener("change", async e => {
         const file = e.target.files[0];

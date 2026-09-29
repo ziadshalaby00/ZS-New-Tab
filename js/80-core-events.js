@@ -49,7 +49,7 @@ window.registerModule('ZSCore', (function () {
             const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(
                 document.activeElement.tagName
             );
-            const isModalOpen = document.getElementById("overlay")?.classList.contains("open");
+            const isModalOpen = window.ZSCore.modal.isAnyOpen();
 
             if (e.key === "/" && !isTyping) {
                 e.preventDefault();
@@ -58,23 +58,22 @@ window.registerModule('ZSCore', (function () {
 
             // Ctrl+S / Cmd+S → toggle settings panel.
             // Deliberately NOT gated on isTyping so it works even while the
-            // user is focused in the search box. Also blocks the browser's
-            // default Save Page dialog.
+            // user is focused in the search box. The browser's default Save Page
+            // dialog is always blocked, even while a modal is open, so it never
+            // pops up on top of our own UI.
             const isCmdOrCtrl = e.ctrlKey || e.metaKey;
             if (
                 isCmdOrCtrl &&
                 !e.shiftKey &&
                 !e.altKey &&
-                e.key.toLowerCase() === "s" &&
-                !isModalOpen &&
-                onToggleSettingsFn
+                e.key.toLowerCase() === "s"
             ) {
                 e.preventDefault();
-                onToggleSettingsFn();
+                if (!isModalOpen && onToggleSettingsFn) onToggleSettingsFn();
             }
 
             if (e.key === "Escape" && onEscapeFn) {
-                if (!document.querySelector(".overlay.open")) {
+                if (!window.ZSCore.modal.isAnyOpen()) {
                     onEscapeFn();
                 }
             }
@@ -98,7 +97,7 @@ window.registerModule('ZSCore', (function () {
                 || !!e.target.closest?.(".overlay");
 
             if (!clickedInsidePanel && !clickedToggle && !clickedOverlay) {
-                if (!document.querySelector(".overlay.open")) {
+                if (!window.ZSCore.modal.isAnyOpen()) {
                     panel.classList.remove("open");
                 }
             }

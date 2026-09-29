@@ -9,11 +9,11 @@ window.registerModule("ZSApp", (function () {
 
     // ---------- Export modal ----------
     function openExportModal() {
-        exportOverlay.classList.add("open");
+        ZSCore.modal.open(exportOverlay, closeExportModal);
     }
 
     function closeExportModal() {
-        exportOverlay.classList.remove("open");
+        ZSCore.modal.close(exportOverlay);
     }
 
     exportOverlay.querySelectorAll(".io-option").forEach(btn => {
@@ -40,11 +40,11 @@ window.registerModule("ZSApp", (function () {
 
     // ---------- Import modal ----------
     function openImportModal() {
-        importOverlay.classList.add("open");
+        ZSCore.modal.open(importOverlay, closeImportModal);
     }
 
     function closeImportModal() {
-        importOverlay.classList.remove("open");
+        ZSCore.modal.close(importOverlay);
     }
 
     importOverlay.querySelectorAll(".io-option").forEach(btn => {
@@ -64,22 +64,6 @@ window.registerModule("ZSApp", (function () {
         .addEventListener("click", closeImportModal);
     importOverlay.addEventListener("click", e => {
         if (e.target === importOverlay) closeImportModal();
-    });
-
-    // ---------- Escape to close ----------
-    document.addEventListener("keydown", e => {
-        if (e.key !== "Escape") return;
-        
-        if (exportOverlay.classList.contains("open")) {
-            e.stopImmediatePropagation();
-            closeExportModal();
-            return;
-        }
-        if (importOverlay.classList.contains("open")) {
-            e.stopImmediatePropagation();
-            closeImportModal();
-            return;
-        }
     });
 
     return {

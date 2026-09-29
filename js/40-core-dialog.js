@@ -40,29 +40,31 @@ window.registerModule('ZSCore', (function () {
             overlay.appendChild(modal);
             document.body.appendChild(overlay);
 
-            // Force the initial (closed) state to be committed before adding
-            // "open", so the enter transition actually plays.
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => overlay.classList.add("open"));
-            });
-
             let settled = false;
 
-            function onKey(e) {
-                if (e.key === "Escape") {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
-                    cleanup(false);
-                }
-            }
+            // Force the initial (closed) state to be committed before adding
+            // "open", so the enter transition actually plays.
+            //
+            // The settled guard is defence-in-depth: cleanup() can, in
+            // theory, run before this fires (e.g. a stray click or a future
+            // keydown listener). Without it, we'd push an already-removed
+            // overlay onto the stack and leave isAnyOpen() stuck true,
+            // silently breaking Ctrl+S and click-outside panel closing.
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    if (settled) return;
+                    ZSCore.modal.open(overlay, () => cleanup(false));
+                });
+            });
 
             function cleanup(result) {
                 if (settled) return;
                 settled = true;
-                document.removeEventListener("keydown", onKey, true);
 
                 // Play the close transition, then remove from the DOM.
-                overlay.classList.remove("open");
+                // (ZSCore.modal.close is idempotent — a no-op if Escape
+                //  already popped this entry from the stack.)
+                ZSCore.modal.close(overlay);
 
                 let removed = false;
                 const remove = () => {
@@ -87,8 +89,6 @@ window.registerModule('ZSCore', (function () {
             overlay.addEventListener("click", (e) => {
                 if (e.target === overlay) cleanup(false);
             });
-
-            document.addEventListener("keydown", onKey, true);
         });
     }
 
@@ -125,26 +125,33 @@ window.registerModule('ZSCore', (function () {
             overlay.appendChild(modal);
             document.body.appendChild(overlay);
 
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => overlay.classList.add("open"));
-            });
+            // onEnter is registered synchronously, so an Enter keypress that
+            // lands in the two-frame window before the rAF below runs will
+            // call cleanup() first. The settled guard inside the rAF
+            // prevents open() from pushing an already-closed overlay.
+            function onEnter(e) {
+                if (e.key !== "Enter") return;
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                cleanup();
+            }
+            document.addEventListener("keydown", onEnter, true);
 
             let settled = false;
 
-            function onKey(e) {
-                if (e.key === "Escape" || e.key === "Enter") {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
-                    cleanup();
-                }
-            }
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    if (settled) return;
+                    ZSCore.modal.open(overlay, cleanup);
+                });
+            });
 
             function cleanup() {
                 if (settled) return;
                 settled = true;
-                document.removeEventListener("keydown", onKey, true);
 
-                overlay.classList.remove("open");
+                document.removeEventListener("keydown", onEnter, true);
+                ZSCore.modal.close(overlay);
 
                 let removed = false;
                 const remove = () => {
@@ -167,8 +174,6 @@ window.registerModule('ZSCore', (function () {
             overlay.addEventListener("click", (e) => {
                 if (e.target === overlay) cleanup();
             });
-
-            document.addEventListener("keydown", onKey, true);
         });
     }
 

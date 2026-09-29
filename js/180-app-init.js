@@ -14,7 +14,6 @@
         () => document.getElementById("engineSelect").value
     );
     ZSCore.setupKeyboardShortcuts("searchInput", () => {
-        ZSApp.closeModal();
         ZSApp.panel.classList.remove("open");
     }, ZSApp.openSettingsPanel);
     ZSCore.setupClickOutsidePanel("panel", "settingsToggle");
